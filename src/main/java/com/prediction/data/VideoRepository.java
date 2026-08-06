@@ -1,8 +1,12 @@
 package com.prediction.data;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
@@ -104,6 +108,61 @@ public class VideoRepository {
                         rs.getLong("cnt"),
                         rs.getDouble("avg1"),
                         rs.getDouble("avg30")));
+    }
+
+    /** Pearson correlation between Day1 and Day30 plus a deterministic scatter sample. */
+    public CorrelationStat correlationAndScatter() {
+        List<double[]> pairs = jdbc.query(
+                "SELECT day01, day30 FROM videos",
+                (rs, i) -> new double[] {rs.getDouble(1), rs.getDouble(2)});
+        int n = pairs.size();
+        double sx = 0, sy = 0, sxx = 0, syy = 0, sxy = 0;
+        for (double[] p : pairs) {
+            double x = p[0], y = p[1];
+            sx += x;
+            sy += y;
+            sxx += x * x;
+            syy += y * y;
+            sxy += x * y;
+        }
+        double denom = Math.sqrt((n * sxx - sx * sx) * (n * syy - sy * sy));
+        double pearson = denom == 0 ? 0 : (n * sxy - sx * sy) / denom;
+
+        int sampleSize = Math.min(3000, n);
+        double[][] scatter = new double[sampleSize][];
+        int step = Math.max(1, n / sampleSize);
+        int idx = 0;
+        for (int i = 0; i < n && idx < sampleSize; i += step) {
+            scatter[idx++] = pairs.get(i);
+        }
+        return new CorrelationStat(pearson, n, scatter);
+    }
+
+    /** Average daily curves: overall and per category. */
+    public DecayCurves decayCurves() {
+        String daySql = String.join(", ",
+                java.util.stream.IntStream.rangeClosed(1, 30)
+                        .mapToObj(d -> String.format("AVG(day%02d)", d))
+                        .toList());
+        double[] overall = jdbc.queryForObject(
+                "SELECT " + daySql + " FROM videos",
+                (rs, i) -> readAverages(rs));
+        Map<String, double[]> byCategory = new LinkedHashMap<>();
+        jdbc.query(
+                "SELECT category, " + daySql + " FROM videos GROUP BY category",
+                (rs, i) -> {
+                    byCategory.put(rs.getString(1), readAverages(rs));
+                    return null;
+                });
+        return new DecayCurves(overall, byCategory);
+    }
+
+    private static double[] readAverages(ResultSet rs) throws SQLException {
+        double[] averages = new double[30];
+        for (int d = 0; d < 30; d++) {
+            averages[d] = rs.getDouble(d + 1);
+        }
+        return averages;
     }
 
     private RowMapper<Video> videoRowMapper() {
