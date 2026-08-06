@@ -1,6 +1,7 @@
 package com.prediction.api;
 
 import com.prediction.data.VideoRepository;
+import com.prediction.common.ApiResponse;
 import java.util.Map;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -17,10 +18,10 @@ public class HealthController {
     }
 
     @GetMapping("/health")
-    public Map<String, Object> health() {
-        return Map.of(
+    public ApiResponse<Map<String, Object>> health() {
+        return ApiResponse.ok(Map.of(
                 "status", "ok",
                 "totalVideos", videoRepository.count(),
-                "categories", videoRepository.countCategories());
+                "categories", videoRepository.countCategories()));
     }
 }

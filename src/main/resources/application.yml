@@ -9,3 +9,4 @@ app:
   db-path: ${user.dir}/data/smtpd.db
   covers-dir: ${user.dir}/data/covers
   uploads-dir: ${user.dir}/data/uploads
+  covers-zip: ${user.dir}/data/img_yt.zip
