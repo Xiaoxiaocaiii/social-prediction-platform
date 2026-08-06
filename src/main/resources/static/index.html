@@ -137,7 +137,31 @@
             <h1>曲线对比</h1>
             <p>任选 2~3 个视频，叠加比较真实热度曲线与峰值/衰减指标。</p>
         </div>
-        <div class="placeholder-card">功能建设中（2.5 步骤实现）</div>
+        <div class="compare-layout">
+            <div class="card-panel compare-picker">
+                <div class="compare-row">
+                    <input id="compare-q" class="input search-input" type="text" placeholder="搜索视频并添加到对比列表">
+                    <button id="compare-search" class="btn">搜索</button>
+                </div>
+                <div id="compare-picker-results" class="picker-results"></div>
+                <div class="preset-row">
+                    <button id="compare-preset-a" class="btn">示例：热门 vs 冷门</button>
+                    <button id="compare-preset-b" class="btn">示例：不同分类</button>
+                </div>
+                <div class="selected-label">已选视频（2~3 个）</div>
+                <div id="compare-selected" class="chip-list"></div>
+                <button id="compare-run" class="btn primary" disabled>开始对比</button>
+            </div>
+            <div id="compare-result" class="compare-result hidden">
+                <div id="compare-chart" class="compare-chart"></div>
+                <table class="compare-table">
+                    <thead>
+                    <tr><th>视频</th><th>作者</th><th>峰值天</th><th>衰减率</th><th>Day30</th></tr>
+                    </thead>
+                    <tbody id="compare-table-body"></tbody>
+                </table>
+            </div>
+        </div>
     </section>
 </main>
 
@@ -157,5 +181,6 @@
 <script src="js/predict.js"></script>
 <script src="js/ranking.js"></script>
 <script src="js/insights.js"></script>
+<script src="js/compare.js"></script>
 </body>
 </html>
