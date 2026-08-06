@@ -13,6 +13,9 @@
             page.classList.toggle("active", page.id === "page-" + name);
         });
         window.scrollTo({ top: 0 });
+        if (typeof window.onPageShown === "function") {
+            window.onPageShown(name);
+        }
     }
 
     navButtons.forEach(function (btn) {

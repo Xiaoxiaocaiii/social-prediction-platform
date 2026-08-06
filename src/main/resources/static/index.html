@@ -108,7 +108,28 @@
             <h1>数据洞察</h1>
             <p>分类热度对比、早期热度与最终热度相关性、平均热度衰减曲线。</p>
         </div>
-        <div class="placeholder-card">功能建设中（2.4 步骤实现）</div>
+        <div class="insight-grid">
+            <div class="card-panel insight-card">
+                <div class="insight-title">分类平均热度对比</div>
+                <div id="insight-category-chart" class="insight-chart"></div>
+                <div class="insight-note">数据口径：按 15 个分类统计全部 282,481 条视频的 Day1 / Day30 平均热度分。</div>
+            </div>
+            <div class="card-panel insight-card">
+                <div class="insight-title" id="insight-correlation-title">早期热度与最终热度相关性</div>
+                <div id="insight-correlation-chart" class="insight-chart"></div>
+                <div class="insight-note">数据口径：全量 282,481 条视频 Day1 与 Day30 热度分的 Pearson 相关系数，散点为 3,000 个均匀抽样。</div>
+            </div>
+            <div class="card-panel insight-card">
+                <div class="insight-title">平均热度衰减曲线</div>
+                <div class="insight-controls">
+                    <select id="insight-decay-category" class="input">
+                        <option value="__overall__">整体</option>
+                    </select>
+                </div>
+                <div id="insight-decay-chart" class="insight-chart"></div>
+                <div class="insight-note">数据口径：第 1~30 天平均热度分的变化，反映热度随时间衰减的整体规律。</div>
+            </div>
+        </div>
     </section>
 
     <section id="page-compare" class="page">
@@ -135,5 +156,6 @@
 <script src="js/app.js"></script>
 <script src="js/predict.js"></script>
 <script src="js/ranking.js"></script>
+<script src="js/insights.js"></script>
 </body>
 </html>
