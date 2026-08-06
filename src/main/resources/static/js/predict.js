@@ -97,47 +97,23 @@
     async function render(data) {
         noteEl.textContent = data.note || "";
         refsEl.innerHTML = "";
-        let refCurves = [];
         if (!data.references || !data.references.length) {
             refsEl.innerHTML = '<div class="empty">未找到参考案例，已使用全库平均曲线兜底</div>';
         } else {
             data.references.forEach(function (item) {
                 refsEl.appendChild(buildRef(item));
             });
-            try {
-                const details = await Promise.all(data.references.map(function (item) {
-                    return API.get("/api/videos/" + encodeURIComponent(item.videoId));
-                }));
-                refCurves = details.map(function (d) {
-                    return { title: d.title, curve: d.curve };
-                });
-            } catch (e) {
-                // keep prediction-only chart when reference details fail
-            }
         }
-        drawChart(data.prediction, refCurves);
+        drawChart(data.prediction);
         resultEl.classList.remove("hidden");
         resultEl.scrollIntoView({ behavior: "smooth", block: "start" });
     }
 
-    function drawChart(prediction, refCurves) {
+    function drawChart(prediction) {
         if (chart) {
             chart.dispose();
         }
         chart = echarts.init(chartEl);
-
-        const series = (refCurves || []).map(function (ref) {
-            return {
-                name: ref.title,
-                type: "line",
-                smooth: true,
-                data: ref.curve,
-                symbol: "none",
-                lineStyle: { width: 1.5, opacity: 0.45 },
-                itemStyle: { opacity: 0 },
-                emphasis: { lineStyle: { width: 2, opacity: 0.9 } }
-            };
-        });
 
         let peakIdx = 0;
         for (let i = 1; i < prediction.length; i++) {
@@ -145,8 +121,17 @@
                 peakIdx = i;
             }
         }
-        series.push({
-            name: "基线预测（实线）",
+        chart.setOption({
+            tooltip: { trigger: "axis" },
+            grid: { left: 52, right: 24, top: 28, bottom: 34 },
+            xAxis: {
+                type: "category",
+                data: window.days,
+                axisLabel: { interval: 4 }
+            },
+            yAxis: { type: "value", name: "热度分", scale: true },
+            series: [{
+            name: "基线预测",
             type: "line",
             smooth: true,
             data: prediction,
@@ -167,19 +152,7 @@
                     label: { fontSize: 10, color: "#2563eb" }
                 }]
             }
-        });
-
-        chart.setOption({
-            tooltip: { trigger: "axis" },
-            legend: { type: "scroll", top: 0, textStyle: { fontSize: 11 } },
-            grid: { left: 52, right: 24, top: 46, bottom: 34 },
-            xAxis: {
-                type: "category",
-                data: window.days,
-                axisLabel: { interval: 4 }
-            },
-            yAxis: { type: "value", name: "热度分", scale: true },
-            series: series
+            }]
         });
     }
 
