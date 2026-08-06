@@ -105,9 +105,9 @@
                 refsEl.appendChild(buildRef(item));
             });
         }
+        resultEl.classList.remove("hidden");
         refsWrap.classList.remove("hidden");
         drawChart(data.prediction);
-        resultEl.classList.remove("hidden");
         resultEl.scrollIntoView({ behavior: "smooth", block: "start" });
     }
 
@@ -125,30 +125,19 @@
         }
         chart.setOption({
             tooltip: { trigger: "axis" },
-            graphic: [{
-                type: "text",
-                right: 12,
-                top: 4,
-                style: {
-                    text: "峰值 第" + (peakIdx + 1) + " 天",
-                    fill: "#2563eb",
-                    fontSize: 11,
-                    fontWeight: 600
-                }
-            }],
-            grid: { left: 52, right: 24, top: 28, bottom: 60 },
+            grid: { left: 52, right: 24, top: 44, bottom: 50 },
             xAxis: {
                 type: "category",
                 data: window.days,
-                axisLabel: { rotate: 45, interval: "auto" }
+                axisLabel: { rotate: 30, interval: "auto" }
             },
             yAxis: { type: "value", name: "热度分", scale: true },
             series: [{
-            name: "基线预测",
-            type: "line",
-            smooth: true,
-            data: prediction,
-            symbol: "none",
+                name: "基线预测",
+                type: "line",
+                smooth: true,
+                data: prediction,
+                symbol: "none",
                 lineStyle: { width: 3, color: "#2563eb" },
                 itemStyle: { color: "#2563eb" },
                 areaStyle: {
@@ -156,6 +145,21 @@
                         { offset: 0, color: "rgba(37, 99, 235, 0.22)" },
                         { offset: 1, color: "rgba(37, 99, 235, 0.02)" }
                     ])
+                },
+                markPoint: {
+                    data: [{
+                        name: "峰值 第" + (peakIdx + 1) + " 天",
+                        coord: [window.days[peakIdx], prediction[peakIdx]],
+                        symbol: "circle",
+                        symbolSize: 8,
+                        itemStyle: { color: "#2563eb" },
+                        label: {
+                            position: "top",
+                            fontSize: 11,
+                            color: "#2563eb",
+                            fontWeight: 600
+                        }
+                    }]
                 }
             }]
         });

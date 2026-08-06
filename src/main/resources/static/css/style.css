@@ -428,7 +428,7 @@ main {
 .predict-layout {
     display: flex;
     gap: 20px;
-    align-items: flex-start;
+    align-items: stretch;
     flex-wrap: wrap;
 }
 
@@ -520,8 +520,9 @@ main {
 }
 
 .predict-chart {
+    flex: 1;
+    min-height: 240px;
     width: 100%;
-    height: 380px;
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 8px;
