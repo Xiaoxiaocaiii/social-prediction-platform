@@ -45,13 +45,20 @@
         charts.category.setOption({
             tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
             legend: { data: ["Day1 平均热度", "Day30 平均热度"], top: 0 },
-            grid: { left: 48, right: 16, top: 36, bottom: 66 },
+            grid: { left: 64, right: 20, top: 44, bottom: 60 },
             xAxis: {
                 type: "category",
+                position: "bottom",
                 data: cats.map(function (c) { return c.category; }),
-                axisLabel: { rotate: 30, fontSize: 11 }
+                axisLabel: { rotate: 30, interval: "auto", fontSize: 11 },
+                axisTick: { alignWithLabel: true }
             },
-            yAxis: { type: "value", name: "热度分" },
+            yAxis: {
+                type: "value",
+                name: "热度分",
+                nameLocation: "middle",
+                nameGap: 42
+            },
             series: [
                 {
                     name: "Day1 平均热度",
@@ -82,9 +89,21 @@
                     return "Day1: " + p.value[0].toFixed(2) + "<br>Day30: " + p.value[1].toFixed(2);
                 }
             },
-            grid: { left: 54, right: 24, top: 16, bottom: 42 },
-            xAxis: { type: "value", name: "Day1 热度" },
-            yAxis: { type: "value", name: "Day30 热度" },
+            grid: { left: 70, right: 28, top: 20, bottom: 48 },
+            xAxis: {
+                type: "value",
+                name: "Day1 热度",
+                nameLocation: "end",
+                nameGap: 20,
+                min: 0
+            },
+            yAxis: {
+                type: "value",
+                name: "Day30 热度",
+                nameLocation: "middle",
+                nameGap: 44,
+                min: 0
+            },
             series: [{
                 type: "scatter",
                 data: corr.scatter,
@@ -115,13 +134,19 @@
         charts.decay = initChart("insight-decay-chart");
         charts.decay.setOption({
             tooltip: { trigger: "axis" },
-            grid: { left: 52, right: 20, top: 24, bottom: 34 },
+            grid: { left: 64, right: 20, top: 30, bottom: 44 },
             xAxis: {
                 type: "category",
                 data: window.days,
                 axisLabel: { interval: 4 }
             },
-            yAxis: { type: "value", name: "热度分" },
+            yAxis: {
+                type: "value",
+                name: "热度分",
+                nameLocation: "middle",
+                nameGap: 42,
+                min: 0
+            },
             series: [{
                 type: "line",
                 smooth: true,
