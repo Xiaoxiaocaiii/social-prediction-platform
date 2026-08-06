@@ -85,7 +85,7 @@
                 formData.append("file", selectedFile);
             }
             const data = await API.upload("/api/predict", formData);
-            render(data);
+            await render(data);
         } catch (e) {
             showToast(e.message, "error");
         } finally {
@@ -94,44 +94,92 @@
         }
     }
 
-    function render(data) {
+    async function render(data) {
         noteEl.textContent = data.note || "";
-        drawChart(data.prediction);
         refsEl.innerHTML = "";
+        let refCurves = [];
         if (!data.references || !data.references.length) {
             refsEl.innerHTML = '<div class="empty">未找到参考案例，已使用全库平均曲线兜底</div>';
         } else {
             data.references.forEach(function (item) {
                 refsEl.appendChild(buildRef(item));
             });
+            try {
+                const details = await Promise.all(data.references.map(function (item) {
+                    return API.get("/api/videos/" + encodeURIComponent(item.videoId));
+                }));
+                refCurves = details.map(function (d) {
+                    return { title: d.title, curve: d.curve };
+                });
+            } catch (e) {
+                // keep prediction-only chart when reference details fail
+            }
         }
+        drawChart(data.prediction, refCurves);
         resultEl.classList.remove("hidden");
         resultEl.scrollIntoView({ behavior: "smooth", block: "start" });
     }
 
-    function drawChart(prediction) {
+    function drawChart(prediction, refCurves) {
         if (chart) {
             chart.dispose();
         }
         chart = echarts.init(chartEl);
+
+        const series = (refCurves || []).map(function (ref) {
+            return {
+                name: ref.title,
+                type: "line",
+                smooth: true,
+                data: ref.curve,
+                symbol: "none",
+                lineStyle: { width: 1.5, opacity: 0.45 },
+                itemStyle: { opacity: 0 },
+                emphasis: { lineStyle: { width: 2, opacity: 0.9 } }
+            };
+        });
+
+        let peakIdx = 0;
+        for (let i = 1; i < prediction.length; i++) {
+            if (prediction[i] > prediction[peakIdx]) {
+                peakIdx = i;
+            }
+        }
+        series.push({
+            name: "基线预测（实线）",
+            type: "line",
+            smooth: true,
+            data: prediction,
+            symbol: "none",
+            lineStyle: { width: 3, color: "#2563eb" },
+            itemStyle: { color: "#2563eb" },
+            areaStyle: {
+                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                    { offset: 0, color: "rgba(37, 99, 235, 0.22)" },
+                    { offset: 1, color: "rgba(37, 99, 235, 0.02)" }
+                ])
+            },
+            markPoint: {
+                data: [{
+                    coord: [window.days[peakIdx], prediction[peakIdx]],
+                    value: "峰值 第" + (peakIdx + 1) + " 天",
+                    symbolSize: 46,
+                    label: { fontSize: 10, color: "#2563eb" }
+                }]
+            }
+        });
+
         chart.setOption({
             tooltip: { trigger: "axis" },
-            grid: { left: 52, right: 20, top: 24, bottom: 34 },
+            legend: { type: "scroll", top: 0, textStyle: { fontSize: 11 } },
+            grid: { left: 52, right: 24, top: 46, bottom: 34 },
             xAxis: {
                 type: "category",
                 data: window.days,
                 axisLabel: { interval: 4 }
             },
-            yAxis: { type: "value", name: "热度分" },
-            series: [{
-                type: "line",
-                smooth: true,
-                data: prediction,
-                symbolSize: 5,
-                lineStyle: { color: "#16a34a" },
-                itemStyle: { color: "#16a34a" },
-                areaStyle: { opacity: 0.12 }
-            }]
+            yAxis: { type: "value", name: "热度分", scale: true },
+            series: series
         });
     }
 
