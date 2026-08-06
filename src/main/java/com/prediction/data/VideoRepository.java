@@ -49,53 +49,68 @@ public class VideoRepository {
         int safePage = Math.max(1, page);
         int safeSize = Math.min(Math.max(1, pageSize), 100);
         int offset = (safePage - 1) * safeSize;
-
-        StringBuilder cond = new StringBuilder();
-        List<Object> params = new ArrayList<>();
-        if (category != null && !category.isBlank()) {
-            cond.append("videos.category = ?");
-            params.add(category);
-        }
-
-        boolean fts = q != null && q.length() >= 3;
-        if (fts) {
-            if (!cond.isEmpty()) {
-                cond.append(" AND ");
-            }
-            cond.append("videos_fts MATCH ?");
-            params.add(escapeFtsQuery(q));
-        } else if (q != null && !q.isBlank()) {
-            if (!cond.isEmpty()) {
-                cond.append(" AND ");
-            }
-            cond.append("(videos.title LIKE ? OR videos.tags LIKE ? OR videos.description LIKE ?)");
-            String like = "%" + q + "%";
-            params.add(like);
-            params.add(like);
-            params.add(like);
-        }
-
-        String from = "videos"
-                + (fts ? " JOIN videos_fts ON videos.video_id = videos_fts.video_id" : "");
-        String where = cond.isEmpty() ? "" : " WHERE " + cond;
         String order = switch (sort == null ? "day30_desc" : sort) {
             case "day1_desc" -> " ORDER BY videos.day01 DESC, videos.day30 DESC";
             case "title" -> " ORDER BY videos.title COLLATE NOCASE ASC";
             default -> " ORDER BY videos.day30 DESC, videos.day01 DESC";
         };
 
+        if (q != null && q.length() >= 3) {
+            return searchFts(category, order, q, safeSize, offset);
+        }
+
+        List<Object> params = new ArrayList<>();
+        StringBuilder cond = new StringBuilder();
+        if (category != null && !category.isBlank()) {
+            cond.append("category = ?");
+            params.add(category);
+        }
+        if (q != null && !q.isBlank()) {
+            if (!cond.isEmpty()) {
+                cond.append(" AND ");
+            }
+            cond.append("(title LIKE ? OR tags LIKE ? OR description LIKE ?)");
+            String like = "%" + q + "%";
+            params.add(like);
+            params.add(like);
+            params.add(like);
+        }
+        String where = cond.isEmpty() ? "" : " WHERE " + cond;
         Long total = jdbc.queryForObject(
-                "SELECT COUNT(*) FROM " + from + where, Long.class, params.toArray());
+                "SELECT COUNT(*) FROM videos" + where, Long.class, params.toArray());
 
         List<Object> pageParams = new ArrayList<>(params);
         pageParams.add(safeSize);
         pageParams.add(offset);
         List<VideoSummary> items = jdbc.query(
-                "SELECT videos.video_id, videos.title, videos.category, videos.user_id, "
-                        + "videos.user_image, videos.day30 FROM " + from + where + order
+                "SELECT video_id, title, category, user_id, user_image, day30 FROM videos"
+                        + where + order
                         + " LIMIT ? OFFSET ?",
                 summaryMapper(), pageParams.toArray());
 
+        return new PageResult<>(total == null ? 0 : total, items);
+    }
+
+    /** FTS search without a direct FTS JOIN (that plan is pathologically slow in SQLite). */
+    private PageResult<VideoSummary> searchFts(
+            String category, String order, String q, int pageSize, int offset) {
+        List<Object> params = new ArrayList<>();
+        params.add(escapeFtsQuery(q));
+        String where = "video_id IN (SELECT video_id FROM videos_fts WHERE videos_fts MATCH ?)";
+        if (category != null && !category.isBlank()) {
+            where += " AND category = ?";
+            params.add(category);
+        }
+        Long total = jdbc.queryForObject(
+                "SELECT COUNT(*) FROM videos WHERE " + where, Long.class, params.toArray());
+
+        List<Object> pageParams = new ArrayList<>(params);
+        pageParams.add(pageSize);
+        pageParams.add(offset);
+        List<VideoSummary> items = jdbc.query(
+                "SELECT video_id, title, category, user_id, user_image, day30 FROM videos WHERE "
+                        + where + order + " LIMIT ? OFFSET ?",
+                summaryMapper(), pageParams.toArray());
         return new PageResult<>(total == null ? 0 : total, items);
     }
 
@@ -166,10 +181,10 @@ public class VideoRepository {
         if (q.length() >= 3) {
             try {
                 return jdbc.query(
-                        "SELECT videos.video_id, videos.title, videos.user_id, videos.day30, "
-                                + "bm25(videos_fts) AS score "
-                                + "FROM videos JOIN videos_fts ON videos.video_id = videos_fts.video_id "
-                                + "WHERE videos_fts MATCH ? ORDER BY score ASC LIMIT ?",
+                        "SELECT v.video_id, v.title, v.user_id, v.day30, f.score FROM videos v JOIN ("
+                                + "SELECT video_id, bm25(videos_fts) AS score FROM videos_fts "
+                                + "WHERE videos_fts MATCH ? ORDER BY score ASC LIMIT ?"
+                                + ") f ON v.video_id = f.video_id ORDER BY f.score ASC",
                         (rs, i) -> new ReferenceHit(
                                 rs.getString("video_id"),
                                 rs.getString("title"),
