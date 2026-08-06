@@ -173,6 +173,8 @@
         }
     };
 
+    window.openVideoDetail = openDetail;
+
     // ---- events ----
     searchBtn.addEventListener("click", function () {
         page = 1;
