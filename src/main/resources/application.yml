@@ -1,0 +1,11 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: social-prediction-platform
+
+app:
+  db-path: ${user.dir}/data/smtpd.db
+  covers-dir: ${user.dir}/data/covers
+  uploads-dir: ${user.dir}/data/uploads

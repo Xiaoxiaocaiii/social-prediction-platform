@@ -1,8 +1,8 @@
-# 大型数据资产（不入版本库）
-data/
+# 大型数据资产（仅根目录，不入版本库）
+/data/
 
 # 构建输出
-target/
+/target/
 
 # IDE
 .idea/
@@ -13,8 +13,11 @@ target/
 .claude/
 
 # 日志
-logs/
+/logs/
 *.log
 
 # Maven 本地缓存
 .m2/
+
+# 本机 Maven settings（机器相关，不入版本库）
+mvn-settings.xml
