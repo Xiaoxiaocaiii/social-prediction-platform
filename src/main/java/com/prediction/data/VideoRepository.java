@@ -157,6 +157,46 @@ public class VideoRepository {
         return new DecayCurves(overall, byCategory);
     }
 
+    /** Top-K videos ranked by text relevance (BM25), LIKE fallback for short terms. */
+    public List<ReferenceHit> searchRelevant(String q, int topK) {
+        int limit = Math.min(Math.max(1, topK), 20);
+        if (q == null || q.isBlank()) {
+            return List.of();
+        }
+        if (q.length() >= 3) {
+            try {
+                return jdbc.query(
+                        "SELECT videos.video_id, videos.title, videos.user_id, videos.day30, "
+                                + "bm25(videos_fts) AS score "
+                                + "FROM videos JOIN videos_fts ON videos.video_id = videos_fts.video_id "
+                                + "WHERE videos_fts MATCH ? ORDER BY score ASC LIMIT ?",
+                        (rs, i) -> new ReferenceHit(
+                                rs.getString("video_id"),
+                                rs.getString("title"),
+                                coverPath(rs.getString("video_id")),
+                                rs.getString("user_id"),
+                                rs.getDouble("day30"),
+                                rs.getDouble("score")),
+                        escapeFtsQuery(q), limit);
+            } catch (org.springframework.dao.DataAccessException e) {
+                // malformed FTS query -> fall back to LIKE
+            }
+        }
+        String like = "%" + q + "%";
+        return jdbc.query(
+                "SELECT video_id, title, user_id, day30 FROM videos "
+                        + "WHERE title LIKE ? OR tags LIKE ? OR description LIKE ? "
+                        + "ORDER BY day30 DESC LIMIT ?",
+                (rs, i) -> new ReferenceHit(
+                        rs.getString("video_id"),
+                        rs.getString("title"),
+                        coverPath(rs.getString("video_id")),
+                        rs.getString("user_id"),
+                        rs.getDouble("day30"),
+                        0),
+                like, like, like, limit);
+    }
+
     private static double[] readAverages(ResultSet rs) throws SQLException {
         double[] averages = new double[30];
         for (int d = 0; d < 30; d++) {

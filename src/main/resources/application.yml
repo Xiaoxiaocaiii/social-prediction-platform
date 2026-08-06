@@ -4,9 +4,15 @@ server:
 spring:
   application:
     name: social-prediction-platform
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 12MB
 
 app:
   db-path: ${user.dir}/data/smtpd.db
   covers-dir: ${user.dir}/data/covers
   uploads-dir: ${user.dir}/data/uploads
   covers-zip: ${user.dir}/data/img_yt.zip
+  prediction-mode: baseline
+  remote-prediction-url: http://127.0.0.1:5001/predict
