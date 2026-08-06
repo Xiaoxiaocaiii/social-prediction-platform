@@ -14,6 +14,7 @@
     const noteEl = document.getElementById("predict-note");
     const chartEl = document.getElementById("predict-chart");
     const refsEl = document.getElementById("predict-refs");
+    const refsWrap = document.getElementById("predict-refs-wrap");
 
     let selectedFile = null;
     let chart = null;
@@ -104,6 +105,7 @@
                 refsEl.appendChild(buildRef(item));
             });
         }
+        refsWrap.classList.remove("hidden");
         drawChart(data.prediction);
         resultEl.classList.remove("hidden");
         resultEl.scrollIntoView({ behavior: "smooth", block: "start" });

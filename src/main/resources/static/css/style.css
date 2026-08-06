@@ -427,28 +427,28 @@ main {
 
 .predict-layout {
     display: flex;
-    flex-direction: column;
     gap: 20px;
-    align-items: stretch;
+    align-items: flex-start;
+    flex-wrap: wrap;
 }
 
 .predict-form {
-    width: 100%;
+    width: 360px;
+    flex-shrink: 0;
     display: flex;
     flex-direction: column;
     gap: 12px;
 }
 
 .predict-result {
-    width: 100%;
-    min-width: 0;
+    flex: 1;
+    min-width: 420px;
     display: flex;
     flex-direction: column;
     gap: 12px;
 }
 
 .upload-zone {
-    max-width: 400px;
     border: 1.5px dashed var(--border);
     border-radius: 8px;
     padding: 22px 16px;
@@ -525,6 +525,13 @@ main {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 8px;
+}
+
+.predict-refs-wrap {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 }
 
 .result-subtitle {
