@@ -7,6 +7,7 @@ import com.prediction.data.VideoRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -14,17 +15,25 @@ import org.springframework.web.bind.annotation.RestController;
 public class InsightsController {
 
     private final VideoRepository videoRepository;
+    private volatile InsightsPayload cached;
 
     public InsightsController(VideoRepository videoRepository) {
         this.videoRepository = videoRepository;
     }
 
     @GetMapping("/insights")
-    public ResponseEntity<ApiResponse<InsightsPayload>> insights() {
-        InsightsPayload payload = new InsightsPayload(
-                videoRepository.categoryStats(),
-                videoRepository.correlationAndScatter(),
-                videoRepository.decayCurves());
-        return ResponseEntity.ok(ApiResponse.ok(payload));
+    public ResponseEntity<ApiResponse<InsightsPayload>> insights(
+            @RequestParam(defaultValue = "false") boolean refresh) {
+        return ResponseEntity.ok(ApiResponse.ok(compute(refresh)));
+    }
+
+    private synchronized InsightsPayload compute(boolean refresh) {
+        if (refresh || cached == null) {
+            cached = new InsightsPayload(
+                    videoRepository.categoryStats(),
+                    videoRepository.correlationAndScatter(),
+                    videoRepository.decayCurves());
+        }
+        return cached;
     }
 }

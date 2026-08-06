@@ -17,6 +17,13 @@
     let loading = false;
     let detailChart = null;
 
+    API.get("/api/health")
+        .then(function (h) {
+            document.getElementById("stat-videos").textContent = formatNumber(h.totalVideos);
+            document.getElementById("stat-categories").textContent = h.categories;
+        })
+        .catch(function () {});
+
     function buildQuery() {
         const params = new URLSearchParams();
         params.set("page", page);
