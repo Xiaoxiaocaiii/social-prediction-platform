@@ -68,7 +68,7 @@
     <section id="page-ranking" class="page">
         <div class="page-head">
             <h1>热度排行榜</h1>
-            <p>浏览 282,481 条真实 YouTube 视频，支持分类筛选、排序与搜索。</p>
+            <p>浏览 282,481 条真实 YouTube 视频，支持全站/分类榜单切换与视频查找。</p>
         </div>
         <div class="stat-strip">
             <div class="stat">
@@ -85,8 +85,9 @@
             </div>
         </div>
         <div class="filter-bar">
+            <label class="field-label" for="rank-category">榜单范围</label>
             <select id="rank-category" class="input">
-                <option value="">全部分类</option>
+                <option value="">全站</option>
                 <option>People  Blogs</option>
                 <option>Gaming</option>
                 <option>Entertainment</option>
@@ -103,13 +104,14 @@
                 <option>Autos  Vehicles</option>
                 <option>Pets  Animals</option>
             </select>
+            <label class="field-label" for="rank-sort">榜单口径</label>
             <select id="rank-sort" class="input">
-                <option value="day30_desc">Day30 热度</option>
-                <option value="day1_desc">Day1 热度</option>
-                <option value="title">标题</option>
+                <option value="day30_desc">Day30 总榜</option>
+                <option value="day1_desc">Day1 新热榜</option>
+                <option value="longrun_desc">长红榜</option>
             </select>
-            <input id="rank-q" class="input search-input" type="text" placeholder="搜索标题 / 标签 / 描述">
-            <button id="rank-search" class="btn primary">搜索</button>
+            <input id="rank-q" class="input search-input" type="text" placeholder="查找视频（标题 / 标签 / 描述）">
+            <button id="rank-search" class="btn primary">查找</button>
         </div>
         <div id="rank-total" class="rank-total"></div>
         <div id="rank-grid" class="video-grid"></div>

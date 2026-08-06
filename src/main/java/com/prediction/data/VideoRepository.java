@@ -51,6 +51,10 @@ public class VideoRepository {
         int offset = (safePage - 1) * safeSize;
         String order = switch (sort == null ? "day30_desc" : sort) {
             case "day1_desc" -> " ORDER BY videos.day01 DESC, videos.day30 DESC";
+            case "longrun_desc" ->
+                    " ORDER BY CASE WHEN videos.day01 > 0"
+                            + " THEN (videos.day01 - videos.day30) / videos.day01 ELSE 1 END ASC,"
+                            + " videos.day30 DESC";
             case "title" -> " ORDER BY videos.title COLLATE NOCASE ASC";
             default -> " ORDER BY videos.day30 DESC, videos.day01 DESC";
         };
