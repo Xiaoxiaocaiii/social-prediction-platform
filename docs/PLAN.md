@@ -1,0 +1,314 @@
+# 多模态社交媒体流行度预测与可视化分析平台（v2）最终方案
+
+> 状态：已确认方案（2026-08-06）｜阶段 0 已完成（2026-08-06）｜文档存档版 v1.1
+
+## 1. 项目概述
+
+基于 SMTPD 数据集（28 万条真实 YouTube 视频：封面图 + 文本 + 30 天热度序列），构建一个「数据可浏览、预测可演示、结论可追溯」的流行度预测与可视化平台。
+
+核心原则：
+
+- 全部数据真实，不做假数据；模型未接入前，任何模拟输出必须在界面上明确标注。
+- 模型（LSTM 预测、Stable Diffusion 生成）后续以 Python 服务接入，接口契约先行。
+- 本地跑通即可，不做 Docker、不做线上部署。
+
+## 2. 项目范围
+
+### 保留
+
+- 图文上传（上传图片 + 文案，作为预测入口）
+- 流行度预测（30 天热度曲线，基线版先行）
+
+### 新增
+
+- 热度排行榜 / 数据浏览（全量数据索引，分页 + 筛选 + 搜索）
+- 数据洞察（分类热度、Day1-Day30 相关性、平均衰减曲线）
+- 曲线对比（数据集内任选 2~3 个视频叠加真实曲线）
+
+### 去掉（原 v1 的交互功能）
+
+- AI 配图生成（改为离线成果 + 静态展示，见第 6 节）
+- 相似爆款检索（改为预测内部的「参考案例」机制，不再作为独立展示功能）
+- AI 优化建议（原为固定文案，无意义）
+
+## 3. 技术栈与运行方式
+
+| 层次 | 选型 |
+|---|---|
+| 后端 | Java 17 + Spring Boot 3.x + Maven |
+| 数据库 | SQLite（xerial sqlite-jdbc），单文件索引 |
+| 前端 | 静态 HTML/CSS/JS + ECharts，全部资源本地化（不依赖 CDN，答辩现场可能断网） |
+| 启动 | `mvn spring-boot:run`，浏览器访问 `http://localhost:8080` |
+
+## 4. 目录结构规划
+
+```text
+social-prediction-platform/
+├─ docs/
+│  └─ PLAN.md                 # 本方案
+├─ data/                      # 数据资产，不入 git（.gitignore）
+│  ├─ basic_view_pn.csv       # 原始数据（608MB，已就位）
+│  ├─ img_yt.zip              # 封面图压缩包（待下载）
+│  ├─ smtpd.db                # 构建出的 SQLite 索引
+│  ├─ covers/                 # 提取后的本地封面图
+│  └─ uploads/                # 演示时用户上传的图片
+├─ scripts/
+│  ├─ build_index.py          # csv → SQLite 索引
+│  └─ extract_covers.py       # img_yt.zip → data/covers/
+├─ src/main/java/...          # Spring Boot 后端
+├─ src/main/resources/static/ # 前端四页面
+├─ pom.xml
+└─ .gitignore
+```
+
+## 5. 数据层设计（阶段 0）
+
+### 5.1 输入
+
+- `data/basic_view_pn.csv`：608MB，282K+ 行，45 列。
+- `data/img_yt_divide.z01/.z02/.zip`：YouTube 封面图分卷压缩包（约 9.7GB，共 3 个分卷）。
+- 已还原出内层 `data/img_yt.zip`（9.25GB，301,408 个条目，命名 `img_yt/{video_id}.jpg`）。
+
+> 说明：原始下载是 7-Zip 跨磁盘分卷（spanning zip），Python/`.NET` 均不支持直接读取，
+> 由 `scripts/extract_spanning_zip.py` 按「分卷基准 + 相对偏移」手动解析并还原内层 zip。
+
+### 5.2 SQLite 表结构（videos，45 列）
+
+文本列（10）：
+
+`video_id`（主键）、`video_url`、`video_cover`、`user_url`、`user_image`、`user_id`、`category`、`title`、`tags`、`description`
+
+数值列（5）：
+
+`user_subscribers`、`video_duration`、`title_length`、`tag_num`、`desc_length`
+
+时序列（30）：
+
+`day01` ~ `day30`（popularity 分数，公式 `log2(观看数/天数+1)`）
+
+### 5.3 索引与检索
+
+- 普通索引：`category`、`day30`（排序）、`video_id`（主键）。
+- 全文索引：FTS5 trigram 分词（title/tags/description），支持中文子串检索。
+
+### 5.4 封面提取
+
+- 从 `img_yt.zip` 按文件名映射到 `video_id`，提取到 `data/covers/{video_id}.jpg`。
+- 输出统计：总数、成功数、缺失数、缺失率。
+
+### 5.5 验收标准
+
+- 行数 ≈ 28.2 万；分类 = 15。
+- 标题搜索、按 Day30 排序分页响应 < 1 秒。
+- 封面缺失率记录在案，缺失项前端用占位图。
+
+### 5.6 阶段 0 实际结果（2026-08-06）
+
+- SQLite 索引：282,481 行，15 个分类，0 行跳过，DB 约 1.89GB。
+- 全文检索：FTS5 trigram，中文 3 字以上查询约 15ms；2 字查询用 LIKE 兜底（约 0.5s）。
+- 封面（轻量方案）：按分类热度前 1000 + 5000 随机共 19,733 个视频，
+  成功提取 19,732 张封面（1 张在 zip 中缺失），存为 `data/covers/{video_id前2位}/{video_id}.jpg`。
+- 内层 `data/img_yt.zip` 保留，后续可随时按需补提或全量提取。
+
+## 6. 后端接口契约（阶段 1）
+
+统一响应：`{ "code": 0, "message": "ok", "data": ... }`。
+
+### 6.1 `GET /api/videos`
+
+分页浏览/筛选/搜索。
+
+参数：`page`、`pageSize`（默认 20）、`category`（可选）、`sort`（`day30_desc` 默认 / `day1_desc` / `title`）、`q`（搜索词）。
+
+出参 `data`：
+
+```json
+{
+  "total": 282400,
+  "items": [
+    {
+      "videoId": "YFVR_QIKe4c",
+      "title": "...",
+      "category": "Film  Animation",
+      "coverPath": "/covers/YFVR_QIKe4c.jpg",
+      "day30": 5.64,
+      "userId": "小月情感动画",
+      "userImage": "https://..."
+    }
+  ]
+}
+```
+
+### 6.2 `GET /api/videos/{id}`
+
+单视频详情。
+
+出参 `data`：全字段 + `curve`（30 个数值）+ `peakDay`（峰值天）+ `decayRate`（衰减率）。
+
+### 6.3 `GET /api/insights`
+
+数据洞察统计。
+
+出参 `data`：
+
+```json
+{
+  "categoryStats": [{ "category": "...", "count": 12000, "avgDay1": 6.1, "avgDay30": 5.2 }],
+  "correlation": { "pearson": 0.83, "sampleCount": 282400 },
+  "decayCurves": { "overall": [30 个均值], "byCategory": { "category": [30 个均值] } }
+}
+```
+
+### 6.4 `POST /api/predict`
+
+上传图文 → 参考案例 + 基线预测曲线。
+
+入参（multipart）：`file`（图片，可选）、`text`（文案，必填）、`topK`（默认 5）。
+
+处理流程：
+
+1. 保存上传图片到 `data/uploads/{taskId}/`（仅展示与存档，暂不参与计算）。
+2. FTS5 + BM25 按文案检索最相似的 topK 历史视频作为参考案例。
+3. 基线预测 = topK 视频 `day01~day30` 的平均值；topK 不足时用全库平均曲线兜底。
+4. 返回结果并标注模式。
+
+出参 `data`：
+
+```json
+{
+  "mode": "baseline",
+  "note": "基线预测：参考案例曲线平均，模型接入后替换",
+  "prediction": [30 个数值],
+  "references": [
+    {
+      "videoId": "...",
+      "title": "...",
+      "coverPath": "/covers/....jpg",
+      "userId": "...",
+      "day30": 6.8,
+      "score": 12.3
+    }
+  ]
+}
+```
+
+实现说明：预测服务设计为接口 + 双实现，由配置切换：
+
+- `baseline`（默认）：Java 内置 BM25 基线，真实计算，不依赖任何模型。
+- `remote`：HTTP 调用 Python 模型服务（契约见第 7 节）。
+
+### 6.5 `POST /api/compare`
+
+曲线对比。
+
+入参：`{ "videoIds": ["id1", "id2", "id3"] }`（2~3 个）。
+
+出参 `data`：每个视频的 `videoId`、`title`、`userId`、`curve[30]`、`peakDay`、`decayRate`。
+
+### 6.6 预留：`POST /api/generate`
+
+生成增强契约（本期不实现，默认返回「未启用」）：
+
+- 入参：`{ "text": "..." }`
+- 出参：`{ "imagePath": "/covers-generated/....jpg" }`
+
+## 7. 模型接入策略
+
+### 7.1 预测模型（LSTM）
+
+给模型团队的接口契约（Python 服务）：
+
+```text
+POST http://127.0.0.1:5001/predict
+入参: { "text": "...", "imagePath": "...", "topK": 5 }
+出参: { "prediction": [30], "references": [...] }
+```
+
+出参与 Java 端 `POST /api/predict` 一致。LSTM 交付后，Java 端改配置 `prediction.mode=remote` 即可，前端零改动。
+
+### 7.2 生成增强（flax/stable-diffusion-2-1）
+
+- 负责人确认扩散模型为 `flax/stable-diffusion-2-1`（JAX 版 SD 2.1，Python）。
+- 处理方式：模型团队离线生成「语义补充图」样例 → 用于论文/报告/答辩材料；平台「研究成果」静态区（数据洞察页底部）展示真实样例图。
+- `POST /api/generate` 契约预留，出图效果达标后再评估是否交互化。
+- 理由：SD 2.1 出图 AI 味较重，交互生成需要 GPU 且演示体验不可控，静态展示更诚实、更稳定。
+
+## 8. 前端四页面（阶段 2）
+
+统一顶部导航：上传预测 / 热度排行榜 / 数据洞察 / 曲线对比。
+
+### 8.1 上传预测
+
+- 拖拽/选择图片 + 文案输入。
+- 提交后展示：参考案例卡片（封面、标题、作者、Day30、相似度）、30 天预测曲线（标注「基线预测」）。
+- 空输入、接口失败有明确提示；上传图片暂不参与计算，界面如实说明。
+
+### 8.2 热度排行榜 / 数据浏览
+
+- 筛选栏：分类下拉、排序、搜索框。
+- 卡片网格列表（封面、标题、分类、Day30 热度）+ 分页。
+- 详情：封面大图、标签、作者、完整 30 天曲线、峰值/衰减指标、跳转 YouTube 原视频链接。
+
+### 8.3 数据洞察
+
+- 分类平均热度柱状图。
+- Day1 与 Day30 相关性散点图（附 Pearson r 值）。
+- 平均热度衰减折线（整体 / 按分类切换）。
+- 每块图表附一行数据口径说明。
+
+### 8.4 曲线对比
+
+- 从排行榜选择 2~3 个视频，叠加真实曲线 + 指标表（峰值天、衰减率、Day30）。
+- 预置两组示例：同分类高热度 vs 低热度、不同分类对比，一键载入。
+
+## 9. 与申报书对齐
+
+| 申报书要点 | 平台落地 |
+|---|---|
+| 多模态数据集构建 | 数据浏览 + 数据洞察（28 万条真实数据） |
+| 时序建模 | 30 天预测 + 衰减/相关性分析 |
+| 检索增强 | 参考案例（检索增强基线预测） |
+| 生成增强 | 离线模型实验 + 静态成果展示（不放假图） |
+| 系统实现 / 软著 | 平台本身可申报软件著作权 |
+
+## 10. 里程碑与验收
+
+| 阶段 | 内容 | 时长 | 验收标准 |
+|---|---|---|---|
+| 0 | 数据预处理：SQLite 索引 + 封面提取 | 1 天 | 行数/分类正确、查询 < 1s |
+| 1 | 后端 5 接口 + 基线预测 | 约 1 周 | 接口全部返回真实数据 |
+| 2 | 前端 4 页面 | 约 1 周 | 全流程跑通、图表真实、断网可用 |
+| 3 | 联调 + 启动脚本 + 演示准备 | 2~3 天 | 一条命令启动、演示话术就绪 |
+| 模型接入 | 独立排期，不占主线 | 待定 | 切 remote 后前端零改动 |
+
+## 11. 风险与边界
+
+- 发布时间建议不可做：csv 无发布时间列，已从功能中移除。
+- 上传图片暂不参与预测：无模型时如实说明，模型接入后启用。
+- 封面缺失：个别视频封面缺失或 URL 失效，前端用占位图。
+- 短搜索词：FTS5 trigram 需 ≥3 字符，短词用标签匹配（LIKE）兜底。
+- 断网演示：前端资源（ECharts、样式）全部本地化。
+- SQLite 并发：本项目以只读查询为主，无写入竞争，无影响。
+
+## 12. 当前仓库状态与待办
+
+### 已完成的动作
+
+- 旧项目（src、pom.xml、README、.git 历史）已按用户要求删除，不可恢复。
+- 新仓库已初始化（main 分支，暂无提交）。
+- `data/basic_view_pn.csv` 保留在 `data/`。
+- 本方案已存档（docs/PLAN.md）。
+- 阶段 0 完成：SQLite 索引、内层 zip 还原、轻量封面提取（见 5.6）。
+
+### 实现侧待办（需用户确认后启动）
+
+- 阶段 1：Spring Boot 后端与 5 个接口。
+- 阶段 2：前端四页面。
+- 阶段 3：联调、启动脚本、演示准备。
+
+## 13. 变更记录
+
+| 日期 | 版本 | 说明 |
+|---|---|---|
+| 2026-08-06 | v1.0 | 方案确认并存档 |
+| 2026-08-06 | v1.1 | 阶段 0 完成：SQLite 索引、跨磁盘分卷还原、轻量封面提取 |

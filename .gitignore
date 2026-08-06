@@ -1,0 +1,20 @@
+# 大型数据资产（不入版本库）
+data/
+
+# 构建输出
+target/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# 本地配置
+.claude/
+
+# 日志
+logs/
+*.log
+
+# Maven 本地缓存
+.m2/
