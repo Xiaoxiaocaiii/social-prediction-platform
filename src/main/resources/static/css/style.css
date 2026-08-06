@@ -120,8 +120,20 @@ main {
 .filter-bar {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    align-items: center;
+    gap: 12px;
     margin-bottom: 12px;
+}
+
+.filter-bar .field-label {
+    display: inline-flex;
+    align-items: center;
+    height: 34px;
+    white-space: nowrap;
+}
+
+.filter-bar .input {
+    height: 34px;
 }
 
 .input {
