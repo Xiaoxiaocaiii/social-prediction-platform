@@ -46,8 +46,54 @@
         return coverPath || "img/cover-placeholder.svg";
     };
 
+    window.coverPathFor = function (videoId) {
+        if (!videoId) {
+            return "img/cover-placeholder.svg";
+        }
+        const prefix = videoId.length >= 2 ? videoId.slice(0, 2) : "xx";
+        return "/covers/" + prefix + "/" + videoId + ".jpg";
+    };
+
+    window.escapeHtml = function (value) {
+        return String(value == null ? "" : value).replace(/[&<>"']/g, function (ch) {
+            return {
+                "&": "&amp;",
+                "<": "&lt;",
+                ">": "&gt;",
+                '"': "&quot;",
+                "'": "&#39;"
+            }[ch];
+        });
+    };
+
     window.days = Array.from({ length: 30 }, function (_, i) {
         return "第 " + (i + 1) + " 天";
+    });
+
+    // ---- modal ----
+    window.showModal = function (id) {
+        document.getElementById(id).classList.remove("hidden");
+    };
+
+    window.hideModal = function (id) {
+        document.getElementById(id).classList.add("hidden");
+        if (typeof window.onModalClosed === "function") {
+            window.onModalClosed(id);
+        }
+    };
+
+    document.querySelectorAll("[data-close]").forEach(function (el) {
+        el.addEventListener("click", function () {
+            hideModal(el.dataset.close);
+        });
+    });
+
+    document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape") {
+            document.querySelectorAll(".modal:not(.hidden)").forEach(function (m) {
+                hideModal(m.id);
+            });
+        }
     });
 
     // ---- image fallback (capture-phase so it works for dynamically added imgs) ----

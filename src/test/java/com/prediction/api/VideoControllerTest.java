@@ -60,6 +60,13 @@ class VideoControllerTest {
     }
 
     @Test
+    void unknownStaticResourceReturns404() throws Exception {
+        mockMvc.perform(get("/nope.txt"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value(404));
+    }
+
+    @Test
     void existingCoverIsServed() throws Exception {
         mockMvc.perform(get("/covers/a1/a1fJqcNwCB4.jpg"))
                 .andExpect(status().isOk())

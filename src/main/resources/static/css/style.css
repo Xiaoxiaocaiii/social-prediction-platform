@@ -115,6 +115,273 @@ main {
     border-radius: 8px;
 }
 
+/* ---- ranking page ---- */
+.filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.input {
+    padding: 7px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface);
+    font-size: 14px;
+    color: var(--text);
+}
+
+.search-input {
+    flex: 1;
+    min-width: 200px;
+}
+
+.btn {
+    padding: 7px 14px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface);
+    font-size: 14px;
+    color: var(--text);
+    cursor: pointer;
+}
+
+.btn:hover:not(:disabled) {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.btn.primary {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+}
+
+.btn.primary:hover:not(:disabled) {
+    background: #1d4ed8;
+    color: #fff;
+}
+
+.btn:disabled {
+    opacity: 0.45;
+    cursor: default;
+}
+
+.rank-total {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+}
+
+.video-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 14px;
+}
+
+.video-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: box-shadow 0.15s, transform 0.15s;
+}
+
+.video-card:hover {
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.12);
+    transform: translateY(-1px);
+}
+
+.video-cover {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    display: block;
+    background: #e2e8f0;
+}
+
+.video-card-body {
+    padding: 10px 12px 12px;
+}
+
+.video-title {
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.45;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 40px;
+}
+
+.video-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.heat-badge {
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.loading,
+.empty {
+    grid-column: 1 / -1;
+    padding: 48px;
+    text-align: center;
+    color: var(--text-muted);
+}
+
+.pager {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    margin-top: 20px;
+}
+
+.pager-info {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+/* ---- modal & detail ---- */
+.modal {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.modal.hidden {
+    display: none;
+}
+
+.modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+}
+
+.modal-panel {
+    position: relative;
+    width: min(880px, 100%);
+    max-height: 90vh;
+    overflow: auto;
+    background: var(--surface);
+    border-radius: 10px;
+    padding: 24px;
+}
+
+.modal-close {
+    position: absolute;
+    top: 10px;
+    right: 14px;
+    border: none;
+    background: none;
+    font-size: 24px;
+    line-height: 1;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+.modal-close:hover {
+    color: var(--text);
+}
+
+.detail-cover {
+    width: 100%;
+    max-height: 340px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.detail-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 12px 0 6px;
+}
+
+.detail-author {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.detail-author img {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #e2e8f0;
+}
+
+.tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 12px 0;
+}
+
+.tag {
+    background: var(--primary-weak);
+    color: var(--primary);
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+}
+
+.metric-row {
+    display: flex;
+    gap: 32px;
+    margin: 14px 0;
+    flex-wrap: wrap;
+}
+
+.metric-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.metric-label {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.detail-chart {
+    width: 100%;
+    height: 320px;
+}
+
+.detail-desc {
+    margin-top: 10px;
+    max-height: 120px;
+    overflow: auto;
+    font-size: 13px;
+    color: var(--text-secondary);
+    white-space: pre-wrap;
+}
+
+.detail-link {
+    display: inline-block;
+    margin-top: 12px;
+    color: var(--primary);
+    text-decoration: none;
+    font-size: 13px;
+}
+
 .toast {
     position: fixed;
     top: 72px;
