@@ -125,11 +125,22 @@
         }
         chart.setOption({
             tooltip: { trigger: "axis" },
-            grid: { left: 52, right: 24, top: 28, bottom: 34 },
+            graphic: [{
+                type: "text",
+                right: 12,
+                top: 4,
+                style: {
+                    text: "峰值 第" + (peakIdx + 1) + " 天",
+                    fill: "#2563eb",
+                    fontSize: 11,
+                    fontWeight: 600
+                }
+            }],
+            grid: { left: 52, right: 24, top: 28, bottom: 60 },
             xAxis: {
                 type: "category",
                 data: window.days,
-                axisLabel: { interval: 4 }
+                axisLabel: { rotate: 45, interval: "auto" }
             },
             yAxis: { type: "value", name: "热度分", scale: true },
             series: [{
@@ -138,22 +149,14 @@
             smooth: true,
             data: prediction,
             symbol: "none",
-            lineStyle: { width: 3, color: "#2563eb" },
-            itemStyle: { color: "#2563eb" },
-            areaStyle: {
-                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                    { offset: 0, color: "rgba(37, 99, 235, 0.22)" },
-                    { offset: 1, color: "rgba(37, 99, 235, 0.02)" }
-                ])
-            },
-            markPoint: {
-                data: [{
-                    coord: [window.days[peakIdx], prediction[peakIdx]],
-                    value: "峰值 第" + (peakIdx + 1) + " 天",
-                    symbolSize: 46,
-                    label: { fontSize: 10, color: "#2563eb" }
-                }]
-            }
+                lineStyle: { width: 3, color: "#2563eb" },
+                itemStyle: { color: "#2563eb" },
+                areaStyle: {
+                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                        { offset: 0, color: "rgba(37, 99, 235, 0.22)" },
+                        { offset: 1, color: "rgba(37, 99, 235, 0.02)" }
+                    ])
+                }
             }]
         });
     }
