@@ -1287,68 +1287,8 @@ main {
 
     #preloader,
     #bg-particles,
-    #cursor-dot,
     #scroll-progress {
         display: none !important;
-    }
-}
-
-/* ---- 自定义霓虹光标 ---- */
-body.cursor-enabled,
-body.cursor-enabled * {
-    cursor: none !important;
-}
-
-body.cursor-enabled input,
-body.cursor-enabled textarea,
-body.cursor-enabled select {
-    cursor: auto !important;
-}
-
-#cursor-dot {
-    position: fixed;
-    left: 0;
-    top: 0;
-    pointer-events: none;
-    border-radius: 50%;
-    z-index: 9999;
-    opacity: 0;
-    will-change: transform;
-    transition: width 0.18s ease, height 0.18s ease, margin 0.18s ease, opacity 0.22s ease;
-}
-
-body.cursor-ready #cursor-dot {
-    opacity: 1;
-}
-
-body.cursor-leave #cursor-dot,
-body.cursor-on-input #cursor-dot {
-    opacity: 0;
-}
-
-#cursor-dot {
-    width: 8px;
-    height: 8px;
-    margin: -4px 0 0 -4px;
-    background: #22d3ee;
-    box-shadow: 0 0 12px rgba(34, 211, 238, 0.9);
-}
-
-body.cursor-hover #cursor-dot {
-    width: 12px;
-    height: 12px;
-    margin: -6px 0 0 -6px;
-    box-shadow: 0 0 16px rgba(34, 211, 238, 1);
-}
-
-@media (hover: none), (pointer: coarse) {
-    #cursor-dot {
-        display: none;
-    }
-
-    body.cursor-enabled,
-    body.cursor-enabled * {
-        cursor: auto !important;
     }
 }
 

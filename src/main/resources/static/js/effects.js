@@ -28,59 +28,6 @@
         }
     }
 
-    /* ---- 自定义霓虹光标 ---- */
-    var dot = document.getElementById("cursor-dot");
-    if (dot && finePointer && !reduced) {
-        document.body.classList.add("cursor-enabled");
-        var mx = window.innerWidth / 2;
-        var my = window.innerHeight / 2;
-        var cursorReady = false;
-
-        var HOVER_SEL = "a, button, .nav-btn, .video-card, .picker-item, .chip, .upload-zone, .tag, .chip-remove, .modal-close, .legend-dot";
-
-        document.addEventListener("mousemove", function (e) {
-            mx = e.clientX;
-            my = e.clientY;
-            if (!cursorReady) {
-                cursorReady = true;
-                document.body.classList.add("cursor-ready");
-            }
-        });
-
-        document.addEventListener("mouseover", function (e) {
-            var t = e.target;
-            if (t.closest && t.closest("input, textarea, select")) {
-                document.body.classList.add("cursor-on-input");
-                document.body.classList.remove("cursor-hover");
-            } else if (t.closest && t.closest(HOVER_SEL)) {
-                document.body.classList.add("cursor-hover");
-                document.body.classList.remove("cursor-on-input");
-            }
-        });
-
-        document.addEventListener("mouseout", function (e) {
-            var t = e.target;
-            if (t.closest && t.closest("input, textarea, select")) {
-                document.body.classList.remove("cursor-on-input");
-            }
-            if (t.closest && t.closest(HOVER_SEL)) {
-                document.body.classList.remove("cursor-hover");
-            }
-        });
-
-        document.documentElement.addEventListener("mouseleave", function () {
-            document.body.classList.add("cursor-leave");
-        });
-        document.documentElement.addEventListener("mouseenter", function () {
-            document.body.classList.remove("cursor-leave");
-        });
-
-        (function tick() {
-            dot.style.transform = "translate3d(" + mx + "px, " + my + "px, 0)";
-            requestAnimationFrame(tick);
-        })();
-    }
-
     /* ---- 滚动进度条 ---- */
     var progress = document.getElementById("scroll-progress");
     if (progress) {
