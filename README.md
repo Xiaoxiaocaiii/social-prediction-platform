@@ -2,6 +2,13 @@
 
 基于 SMTPD 数据集（28 万条真实 YouTube 视频：封面图 + 文本 + 30 天热度序列）的本地演示平台。
 
+## 页面
+
+1. **上传预测**：上传图文 → 参考案例 + 30 天预测曲线（基线标注、峰值提示）
+2. **热度排行榜**：榜单切换（全站/分类 × Day30 总榜/Day1 新热榜/长红榜）+ 查找视频 + 详情弹窗
+3. **数据洞察**：分类热度、Day1-Day30 相关性（r=0.9296）、平均衰减曲线
+4. **曲线对比**：2~3 个视频叠加曲线 + 指标表 + 预置示例
+
 ## 环境要求
 
 - JDK 17
@@ -23,7 +30,7 @@ mvn -s mvn-settings.xml spring-boot:run
 | 接口 | 说明 |
 |---|---|
 | `GET /api/health` | 健康检查 |
-| `GET /api/videos` | 分页浏览 / 分类筛选 / 排序 / 搜索 |
+| `GET /api/videos` | 分页 / 榜单范围（分类）/ 榜单口径（day30/day1/longrun）/ 查找 |
 | `GET /api/videos/{id}` | 视频详情 + 30 天曲线 + 峰值/衰减指标 |
 | `GET /api/insights` | 分类热度、Day1-Day30 相关性、平均衰减曲线 |
 | `POST /api/compare` | 2~3 个视频曲线对比 |
@@ -44,6 +51,13 @@ mvn -s mvn-settings.xml test
 - `remote`：HTTP 调用 Python 服务 `POST http://127.0.0.1:5001/predict`。
 
 模型团队按契约实现后，改配置即可切换，前端零改动。
+
+## 相关文档
+
+- [docs/项目重构报告.md](docs/项目重构报告.md)：重构说明报告（可发给负责人）
+- [docs/成果清单.md](docs/成果清单.md)：成果与软著申报素材
+- [docs/DEMO.md](docs/DEMO.md)：演示脚本与故障应对
+- [docs/PLAN.md](docs/PLAN.md)：完整方案与变更记录
 
 ## 数据说明
 
