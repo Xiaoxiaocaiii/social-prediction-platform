@@ -30,13 +30,10 @@
 
     /* ---- 自定义霓虹光标 ---- */
     var dot = document.getElementById("cursor-dot");
-    var ring = document.getElementById("cursor-ring");
-    if (dot && ring && finePointer && !reduced) {
+    if (dot && finePointer && !reduced) {
         document.body.classList.add("cursor-enabled");
         var mx = window.innerWidth / 2;
         var my = window.innerHeight / 2;
-        var rx = mx;
-        var ry = my;
         var cursorReady = false;
 
         var HOVER_SEL = "a, button, .nav-btn, .video-card, .picker-item, .chip, .upload-zone, .tag, .chip-remove, .modal-close, .legend-dot";
@@ -80,9 +77,6 @@
 
         (function tick() {
             dot.style.transform = "translate3d(" + mx + "px, " + my + "px, 0)";
-            rx += (mx - rx) * 0.16;
-            ry += (my - ry) * 0.16;
-            ring.style.transform = "translate3d(" + rx + "px, " + ry + "px, 0)";
             requestAnimationFrame(tick);
         })();
     }
