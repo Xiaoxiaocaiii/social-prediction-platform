@@ -115,7 +115,7 @@
         if (chart) {
             chart.dispose();
         }
-        chart = echarts.init(chartEl);
+        chart = echarts.init(chartEl, "neon");
 
         let peakIdx = 0;
         for (let i = 1; i < prediction.length; i++) {
@@ -138,12 +138,12 @@
                 smooth: true,
                 data: prediction,
                 symbol: "none",
-                lineStyle: { width: 3, color: "#2563eb" },
-                itemStyle: { color: "#2563eb" },
+                lineStyle: { width: 3, color: "#22d3ee", shadowColor: "rgba(34, 211, 238, 0.55)", shadowBlur: 12 },
+                itemStyle: { color: "#22d3ee" },
                 areaStyle: {
                     color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                        { offset: 0, color: "rgba(37, 99, 235, 0.22)" },
-                        { offset: 1, color: "rgba(37, 99, 235, 0.02)" }
+                        { offset: 0, color: "rgba(34, 211, 238, 0.28)" },
+                        { offset: 1, color: "rgba(34, 211, 238, 0.03)" }
                     ])
                 },
                 markPoint: {
@@ -152,11 +152,11 @@
                         coord: [window.days[peakIdx], prediction[peakIdx]],
                         symbol: "circle",
                         symbolSize: 8,
-                        itemStyle: { color: "#2563eb" },
+                        itemStyle: { color: "#22d3ee" },
                         label: {
                             position: "top",
                             fontSize: 11,
-                            color: "#2563eb",
+                            color: "#67e8f9",
                             fontWeight: 600
                         }
                     }]

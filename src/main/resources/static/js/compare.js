@@ -12,7 +12,7 @@
     const presetA = document.getElementById("compare-preset-a");
     const presetB = document.getElementById("compare-preset-b");
 
-    const COLORS = ["#2563eb", "#16a34a", "#d97706"];
+    const COLORS = ["#22d3ee", "#a78bfa", "#fb7185"];
     let selected = [];
     let chart = null;
 
@@ -135,7 +135,7 @@
         if (chart) {
             chart.dispose();
         }
-        chart = echarts.init(chartEl);
+        chart = echarts.init(chartEl, "neon");
         chart.setOption({
             tooltip: { trigger: "axis" },
             legend: { type: "scroll", top: 0 },

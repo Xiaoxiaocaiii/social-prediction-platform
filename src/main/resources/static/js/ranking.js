@@ -145,7 +145,7 @@
         if (detailChart) {
             detailChart.dispose();
         }
-        detailChart = echarts.init(document.getElementById("detail-chart"));
+        detailChart = echarts.init(document.getElementById("detail-chart"), "neon");
         detailChart.setOption({
             tooltip: { trigger: "axis" },
             grid: { left: 52, right: 20, top: 24, bottom: 34 },
@@ -160,8 +160,8 @@
                 smooth: true,
                 data: curve,
                 symbolSize: 5,
-                lineStyle: { color: "#2563eb" },
-                itemStyle: { color: "#2563eb" },
+                lineStyle: { color: "#22d3ee", shadowColor: "rgba(34, 211, 238, 0.5)", shadowBlur: 10 },
+                itemStyle: { color: "#22d3ee" },
                 areaStyle: { opacity: 0.1 }
             }]
         });

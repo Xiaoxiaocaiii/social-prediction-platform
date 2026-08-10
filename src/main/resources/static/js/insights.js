@@ -10,7 +10,7 @@
     }
 
     function initChart(id) {
-        return echarts.init(document.getElementById(id));
+        return echarts.init(document.getElementById(id), "neon");
     }
 
     window.onPageShown = function (name) {
@@ -64,14 +64,14 @@
                     name: "Day1 平均热度",
                     type: "bar",
                     data: cats.map(function (c) { return round(c.avgDay1); }),
-                    itemStyle: { color: "#94a3b8" },
+                    itemStyle: { color: "#a78bfa" },
                     barMaxWidth: 16
                 },
                 {
                     name: "Day30 平均热度",
                     type: "bar",
                     data: cats.map(function (c) { return round(c.avgDay30); }),
-                    itemStyle: { color: "#2563eb" },
+                    itemStyle: { color: "#22d3ee" },
                     barMaxWidth: 16
                 }
             ]
@@ -108,7 +108,12 @@
                 type: "scatter",
                 data: corr.scatter,
                 symbolSize: 3,
-                itemStyle: { color: "#2563eb", opacity: 0.55 }
+                itemStyle: {
+                    color: "#22d3ee",
+                    opacity: 0.7,
+                    shadowBlur: 8,
+                    shadowColor: "rgba(34, 211, 238, 0.5)"
+                }
             }]
         });
     }
@@ -152,8 +157,8 @@
                 smooth: true,
                 data: arr.map(function (v) { return round(v); }),
                 symbolSize: 4,
-                lineStyle: { color: "#2563eb" },
-                itemStyle: { color: "#2563eb" },
+                lineStyle: { color: "#22d3ee", shadowColor: "rgba(34, 211, 238, 0.5)", shadowBlur: 10 },
+                itemStyle: { color: "#22d3ee" },
                 areaStyle: { opacity: 0.1 }
             }]
         });
