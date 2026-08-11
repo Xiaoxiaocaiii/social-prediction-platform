@@ -2040,6 +2040,29 @@ html[data-theme="light"] .aurora-blob--c {
     background: radial-gradient(circle, rgba(8, 145, 178, 0.06), transparent 70%);
 }
 
+/* ---- 阶段F-6：数字等宽排版 + 统计单位后缀 ---- */
+.stat-value,
+.heat-badge,
+.metric-value,
+.pager-info,
+.compare-table td,
+.rank-total {
+    font-variant-numeric: tabular-nums;
+}
+
+.stat-unit {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-left: 6px;
+    text-shadow: none;
+    letter-spacing: 0;
+}
+
+html[data-theme="light"] .stat-unit {
+    color: #64748b;
+}
+
 /* ---- 阶段F-1：图表内陷面板 + 卡片顶部高光线 ---- */
 .predict-chart,
 .compare-chart,
