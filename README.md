@@ -1,74 +1,103 @@
 # 多模态社交媒体流行度预测与可视化分析平台
 
-基于 SMTPD 数据集（28 万条真实 YouTube 视频：封面图 + 文本 + 30 天热度序列）的本地演示平台。
+基于 SMTPD 数据集（**282,481 条真实 YouTube 视频**：封面图 + 文本 + 30 天热度序列）构建的流行度预测与可视化分析平台，面向大创项目答辩演示与软件著作权申请。页面中的检索、预测与图表全部基于真实数据计算，不包含任何 mock 数据；预测当前采用基线实现，模型可后接入。
 
-## 页面
+## 功能特性
 
-1. **上传预测**：上传图文 → 参考案例 + 30 天预测曲线（基线标注、峰值提示）
-2. **热度排行榜**：榜单切换（全站/分类 × Day30 总榜/Day1 新热榜/长红榜）+ 查找视频 + 详情弹窗
-3. **数据洞察**：分类热度、Day1-Day30 相关性（r=0.9296）、平均衰减曲线
-4. **曲线对比**：2~3 个视频叠加曲线 + 指标表 + 预置示例
+- **上传预测**：输入文案，检索最相似的历史视频（BM25 + FTS5 trigram 中文全文检索），以参考案例的真实曲线平均生成未来 30 天热度预测曲线（含峰值标注、参考案例卡片）
+- **热度排行榜**：浏览 282,481 条真实视频，支持榜单范围（全站 / 15 个分类）× 榜单口径（Day30 总榜 / Day1 新热榜 / 长红榜）切换，标题/标签/描述检索、分页与详情弹窗（真实 30 天曲线、峰值天、衰减率）
+- **数据洞察**：分类平均热度对比、Day1 与 Day30 热度相关性散点（r = 0.9296，早期热度决定最终热度）、平均热度衰减曲线（整体 / 分类切换）
+- **曲线对比**：任选 2~3 个视频叠加真实热度曲线，对比峰值天与衰减率，含预置示例
+- **深色 / 浅色双主题**：顶栏图标一键切换，图表实时重绘，选择持久化到 localStorage
+- **动效与交互**：预加载动画、背景粒子与极光光斑、滚动进度条、磁吸按钮、卡片 3D 倾斜、图表入场生长动画；滚动期间自动暂停重特效保证流畅
 
-## 环境要求
+## 截图
 
-- JDK 17
-- Maven 3.9+
-- 数据文件位于 `data/`（不入 git）：`smtpd.db`、`img_yt.zip`、`covers/`
+| 深色模式 | 浅色模式 |
+| --- | --- |
+| ![预测-深色](docs/screenshots/predict-dark.png) | ![预测-浅色](docs/screenshots/predict-light.png) |
+| ![排行榜-深色](docs/screenshots/ranking-dark.png) | ![排行榜-浅色](docs/screenshots/ranking-light.png) |
+| ![洞察-浅色](docs/screenshots/insights-light.png) | ![对比-浅色](docs/screenshots/compare-light.png) |
 
-## 启动
+## 技术栈
 
-双击 `start.bat`，或执行：
+| 层次 | 选型 |
+| --- | --- |
+| 后端 | Java 17 + Spring Boot 3.2.5 + Maven + SQLite（sqlite-jdbc） |
+| 检索 | SQLite FTS5 trigram 中文全文索引 + BM25 排序，LIKE 兜底 |
+| 前端 | 原生 HTML/CSS/JS + ECharts 5.5.1（全部本地化，断网可用） |
+| 数据处理 | Python 脚本（CSV → SQLite 索引、封面提取、跨磁盘分卷还原） |
+| 测试 | JUnit 5 + MockMvc，24 个用例全部通过 |
 
-```bat
+## 快速开始
+
+环境要求：JDK 17、Maven 3.9+，数据文件位于 `data/`（见「数据说明」）。
+
+```bash
+# 方式一：Windows 下双击 start.bat
+# 方式二：
 mvn -s mvn-settings.xml spring-boot:run
 ```
 
-浏览器打开 http://localhost:8080
+浏览器打开 <http://localhost:8080>
 
-## 接口
+> `mvn-settings.xml` 为本机 Maven 配置（已被 .gitignore 忽略）；标准 Maven 环境可直接使用 `mvn spring-boot:run`。
+
+## 数据说明
+
+| 文件 | 说明 |
+| --- | --- |
+| `data/basic_view_pn.csv` | SMTPD 原始数据（608MB，282,481 行，35 列） |
+| `data/smtpd.db` | SQLite 索引（1.89GB，15 个分类，FTS5 全文索引），由 `scripts/build_index.py` 生成 |
+| `data/img_yt.zip` | 封面压缩包（9.25GB，201,408 个条目），由 `scripts/extract_spanning_zip.py` 分卷还原 |
+| `data/covers/` | 本地封面（19,732 张轻量方案），缺失时按需从 zip 提取 |
+
+> `data/` 已被 .gitignore 忽略，不会进入 Git 仓库；克隆后需自行准备数据文件。
+
+## 接口一览（统一返回 `{code, message, data}`）
 
 | 接口 | 说明 |
-|---|---|
+| --- | --- |
 | `GET /api/health` | 健康检查 |
-| `GET /api/videos` | 分页 / 榜单范围（分类）/ 榜单口径（day30/day1/longrun）/ 查找 |
-| `GET /api/videos/{id}` | 视频详情 + 30 天曲线 + 峰值/衰减指标 |
-| `GET /api/insights` | 分类热度、Day1-Day30 相关性、平均衰减曲线 |
+| `GET /api/videos` | 分页 / 榜单范围（分类）/ 榜单口径（day30 / day1 / longrun）/ 查找 |
+| `GET /api/videos/{id}` | 视频详情 + 30 天曲线 + 峰值天 / 衰减率 |
+| `GET /api/insights` | 分类热度、Day1-Day30 相关性、平均衰减曲线（支持 `?refresh=true` 重算） |
 | `POST /api/compare` | 2~3 个视频曲线对比 |
 | `POST /api/predict` | 上传图文 + 30 天基线预测（multipart） |
-| `GET /covers/{前缀}/{id}.jpg` | 封面（缺失时按需从 zip 提取，再缺失返回占位图） |
+| `GET /covers/{前缀}/{id}.jpg` | 封面（缺失按需提取 / 占位图） |
+
+## 预测原理（基线）
+
+- 文案长度 ≥ 3：FTS5 trigram 索引（标题 / 标签 / 描述）按 BM25 相关度取 Top-K 参考案例；
+- 文案过短或查询语法异常：LIKE 模糊匹配，按 Day30 热度降序；
+- 预测曲线 = 参考案例真实 30 天曲线的逐天平均；无命中时回退全站平均衰减曲线；
+- 上传图片当前仅保存，不参与检索与预测（页面已标注）；
+- 模型接入：`app.prediction-mode` = `baseline`（默认）/ `remote`（HTTP 调用 Python 服务），切换配置即可，前端与接口契约不变。
 
 ## 测试
 
-```bat
+```bash
 mvn -s mvn-settings.xml test
 ```
 
-## 模型接入
+## 项目结构
 
-预测服务双实现，由 `app.prediction-mode` 切换：
+```text
+src/main/java/com/prediction/   # Spring Boot 后端（api / data / service / config）
+src/main/resources/static/      # 前端四页面（index.html + css / js / lib）
+scripts/                        # 数据处理脚本（建索引 / 封面提取 / 分卷还原）
+docs/                           # 方案、演示脚本、成果清单、重构报告
+data/                           # 数据资产（git 忽略）
+```
 
-- `baseline`（默认）：BM25 检索参考案例，取真实曲线平均，纯数据计算。
-- `remote`：HTTP 调用 Python 服务 `POST http://127.0.0.1:5001/predict`。
+## 文档索引
 
-模型团队按契约实现后，改配置即可切换，前端零改动。
-
-## 相关文档
-
-- [docs/项目重构报告.md](docs/项目重构报告.md)：重构说明报告（可发给负责人）
+- [docs/项目重构报告.md](docs/项目重构报告.md)：重构说明报告（发负责人）
 - [docs/成果清单.md](docs/成果清单.md)：成果与软著申报素材
 - [docs/DEMO.md](docs/DEMO.md)：演示脚本与故障应对
 - [docs/PLAN.md](docs/PLAN.md)：完整方案与变更记录
 
-## 数据说明
+## 数据来源与声明
 
-- `data/basic_view_pn.csv`：原始数据（608MB，构建索引用）
-- `data/smtpd.db`：SQLite 索引（`scripts/build_index.py` 生成，282,481 行）
-- `data/img_yt.zip`：封面压缩包（由分卷还原，`scripts/extract_spanning_zip.py`）
-- `data/covers/`：本地封面（轻量方案先提取常用部分，其余按需补提）
-
-## 演示流程建议
-
-1. 上传预测：输入一句文案（如「三毛水果艺术」）→ 展示参考案例和 30 天预测曲线，说明当前是「基线预测」。
-2. 热度排行榜：切换分类、搜索「火锅」、翻页，点开一个视频看真实曲线与峰值/衰减指标。
-3. 数据洞察：指出 Day1 与 Day30 相关系数 r = 0.9296，说明早期热度决定最终热度。
-4. 曲线对比：点「示例：热门 vs 冷门」一键载入，叠加对比两条真实曲线。
+- 数据集：SMTPD（<https://github.com/zhuwei321/SMTPD>）
+- 本仓库仅包含平台代码与文档；原始数据与封面需按上述说明自行准备，请遵守数据集授权与平台内容使用规范。
