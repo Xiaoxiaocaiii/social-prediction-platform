@@ -2063,6 +2063,44 @@ html[data-theme="light"] .stat-unit {
     color: #64748b;
 }
 
+/* ---- 阶段F-7：顶栏滚动收缩 ---- */
+.topbar {
+    transition: padding 0.25s ease, background 0.25s ease, box-shadow 0.25s ease;
+}
+
+.brand-title {
+    transition: font-size 0.25s ease;
+}
+
+.nav-btn {
+    transition: padding 0.25s ease, background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.topbar.topbar--scrolled {
+    padding-top: 6px;
+    padding-bottom: 6px;
+    background: rgba(6, 10, 20, 0.94);
+    box-shadow: 0 1px 0 rgba(34, 211, 238, 0.10), 0 8px 24px rgba(2, 6, 16, 0.65);
+}
+
+.topbar--scrolled .brand-title {
+    font-size: 15px;
+}
+
+.topbar--scrolled .brand-sub {
+    display: none;
+}
+
+.topbar--scrolled .nav-btn {
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+
+html[data-theme="light"] .topbar--scrolled {
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 1px 0 rgba(15, 23, 42, 0.05), 0 8px 24px rgba(15, 23, 42, 0.08);
+}
+
 /* ---- 阶段F-1：图表内陷面板 + 卡片顶部高光线 ---- */
 .predict-chart,
 .compare-chart,

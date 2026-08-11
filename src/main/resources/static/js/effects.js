@@ -61,6 +61,17 @@
         updateProgress();
     }
 
+    /* ---- 顶栏滚动收缩 ---- */
+    var topbar = document.querySelector(".topbar");
+    if (topbar) {
+        var updateTopbar = function () {
+            var top = document.documentElement.scrollTop || document.body.scrollTop || 0;
+            topbar.classList.toggle("topbar--scrolled", top > 24);
+        };
+        window.addEventListener("scroll", updateTopbar, { passive: true });
+        updateTopbar();
+    }
+
     /* ---- 磁吸按钮 ---- */
     if (finePointer && !reduced) {
         document.querySelectorAll(".btn:not(:disabled)").forEach(function (el) {
