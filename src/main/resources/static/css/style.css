@@ -1287,7 +1287,8 @@ main {
 
     #preloader,
     #bg-particles,
-    #scroll-progress {
+    #scroll-progress,
+    .aurora {
         display: none !important;
     }
 }
@@ -1961,6 +1962,82 @@ html[data-theme="light"] .hero-chip {
 html[data-theme="light"] .hero-chip::before {
     background: #0891b2;
     box-shadow: none;
+}
+
+/* ---- 阶段F-4：极光光斑漂移 ---- */
+.aurora {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.aurora-blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(90px);
+    opacity: 0.5;
+    will-change: transform, opacity;
+}
+
+.aurora-blob--a {
+    width: 520px;
+    height: 520px;
+    left: -120px;
+    top: -80px;
+    background: radial-gradient(circle, rgba(34, 211, 238, 0.28), transparent 70%);
+    animation: auroraDriftA 52s ease-in-out infinite alternate;
+}
+
+.aurora-blob--b {
+    width: 460px;
+    height: 460px;
+    right: -100px;
+    top: 10%;
+    background: radial-gradient(circle, rgba(167, 139, 250, 0.24), transparent 70%);
+    animation: auroraDriftB 60s ease-in-out infinite alternate;
+}
+
+.aurora-blob--c {
+    width: 400px;
+    height: 400px;
+    left: 30%;
+    bottom: -140px;
+    background: radial-gradient(circle, rgba(34, 211, 238, 0.16), transparent 70%);
+    animation: auroraDriftC 46s ease-in-out infinite alternate;
+}
+
+@keyframes auroraDriftA {
+    0% { transform: translate(0, 0) scale(1); opacity: 0.45; }
+    50% { opacity: 0.65; }
+    100% { transform: translate(140px, 120px) scale(1.15); opacity: 0.4; }
+}
+
+@keyframes auroraDriftB {
+    0% { transform: translate(0, 0) scale(1.05); opacity: 0.4; }
+    100% { transform: translate(-120px, 160px) scale(0.95); opacity: 0.6; }
+}
+
+@keyframes auroraDriftC {
+    0% { transform: translate(0, 0); opacity: 0.35; }
+    100% { transform: translate(180px, -80px) scale(1.1); opacity: 0.5; }
+}
+
+html[data-theme="light"] .aurora-blob {
+    opacity: 0.35;
+}
+
+html[data-theme="light"] .aurora-blob--a {
+    background: radial-gradient(circle, rgba(8, 145, 178, 0.10), transparent 70%);
+}
+
+html[data-theme="light"] .aurora-blob--b {
+    background: radial-gradient(circle, rgba(124, 58, 237, 0.08), transparent 70%);
+}
+
+html[data-theme="light"] .aurora-blob--c {
+    background: radial-gradient(circle, rgba(8, 145, 178, 0.06), transparent 70%);
 }
 
 /* ---- 阶段F-1：图表内陷面板 + 卡片顶部高光线 ---- */
