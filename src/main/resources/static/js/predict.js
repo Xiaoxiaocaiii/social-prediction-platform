@@ -127,6 +127,9 @@
             }
         }
         chart.setOption({
+            animation: true,
+            animationDuration: 900,
+            animationEasing: "cubicOut",
             tooltip: { trigger: "axis" },
             grid: { left: 52, right: 24, top: 44, bottom: 50 },
             xAxis: {

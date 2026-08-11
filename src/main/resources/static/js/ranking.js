@@ -150,6 +150,9 @@
         const C = window.chartColors ? window.chartColors() : {};
         detailChart = echarts.init(document.getElementById("detail-chart"), window.chartTheme ? window.chartTheme() : "neon");
         detailChart.setOption({
+            animation: true,
+            animationDuration: 800,
+            animationEasing: "cubicOut",
             tooltip: { trigger: "axis" },
             grid: { left: 52, right: 20, top: 24, bottom: 34 },
             xAxis: {

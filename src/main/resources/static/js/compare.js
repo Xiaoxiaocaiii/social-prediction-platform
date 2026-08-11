@@ -142,6 +142,9 @@
         const C = window.chartColors ? window.chartColors() : {};
         chart = echarts.init(chartEl, window.chartTheme ? window.chartTheme() : "neon");
         chart.setOption({
+            animation: true,
+            animationDuration: 900,
+            animationEasing: "cubicOut",
             tooltip: { trigger: "axis" },
             legend: { type: "scroll", top: 0 },
             grid: { left: 52, right: 20, top: 42, bottom: 34 },

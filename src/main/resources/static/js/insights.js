@@ -50,6 +50,9 @@
         const C = window.chartColors ? window.chartColors() : {};
         charts.category = initChart("insight-category-chart");
         charts.category.setOption({
+            animation: true,
+            animationDuration: 800,
+            animationEasing: "cubicOut",
             tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
             legend: { data: ["Day1 平均热度", "Day30 平均热度"], top: 0 },
             grid: { left: 64, right: 20, top: 44, bottom: 60 },
@@ -92,6 +95,9 @@
             "早期热度与最终热度相关性（r = " + corr.pearson.toFixed(4) + "）";
         charts.correlation = initChart("insight-correlation-chart");
         charts.correlation.setOption({
+            animation: true,
+            animationDuration: 700,
+            animationEasing: "cubicOut",
             tooltip: {
                 formatter: function (p) {
                     return "Day1: " + p.value[0].toFixed(2) + "<br>Day30: " + p.value[1].toFixed(2);
@@ -149,6 +155,9 @@
             : curves.byCategory[key] || curves.overall;
         charts.decay = initChart("insight-decay-chart");
         charts.decay.setOption({
+            animation: true,
+            animationDuration: 900,
+            animationEasing: "cubicOut",
             tooltip: { trigger: "axis" },
             grid: { left: 64, right: 20, top: 30, bottom: 44 },
             xAxis: {
