@@ -72,6 +72,17 @@
         updateTopbar();
     }
 
+    /* ---- 滚动期间暂停重特效（极光/粒子），停止滚动 180ms 后恢复 ---- */
+    var heavyTimer = null;
+    var markScrolling = function () {
+        document.body.classList.add("page-scrolling");
+        clearTimeout(heavyTimer);
+        heavyTimer = setTimeout(function () {
+            document.body.classList.remove("page-scrolling");
+        }, 180);
+    };
+    window.addEventListener("scroll", markScrolling, { passive: true });
+
     /* ---- 磁吸按钮 ---- */
     if (finePointer && !reduced) {
         document.querySelectorAll(".btn:not(:disabled)").forEach(function (el) {
@@ -204,6 +215,10 @@
         }
 
         var draw = function () {
+            if (document.hidden || document.body.classList.contains("page-scrolling")) {
+                requestAnimationFrame(draw);
+                return;
+            }
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             var isLight = document.documentElement.getAttribute("data-theme") === "light";
             var palette = isLight ? PALETTE_LIGHT : PALETTE_DARK;
