@@ -13,8 +13,10 @@
     const presetB = document.getElementById("compare-preset-b");
 
     const COLORS = ["#22d3ee", "#a78bfa", "#fb7185"];
+    const COLOR_KEYS = ["cyan", "violet", "pink"];
     let selected = [];
     let chart = null;
+    let lastItems = null;
 
     async function pickerSearch() {
         const q = searchInput.value.trim();
@@ -116,11 +118,13 @@
     }
 
     function renderResult(items) {
+        lastItems = items;
         resultEl.classList.remove("hidden");
         drawChart(items);
+        const C = window.chartColors ? window.chartColors() : {};
         tableBody.innerHTML = items.map(function (video, i) {
             return "<tr>" +
-                "<td><span class=\"legend-dot\" style=\"background:" + COLORS[i % 3] + "\"></span>" +
+                "<td><span class=\"legend-dot\" style=\"background:" + (C[COLOR_KEYS[i % 3]] || COLORS[i % 3]) + "\"></span>" +
                 escapeHtml(video.title) + "</td>" +
                 "<td>" + escapeHtml(video.userId) + "</td>" +
                 "<td>第 " + video.peakDay + " 天</td>" +
@@ -135,7 +139,8 @@
         if (chart) {
             chart.dispose();
         }
-        chart = echarts.init(chartEl, "neon");
+        const C = window.chartColors ? window.chartColors() : {};
+        chart = echarts.init(chartEl, window.chartTheme ? window.chartTheme() : "neon");
         chart.setOption({
             tooltip: { trigger: "axis" },
             legend: { type: "scroll", top: 0 },
@@ -153,8 +158,8 @@
                     smooth: true,
                     data: video.curve,
                     symbolSize: 4,
-                    lineStyle: { color: COLORS[i % 3], width: 2 },
-                    itemStyle: { color: COLORS[i % 3] }
+                    lineStyle: { color: C[COLOR_KEYS[i % 3]] || COLORS[i % 3], width: 2 },
+                    itemStyle: { color: C[COLOR_KEYS[i % 3]] || COLORS[i % 3] }
                 };
             })
         });
@@ -196,6 +201,12 @@
     window.addEventListener("resize", function () {
         if (chart) {
             chart.resize();
+        }
+    });
+
+    window.addEventListener("themechange", function () {
+        if (lastItems) {
+            renderResult(lastItems);
         }
     });
 

@@ -16,6 +16,7 @@
     let total = 0;
     let loading = false;
     let detailChart = null;
+    let currentVideoId = null;
 
     API.get("/api/health")
         .then(function (h) {
@@ -95,6 +96,7 @@
     }
 
     async function openDetail(videoId) {
+        currentVideoId = videoId;
         showModal("detail-modal");
         document.getElementById("detail-body").innerHTML = '<div class="loading">加载中…</div>';
         try {
@@ -145,7 +147,8 @@
         if (detailChart) {
             detailChart.dispose();
         }
-        detailChart = echarts.init(document.getElementById("detail-chart"), "neon");
+        const C = window.chartColors ? window.chartColors() : {};
+        detailChart = echarts.init(document.getElementById("detail-chart"), window.chartTheme ? window.chartTheme() : "neon");
         detailChart.setOption({
             tooltip: { trigger: "axis" },
             grid: { left: 52, right: 20, top: 24, bottom: 34 },
@@ -160,8 +163,8 @@
                 smooth: true,
                 data: curve,
                 symbolSize: 5,
-                lineStyle: { color: "#22d3ee", shadowColor: "rgba(34, 211, 238, 0.5)", shadowBlur: 10 },
-                itemStyle: { color: "#22d3ee" },
+                lineStyle: { color: C.cyan || "#22d3ee", shadowColor: C.cyanGlow || "rgba(34, 211, 238, 0.5)", shadowBlur: 10 },
+                itemStyle: { color: C.cyan || "#22d3ee" },
                 areaStyle: { opacity: 0.1 }
             }]
         });
@@ -179,6 +182,12 @@
             detailChart = null;
         }
     };
+
+    window.addEventListener("themechange", function () {
+        if (currentVideoId && !document.getElementById("detail-modal").classList.contains("hidden")) {
+            openDetail(currentVideoId);
+        }
+    });
 
     window.openVideoDetail = openDetail;
 

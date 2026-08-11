@@ -4,13 +4,19 @@
     let loaded = false;
     let data = null;
     let charts = {};
+    let decayKey = "__overall__";
 
     function round(v) {
         return Math.round(v * 100) / 100;
     }
 
     function initChart(id) {
-        return echarts.init(document.getElementById(id), "neon");
+        const el = document.getElementById(id);
+        const old = echarts.getInstanceByDom(el);
+        if (old) {
+            old.dispose();
+        }
+        return echarts.init(el, window.chartTheme ? window.chartTheme() : "neon");
     }
 
     window.onPageShown = function (name) {
@@ -41,6 +47,7 @@
 
     function renderCategory() {
         const cats = data.categoryStats;
+        const C = window.chartColors ? window.chartColors() : {};
         charts.category = initChart("insight-category-chart");
         charts.category.setOption({
             tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
@@ -64,14 +71,14 @@
                     name: "Day1 平均热度",
                     type: "bar",
                     data: cats.map(function (c) { return round(c.avgDay1); }),
-                    itemStyle: { color: "#a78bfa" },
+                    itemStyle: { color: C.violet || "#a78bfa" },
                     barMaxWidth: 16
                 },
                 {
                     name: "Day30 平均热度",
                     type: "bar",
                     data: cats.map(function (c) { return round(c.avgDay30); }),
-                    itemStyle: { color: "#22d3ee" },
+                    itemStyle: { color: C.cyan || "#22d3ee" },
                     barMaxWidth: 16
                 }
             ]
@@ -80,6 +87,7 @@
 
     function renderCorrelation() {
         const corr = data.correlation;
+        const C = window.chartColors ? window.chartColors() : {};
         document.getElementById("insight-correlation-title").textContent =
             "早期热度与最终热度相关性（r = " + corr.pearson.toFixed(4) + "）";
         charts.correlation = initChart("insight-correlation-chart");
@@ -109,10 +117,10 @@
                 data: corr.scatter,
                 symbolSize: 3,
                 itemStyle: {
-                    color: "#22d3ee",
+                    color: C.cyan || "#22d3ee",
                     opacity: 0.7,
                     shadowBlur: 8,
-                    shadowColor: "rgba(34, 211, 238, 0.5)"
+                    shadowColor: C.cyanGlow || "rgba(34, 211, 238, 0.5)"
                 }
             }]
         });
@@ -127,12 +135,15 @@
                 return '<option value="' + escapeHtml(c) + '">' + escapeHtml(c) + "</option>";
             }).join("");
         select.addEventListener("change", function () {
+            decayKey = select.value;
             renderDecay(select.value);
         });
     }
 
     function renderDecay(key) {
+        decayKey = key;
         const curves = data.decayCurves;
+        const C = window.chartColors ? window.chartColors() : {};
         const arr = key === "__overall__"
             ? curves.overall
             : curves.byCategory[key] || curves.overall;
@@ -157,8 +168,8 @@
                 smooth: true,
                 data: arr.map(function (v) { return round(v); }),
                 symbolSize: 4,
-                lineStyle: { color: "#22d3ee", shadowColor: "rgba(34, 211, 238, 0.5)", shadowBlur: 10 },
-                itemStyle: { color: "#22d3ee" },
+                lineStyle: { color: C.cyan || "#22d3ee", shadowColor: C.cyanGlow || "rgba(34, 211, 238, 0.5)", shadowBlur: 10 },
+                itemStyle: { color: C.cyan || "#22d3ee" },
                 areaStyle: { opacity: 0.1 }
             }]
         });
@@ -168,5 +179,14 @@
         Object.values(charts).forEach(function (c) {
             c.resize();
         });
+    });
+
+    window.addEventListener("themechange", function () {
+        if (!loaded || !data) {
+            return;
+        }
+        renderCategory();
+        renderCorrelation();
+        renderDecay(decayKey);
     });
 })();

@@ -18,6 +18,7 @@
 
     let selectedFile = null;
     let chart = null;
+    let lastPrediction = null;
 
     function setFile(file) {
         selectedFile = file;
@@ -112,10 +113,12 @@
     }
 
     function drawChart(prediction) {
+        lastPrediction = prediction;
         if (chart) {
             chart.dispose();
         }
-        chart = echarts.init(chartEl, "neon");
+        const C = window.chartColors ? window.chartColors() : {};
+        chart = echarts.init(chartEl, window.chartTheme ? window.chartTheme() : "neon");
 
         let peakIdx = 0;
         for (let i = 1; i < prediction.length; i++) {
@@ -138,12 +141,12 @@
                 smooth: true,
                 data: prediction,
                 symbol: "none",
-                lineStyle: { width: 3, color: "#22d3ee", shadowColor: "rgba(34, 211, 238, 0.55)", shadowBlur: 12 },
-                itemStyle: { color: "#22d3ee" },
+                lineStyle: { width: 3, color: C.cyan || "#22d3ee", shadowColor: C.cyanGlow || "rgba(34, 211, 238, 0.55)", shadowBlur: 12 },
+                itemStyle: { color: C.cyan || "#22d3ee" },
                 areaStyle: {
                     color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                        { offset: 0, color: "rgba(34, 211, 238, 0.28)" },
-                        { offset: 1, color: "rgba(34, 211, 238, 0.03)" }
+                        { offset: 0, color: C.cyanSoft || "rgba(34, 211, 238, 0.28)" },
+                        { offset: 1, color: C.cyanSoft2 || "rgba(34, 211, 238, 0.03)" }
                     ])
                 },
                 markPoint: {
@@ -152,11 +155,11 @@
                         coord: [window.days[peakIdx], prediction[peakIdx]],
                         symbol: "circle",
                         symbolSize: 8,
-                        itemStyle: { color: "#22d3ee" },
+                        itemStyle: { color: C.cyan || "#22d3ee" },
                         label: {
                             position: "top",
                             fontSize: 11,
-                            color: "#67e8f9",
+                            color: C.cyanText || "#67e8f9",
                             fontWeight: 600
                         }
                     }]
@@ -192,6 +195,11 @@
     });
 
     submitBtn.addEventListener("click", submit);
+    window.addEventListener("themechange", function () {
+        if (lastPrediction) {
+            drawChart(lastPrediction);
+        }
+    });
     textEl.addEventListener("keydown", function (e) {
         if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
             submit();

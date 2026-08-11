@@ -28,6 +28,21 @@
         }
     }
 
+    /* ---- 主题切换 ---- */
+    var themeToggle = document.getElementById("theme-toggle");
+    if (themeToggle) {
+        themeToggle.addEventListener("click", function () {
+            var root = document.documentElement;
+            var current = root.getAttribute("data-theme") || "dark";
+            var next = current === "dark" ? "light" : "dark";
+            root.setAttribute("data-theme", next);
+            try {
+                localStorage.setItem("smtpd-theme", next);
+            } catch (e) { /* ignore */ }
+            window.dispatchEvent(new CustomEvent("themechange", { detail: { mode: next } }));
+        });
+    }
+
     /* ---- 滚动进度条 ---- */
     var progress = document.getElementById("scroll-progress");
     if (progress) {
@@ -162,7 +177,8 @@
         resize();
         window.addEventListener("resize", resize);
 
-        var PALETTE = ["rgba(34, 211, 238, ALPHA)", "rgba(167, 139, 250, ALPHA)"];
+        var PALETTE_DARK = ["rgba(34, 211, 238, ALPHA)", "rgba(167, 139, 250, ALPHA)"];
+        var PALETTE_LIGHT = ["rgba(8, 145, 178, ALPHA)", "rgba(124, 58, 237, ALPHA)"];
         for (var i = 0; i < 55; i++) {
             parts.push({
                 x: Math.random() * canvas.width,
@@ -178,6 +194,9 @@
 
         var draw = function () {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            var isLight = document.documentElement.getAttribute("data-theme") === "light";
+            var palette = isLight ? PALETTE_LIGHT : PALETTE_DARK;
+            var alphaMul = isLight ? 0.4 : 1;
             for (var j = 0; j < parts.length; j++) {
                 var p = parts[j];
                 p.x += p.vx;
@@ -189,10 +208,10 @@
                 }
                 if (p.x < -4) { p.x = canvas.width + 4; }
                 if (p.x > canvas.width + 4) { p.x = -4; }
-                var alpha = p.base * (0.6 + 0.4 * Math.sin(p.tw));
+                var alpha = p.base * (0.6 + 0.4 * Math.sin(p.tw)) * alphaMul;
                 ctx.beginPath();
                 ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-                ctx.fillStyle = PALETTE[p.c].replace("ALPHA", alpha.toFixed(3));
+                ctx.fillStyle = palette[p.c].replace("ALPHA", alpha.toFixed(3));
                 ctx.fill();
             }
             requestAnimationFrame(draw);

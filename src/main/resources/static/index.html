@@ -3,8 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark light">
     <title>多模态社交媒体流行度预测与可视化分析平台</title>
     <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+    <script>
+        (function () {
+            var t = "dark";
+            try {
+                var saved = localStorage.getItem("smtpd-theme");
+                if (saved === "light" || saved === "dark") {
+                    t = saved;
+                }
+            } catch (e) { /* ignore */ }
+            document.documentElement.setAttribute("data-theme", t);
+        })();
+    </script>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -32,6 +45,18 @@
         <button class="nav-btn" data-page="insights">数据洞察</button>
         <button class="nav-btn" data-page="compare">曲线对比</button>
     </nav>
+    <button id="theme-toggle" class="theme-toggle" type="button"
+            title="切换浅色 / 深色模式" aria-label="切换浅色 / 深色模式">
+        <svg class="theme-icon icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="4"></circle>
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path>
+        </svg>
+        <svg class="theme-icon icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
 </header>
 
 <main>
