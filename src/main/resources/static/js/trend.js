@@ -40,7 +40,7 @@
         chip.addEventListener("click", function () {
             const word = chip.textContent.trim();
             searchInput.value = word;
-            goPredict(word);
+            searchInput.focus();
         });
     });
 
