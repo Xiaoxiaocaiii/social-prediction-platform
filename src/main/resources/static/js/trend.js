@@ -6,18 +6,17 @@
     const hotGrid = document.getElementById("trend-hot-grid");
 
     function goPredict(keyword) {
-        const predictBtn = document.querySelector('.nav-btn[data-page="predict"]');
-        if (predictBtn) {
-            predictBtn.click();
-        }
-        const text = document.getElementById("predict-text");
-        if (text) {
-            text.value = keyword;
-        }
-        const submit = document.getElementById("predict-submit");
-        if (submit) {
-            submit.click();
-        }
+        location.hash = "#/predict";
+        setTimeout(function () {
+            const text = document.getElementById("predict-text");
+            if (text) {
+                text.value = keyword;
+            }
+            const submit = document.getElementById("predict-submit");
+            if (submit) {
+                submit.click();
+            }
+        }, 80);
     }
 
     function runSearch() {

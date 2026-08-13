@@ -17,12 +17,7 @@
             window.onPageShown(name);
         }
     }
-
-    navButtons.forEach(function (btn) {
-        btn.addEventListener("click", function () {
-            showPage(btn.dataset.page);
-        });
-    });
+    window.showPage = showPage;
 
     // ---- toast ----
     const toast = document.getElementById("toast");

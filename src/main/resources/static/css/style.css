@@ -2403,6 +2403,22 @@ html[data-theme="light"] .trend-chip:hover {
     border-radius: 10px;
 }
 
+/* ---- Hash 路由：导航与品牌改为链接 ---- */
+.nav-btn,
+.brand {
+    text-decoration: none;
+}
+
+.nav-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.brand {
+    color: inherit;
+}
+
 /* ---- 阶段F-1：图表内陷面板 + 卡片顶部高光线 ---- */
 .predict-chart,
 .compare-chart,
