@@ -35,6 +35,8 @@
     async function load() {
         try {
             data = await API.get("/api/insights");
+            fillKpis();
+            fillSubtitles();
             renderCategory();
             renderCorrelation();
             fillDecayOptions();
@@ -43,6 +45,36 @@
         } catch (e) {
             showToast(e.message, "error");
         }
+    }
+
+    function peakDayOf(arr) {
+        let peak = 0;
+        for (let i = 1; i < arr.length; i++) {
+            if (arr[i] > arr[peak]) {
+                peak = i;
+            }
+        }
+        return peak + 1;
+    }
+
+    function fillKpis() {
+        document.getElementById("ik-r").textContent = data.correlation.pearson.toFixed(4);
+        document.getElementById("ik-peak").textContent = peakDayOf(data.decayCurves.overall);
+        document.getElementById("ik-cats").textContent = data.categoryStats.length;
+        const samples = data.categoryStats.reduce(function (s, c) {
+            return s + c.count;
+        }, 0);
+        document.getElementById("ik-samples").textContent = samples.toLocaleString("zh-CN");
+    }
+
+    function fillSubtitles() {
+        const top = data.categoryStats[0];
+        document.getElementById("insight-category-sub").textContent =
+            "Day30 平均热度最高的分类：" + top.category;
+        document.getElementById("insight-correlation-sub").textContent =
+            "早期热度决定最终热度：Day1 越高，Day30 通常越高";
+        document.getElementById("insight-decay-sub").textContent =
+            "整体热度峰值集中在第 " + peakDayOf(data.decayCurves.overall) + " 天，随后逐步衰减";
     }
 
     function renderCategory() {

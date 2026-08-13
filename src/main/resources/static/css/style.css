@@ -2238,6 +2238,56 @@ html[data-theme="light"] .result-kpi-value {
     text-shadow: none;
 }
 
+/* ---- 阶段G-4：洞察 KPI 行 + 结论标题 ---- */
+.insight-kpis {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+
+.insight-kpi {
+    flex: 1;
+    min-width: 120px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 10px 12px;
+    background: rgba(10, 16, 31, 0.6);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+}
+
+.insight-kpi-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: #67e8f9;
+    font-variant-numeric: tabular-nums;
+    text-shadow: 0 0 10px rgba(34, 211, 238, 0.35);
+}
+
+.insight-kpi-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+}
+
+.insight-subtitle {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin: -4px 0 10px;
+}
+
+html[data-theme="light"] .insight-kpi {
+    background: #f8fafc;
+}
+
+html[data-theme="light"] .insight-kpi-value {
+    color: #0891b2;
+    text-shadow: none;
+}
+
 /* ---- 阶段F-1：图表内陷面板 + 卡片顶部高光线 ---- */
 .predict-chart,
 .compare-chart,
