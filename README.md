@@ -95,7 +95,6 @@ data/                           # 数据资产（git 忽略）
 
 ## 文档索引
 
-- [docs/项目重构报告.md](docs/项目重构报告.md)：重构说明报告（发负责人）
 - [docs/成果清单.md](docs/成果清单.md)：成果与软著申报素材
 - [docs/DEMO.md](docs/DEMO.md)：演示脚本与故障应对
 - [docs/PLAN.md](docs/PLAN.md)：完整方案与变更记录
