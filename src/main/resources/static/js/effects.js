@@ -201,7 +201,9 @@
 
         var PALETTE_DARK = ["rgba(34, 211, 238, ALPHA)", "rgba(167, 139, 250, ALPHA)"];
         var PALETTE_LIGHT = ["rgba(8, 145, 178, ALPHA)", "rgba(124, 58, 237, ALPHA)"];
-        for (var i = 0; i < 55; i++) {
+        var lightMode = document.documentElement.getAttribute("data-theme") === "light";
+        var particleCount = lightMode ? 26 : 55;
+        for (var i = 0; i < particleCount; i++) {
             parts.push({
                 x: Math.random() * canvas.width,
                 y: Math.random() * canvas.height,

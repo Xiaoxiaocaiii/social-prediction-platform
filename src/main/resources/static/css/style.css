@@ -2388,6 +2388,21 @@ html[data-theme="light"] .trend-chip:hover {
     gap: 14px;
 }
 
+/* ---- 阶段G-6：对比迷你趋势线 + 详情大图 ---- */
+.compare-spark-wrap {
+    margin-top: 6px;
+}
+
+.compare-spark {
+    display: block;
+    opacity: 0.85;
+}
+
+.detail-cover {
+    max-height: 400px;
+    border-radius: 10px;
+}
+
 /* ---- 阶段F-1：图表内陷面板 + 卡片顶部高光线 ---- */
 .predict-chart,
 .compare-chart,

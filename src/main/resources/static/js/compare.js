@@ -123,9 +123,13 @@
         drawChart(items);
         const C = window.chartColors ? window.chartColors() : {};
         tableBody.innerHTML = items.map(function (video, i) {
+            const color = C[COLOR_KEYS[i % 3]] || COLORS[i % 3];
             return "<tr>" +
-                "<td><span class=\"legend-dot\" style=\"background:" + (C[COLOR_KEYS[i % 3]] || COLORS[i % 3]) + "\"></span>" +
-                escapeHtml(video.title) + "</td>" +
+                "<td>" +
+                "<span class=\"legend-dot\" style=\"background:" + color + "\"></span>" +
+                escapeHtml(video.title) +
+                sparkline(video.curve, color) +
+                "</td>" +
                 "<td>" + escapeHtml(video.userId) + "</td>" +
                 "<td>第 " + video.peakDay + " 天</td>" +
                 "<td>" + (video.decayRate * 100).toFixed(1) + "%</td>" +
@@ -133,6 +137,33 @@
                 "</tr>";
         }).join("");
         resultEl.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    function sparkline(curve, color) {
+        if (!curve || curve.length < 2) {
+            return "";
+        }
+        const w = 120;
+        const h = 26;
+        const pad = 2;
+        let min = curve[0];
+        let max = curve[0];
+        curve.forEach(function (v) {
+            if (v < min) { min = v; }
+            if (v > max) { max = v; }
+        });
+        const range = max - min || 1;
+        const pts = curve.map(function (v, i) {
+            const x = pad + (i / (curve.length - 1)) * (w - pad * 2);
+            const y = h - pad - ((v - min) / range) * (h - pad * 2);
+            return x.toFixed(1) + "," + y.toFixed(1);
+        }).join(" ");
+        return '<div class="compare-spark-wrap">' +
+            '<svg class="compare-spark" viewBox="0 0 ' + w + " " + h +
+            '" width="' + w + '" height="' + h + '" preserveAspectRatio="none">' +
+            '<polyline points="' + pts + '" fill="none" stroke="' + color +
+            '" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>' +
+            "</svg></div>";
     }
 
     function drawChart(items) {

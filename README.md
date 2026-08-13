@@ -4,10 +4,11 @@
 
 ## 功能特性
 
-- **上传预测**：输入文案，检索最相似的历史视频（BM25 + FTS5 trigram 中文全文检索），以参考案例的真实曲线平均生成未来 30 天热度预测曲线（含峰值标注、参考案例卡片）
-- **热度排行榜**：浏览 282,481 条真实视频，支持榜单范围（全站 / 15 个分类）× 榜单口径（Day30 总榜 / Day1 新热榜 / 长红榜）切换，标题/标签/描述检索、分页与详情弹窗（真实 30 天曲线、峰值天、衰减率）
-- **数据洞察**：分类平均热度对比、Day1 与 Day30 热度相关性散点（r = 0.9296，早期热度决定最终热度）、平均热度衰减曲线（整体 / 分类切换）
-- **曲线对比**：任选 2~3 个视频叠加真实热度曲线，对比峰值天与衰减率，含预置示例
+- **趋势发现首页**：默认落地页，大搜索框 + 示例关键词 + 今日热点 Top 5（排名 / 封面 / 热度 / 涨跌），回车一键联动到预测
+- **上传预测**：输入文案，检索最相似的历史视频（BM25 + FTS5 trigram 中文全文检索），以参考案例的真实曲线平均生成未来 30 天热度预测曲线；结果区含 KPI（峰值天 / 预测 Day30 / 参考案例数）与全站平均对照虚线
+- **热度排行榜**：浏览 282,481 条真实视频，支持榜单范围（全站 / 15 个分类）× 榜单口径（Day30 总榜 / Day1 新热榜 / 长红榜）切换，标题/标签/描述检索、分页与详情弹窗；视频卡带排名序号、涨跌角标与 KPI 指标行
+- **数据洞察**：分类平均热度对比、Day1 与 Day30 热度相关性散点（r = 0.9296，早期热度决定最终热度）、平均热度衰减曲线（整体 / 分类切换），顶部 KPI 行 + 结论先行标题
+- **曲线对比**：任选 2~3 个视频叠加真实热度曲线，对比峰值天与衰减率，表格内嵌 30 点迷你趋势线，含预置示例
 - **深色 / 浅色双主题**：顶栏图标一键切换，图表实时重绘，选择持久化到 localStorage
 - **动效与交互**：预加载动画、背景粒子与极光光斑、滚动进度条、磁吸按钮、卡片 3D 倾斜、图表入场生长动画；滚动期间自动暂停重特效保证流畅
 
@@ -15,9 +16,11 @@
 
 | 深色模式 | 浅色模式 |
 | --- | --- |
+| ![趋势发现-深色](docs/screenshots/trend-dark.png) | ![趋势发现-浅色](docs/screenshots/trend-light.png) |
 | ![预测-深色](docs/screenshots/predict-dark.png) | ![预测-浅色](docs/screenshots/predict-light.png) |
 | ![排行榜-深色](docs/screenshots/ranking-dark.png) | ![排行榜-浅色](docs/screenshots/ranking-light.png) |
-| ![洞察-浅色](docs/screenshots/insights-light.png) | ![对比-浅色](docs/screenshots/compare-light.png) |
+| ![洞察-深色](docs/screenshots/insights-dark.png) | ![洞察-浅色](docs/screenshots/insights-light.png) |
+| ![对比-深色](docs/screenshots/compare-dark.png) | ![对比-浅色](docs/screenshots/compare-light.png) |
 
 ## 技术栈
 
@@ -84,7 +87,7 @@ mvn -s mvn-settings.xml test
 
 ```text
 src/main/java/com/prediction/   # Spring Boot 后端（api / data / service / config）
-src/main/resources/static/      # 前端四页面（index.html + css / js / lib）
+src/main/resources/static/      # 前端五页面（index.html + css / js / lib）
 scripts/                        # 数据处理脚本（建索引 / 封面提取 / 分卷还原）
 docs/                           # 方案、演示脚本、成果清单、重构报告
 data/                           # 数据资产（git 忽略）
