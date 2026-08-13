@@ -4,6 +4,16 @@
     const searchInput = document.getElementById("trend-search");
     const searchBtn = document.getElementById("trend-search-btn");
     const hotGrid = document.getElementById("trend-hot-grid");
+    const scrollDown = document.getElementById("trend-scroll-down");
+
+    if (scrollDown) {
+        scrollDown.addEventListener("click", function () {
+            const hot = document.querySelector(".trend-hot");
+            if (hot) {
+                hot.scrollIntoView({ behavior: "smooth", block: "start" });
+            }
+        });
+    }
 
     function goPredict(keyword) {
         location.hash = "#/predict";
@@ -55,6 +65,8 @@
             '<img class="video-cover" loading="lazy" src="' + coverSrc(item.coverPath) + '" alt="">' +
             '<div class="video-card-body">' +
             '<div class="video-title">' + escapeHtml(item.title) + "</div>" +
+            '<div class="trend-card-note">Day30 较 Day1 ' +
+            (delta >= 0 ? "上涨 " : "下降 ") + Math.abs(delta).toFixed(1) + "%</div>" +
             '<div class="video-meta">' +
             "<span>" + escapeHtml(item.category) + "</span>" +
             '<span class="meta-right">' +
