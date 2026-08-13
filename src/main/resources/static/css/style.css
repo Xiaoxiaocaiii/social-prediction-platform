@@ -2288,6 +2288,106 @@ html[data-theme="light"] .insight-kpi-value {
     text-shadow: none;
 }
 
+/* ---- 阶段G-5：趋势发现首页 ---- */
+.trend-hero {
+    padding: 36px 0 6px;
+}
+
+.trend-hero h1 {
+    font-size: 40px;
+}
+
+.trend-search-wrap {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin: 26px auto 0;
+    max-width: 720px;
+}
+
+.trend-search {
+    flex: 1;
+    height: 44px;
+    font-size: 15px;
+    padding: 0 16px;
+    border-radius: 10px;
+}
+
+.trend-search-wrap .btn {
+    height: 44px;
+    padding: 0 24px;
+    border-radius: 10px;
+    font-size: 14px;
+}
+
+.trend-chips {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 16px;
+}
+
+.trend-chip {
+    padding: 6px 16px;
+    border-radius: 999px;
+    cursor: pointer;
+    font-size: 13px;
+    color: #7ce9fb;
+    background: rgba(34, 211, 238, 0.08);
+    border: 1px solid rgba(103, 232, 249, 0.3);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+}
+
+.trend-chip:hover {
+    border-color: rgba(103, 232, 249, 0.65);
+    box-shadow: 0 0 12px rgba(34, 211, 238, 0.2);
+    transform: translateY(-1px);
+}
+
+.trend-chip:active {
+    scale: 0.96;
+}
+
+html[data-theme="light"] .trend-chip {
+    color: #0e7490;
+    background: rgba(8, 145, 178, 0.07);
+    border-color: rgba(8, 145, 178, 0.28);
+}
+
+html[data-theme="light"] .trend-chip:hover {
+    border-color: rgba(8, 145, 178, 0.55);
+    box-shadow: 0 0 10px rgba(8, 145, 178, 0.14);
+}
+
+.trend-hot {
+    margin-top: 38px;
+}
+
+.trend-hot-head {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+}
+
+.trend-hot-title {
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.trend-hot-sub {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.trend-hot-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 14px;
+}
+
 /* ---- 阶段F-1：图表内陷面板 + 卡片顶部高光线 ---- */
 .predict-chart,
 .compare-chart,

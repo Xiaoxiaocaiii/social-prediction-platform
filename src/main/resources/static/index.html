@@ -45,7 +45,8 @@
         <div class="brand-sub">SMTPD · 282,481 条真实数据</div>
     </div>
     <nav class="nav">
-        <button class="nav-btn active" data-page="predict">上传预测</button>
+        <button class="nav-btn active" data-page="trend">趋势发现</button>
+        <button class="nav-btn" data-page="predict">上传预测</button>
         <button class="nav-btn" data-page="ranking">热度排行榜</button>
         <button class="nav-btn" data-page="insights">数据洞察</button>
         <button class="nav-btn" data-page="compare">曲线对比</button>
@@ -65,7 +66,33 @@
 </header>
 
 <main>
-    <section id="page-predict" class="page active">
+    <section id="page-trend" class="page active">
+        <div class="page-head trend-hero">
+            <div class="page-overline">TREND DISCOVERY · 00</div>
+            <h1>发现下一个热门内容</h1>
+            <p>基于 282,481 条真实 YouTube 数据的流行度预测平台</p>
+            <div class="trend-search-wrap">
+                <input id="trend-search" class="input trend-search" type="text"
+                       placeholder="输入关键词，检索相似视频并预测热度…">
+                <button id="trend-search-btn" class="btn primary">开始预测</button>
+            </div>
+            <div class="trend-chips">
+                <span class="trend-chip">三毛水果艺术</span>
+                <span class="trend-chip">火锅</span>
+                <span class="trend-chip">cooking</span>
+                <span class="trend-chip">美食</span>
+            </div>
+        </div>
+        <div class="trend-hot">
+            <div class="trend-hot-head">
+                <span class="trend-hot-title">今日热点 Top 5</span>
+                <span class="trend-hot-sub">按 Day30 热度排序 · 全部真实数据</span>
+            </div>
+            <div id="trend-hot-grid" class="trend-hot-grid"></div>
+        </div>
+    </section>
+
+    <section id="page-predict" class="page">
         <div class="page-head">
             <div class="page-overline">SOCIAL PREDICTION PLATFORM · 01 PREDICT</div>
             <h1>上传预测</h1>
@@ -316,5 +343,6 @@
 <script src="js/ranking.js"></script>
 <script src="js/insights.js"></script>
 <script src="js/compare.js"></script>
+<script src="js/trend.js"></script>
 </body>
 </html>
