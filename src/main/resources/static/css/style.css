@@ -2128,6 +2128,73 @@ html[data-theme="light"] .footer-stat-num {
     }
 }
 
+/* ---- 阶段G-2：排行榜排名序号 + 涨跌角标 + 搜索框加大 ---- */
+.stat-strip .stat:nth-child(4) { transition-delay: 0.24s; }
+
+.rank-num {
+    position: absolute;
+    top: 8px;
+    left: 10px;
+    z-index: 2;
+    padding: 1px 8px;
+    border-radius: 6px;
+    background: rgba(7, 11, 20, 0.58);
+    border: 1px solid rgba(103, 232, 249, 0.28);
+    color: #a5f3fc;
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    line-height: 1.5;
+    text-shadow: 0 0 8px rgba(34, 211, 238, 0.5);
+    pointer-events: none;
+}
+
+.video-meta .meta-right {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.delta-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 1px 7px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0;
+}
+
+.delta-up {
+    color: #34d399;
+    background: rgba(52, 211, 153, 0.12);
+    border: 1px solid rgba(52, 211, 153, 0.32);
+}
+
+.delta-down {
+    color: #fb7185;
+    background: rgba(251, 113, 133, 0.12);
+    border: 1px solid rgba(251, 113, 133, 0.32);
+}
+
+html[data-theme="light"] .delta-up {
+    color: #059669;
+    background: rgba(5, 150, 105, 0.08);
+    border-color: rgba(5, 150, 105, 0.28);
+}
+
+html[data-theme="light"] .delta-down {
+    color: #e11d48;
+    background: rgba(225, 29, 72, 0.06);
+    border-color: rgba(225, 29, 72, 0.28);
+}
+
+.filter-bar .search-input {
+    min-width: 280px;
+    font-size: 14px;
+}
+
 /* ---- 阶段F-1：图表内陷面板 + 卡片顶部高光线 ---- */
 .predict-chart,
 .compare-chart,

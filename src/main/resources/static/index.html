@@ -129,8 +129,16 @@
                 <div class="stat-label">内容分类</div>
             </div>
             <div class="stat reveal">
-                <div class="stat-value">SMTPD</div>
-                <div class="stat-label">数据来源</div>
+                <div class="stat-value">
+                    <span id="stat-avgday30">—</span>
+                </div>
+                <div class="stat-label">平均 Day30 热度</div>
+            </div>
+            <div class="stat reveal">
+                <div class="stat-value">
+                    <span id="stat-avgpeak">—</span><span class="stat-unit">天</span>
+                </div>
+                <div class="stat-label">平均峰值天</div>
             </div>
         </div>
         <div class="filter-bar">
@@ -159,7 +167,7 @@
                 <option value="day1_desc">Day1 新热榜</option>
                 <option value="longrun_desc">长红榜</option>
             </select>
-            <input id="rank-q" class="input search-input" type="text" placeholder="查找视频（标题 / 标签 / 描述）">
+            <input id="rank-q" class="input search-input" type="text" placeholder="搜索标题 / 标签 / 描述，例如：美食">
             <button id="rank-search" class="btn primary">查找</button>
         </div>
         <div id="rank-total" class="rank-total"></div>

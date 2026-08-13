@@ -25,6 +25,22 @@
         })
         .catch(function () {});
 
+    API.get("/api/insights")
+        .then(function (d) {
+            const overall = d.decayCurves && d.decayCurves.overall;
+            if (overall && overall.length >= 30) {
+                document.getElementById("stat-avgday30").textContent = formatNumber(overall[29]);
+                let peak = 0;
+                for (let i = 1; i < overall.length; i++) {
+                    if (overall[i] > overall[peak]) {
+                        peak = i;
+                    }
+                }
+                document.getElementById("stat-avgpeak").textContent = peak + 1;
+            }
+        })
+        .catch(function () {});
+
     function buildQuery() {
         const params = new URLSearchParams();
         params.set("page", page);
@@ -67,8 +83,8 @@
             grid.innerHTML = '<div class="empty">没有找到匹配的视频</div>';
         } else {
             grid.innerHTML = "";
-            items.forEach(function (item) {
-                grid.appendChild(buildCard(item));
+            items.forEach(function (item, i) {
+                grid.appendChild(buildCard(item, (page - 1) * pageSize + i + 1));
             });
         }
         const pages = Math.max(1, Math.ceil(total / pageSize));
@@ -77,16 +93,23 @@
         nextBtn.disabled = page >= pages;
     }
 
-    function buildCard(item) {
+    function buildCard(item, rank) {
         const el = document.createElement("div");
         el.className = "video-card";
+        const delta = item.day1 > 0 ? ((item.day30 - item.day1) / item.day1) * 100 : 0;
+        const deltaClass = delta >= 0 ? "delta-up" : "delta-down";
+        const deltaText = (delta >= 0 ? "↑" : "↓") + Math.abs(delta).toFixed(1) + "%";
         el.innerHTML =
+            '<span class="rank-num">' + String(rank).padStart(2, "0") + "</span>" +
             '<img class="video-cover" loading="lazy" src="' + coverSrc(item.coverPath) + '" alt="">' +
             '<div class="video-card-body">' +
             '<div class="video-title">' + escapeHtml(item.title) + "</div>" +
             '<div class="video-meta">' +
             "<span>" + escapeHtml(item.category) + "</span>" +
+            '<span class="meta-right">' +
             '<span class="heat-badge">热度 ' + formatNumber(item.day30) + "</span>" +
+            '<span class="delta-badge ' + deltaClass + '">' + deltaText + "</span>" +
+            "</span>" +
             "</div>" +
             "</div>";
         el.addEventListener("click", function () {
