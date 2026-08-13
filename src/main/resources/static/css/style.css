@@ -2195,6 +2195,49 @@ html[data-theme="light"] .delta-down {
     font-size: 14px;
 }
 
+/* ---- 阶段G-3：预测结果 KPI 行 ---- */
+.result-kpis {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.result-kpi {
+    flex: 1;
+    min-width: 90px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 8px 10px;
+    background: rgba(10, 16, 31, 0.6);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+}
+
+.result-kpi-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: #67e8f9;
+    font-variant-numeric: tabular-nums;
+    text-shadow: 0 0 10px rgba(34, 211, 238, 0.35);
+}
+
+.result-kpi-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+}
+
+html[data-theme="light"] .result-kpi {
+    background: #f8fafc;
+}
+
+html[data-theme="light"] .result-kpi-value {
+    color: #0891b2;
+    text-shadow: none;
+}
+
 /* ---- 阶段F-1：图表内陷面板 + 卡片顶部高光线 ---- */
 .predict-chart,
 .compare-chart,

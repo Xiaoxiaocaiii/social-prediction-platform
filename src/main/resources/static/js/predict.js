@@ -19,6 +19,21 @@
     let selectedFile = null;
     let chart = null;
     let lastPrediction = null;
+    let lastOverall = null;
+    let overallPromise = null;
+
+    function getOverall() {
+        if (!overallPromise) {
+            overallPromise = API.get("/api/insights")
+                .then(function (d) {
+                    return (d.decayCurves && d.decayCurves.overall) || null;
+                })
+                .catch(function () {
+                    return null;
+                });
+        }
+        return overallPromise;
+    }
 
     function setFile(file) {
         selectedFile = file;
@@ -108,12 +123,24 @@
         }
         resultEl.classList.remove("hidden");
         refsWrap.classList.remove("hidden");
-        drawChart(data.prediction);
+        let peakIdx = 0;
+        for (let i = 1; i < data.prediction.length; i++) {
+            if (data.prediction[i] > data.prediction[peakIdx]) {
+                peakIdx = i;
+            }
+        }
+        document.getElementById("kpi-peak").textContent = peakIdx + 1;
+        document.getElementById("kpi-day30").textContent = formatNumber(data.prediction[29]);
+        document.getElementById("kpi-refs").textContent =
+            (data.references ? data.references.length : 0);
+        const overall = await getOverall();
+        drawChart(data.prediction, overall);
         resultEl.scrollIntoView({ behavior: "smooth", block: "start" });
     }
 
-    function drawChart(prediction) {
+    function drawChart(prediction, overall) {
         lastPrediction = prediction;
+        lastOverall = overall || null;
         if (chart) {
             chart.dispose();
         }
@@ -131,6 +158,7 @@
             animationDuration: 900,
             animationEasing: "cubicOut",
             tooltip: { trigger: "axis" },
+            legend: { data: ["基线预测", "全站平均"], top: 0, textStyle: { fontSize: 11 } },
             grid: { left: 52, right: 24, top: 44, bottom: 50 },
             xAxis: {
                 type: "category",
@@ -167,7 +195,16 @@
                         }
                     }]
                 }
-            }]
+            }].concat(overall ? [{
+                name: "全站平均",
+                type: "line",
+                smooth: true,
+                data: overall,
+                symbol: "none",
+                lineStyle: { width: 2, color: C.gray || "#64748b", type: "dashed" },
+                itemStyle: { color: C.gray || "#64748b" },
+                z: 1
+            }] : [])
         });
     }
 
@@ -200,7 +237,7 @@
     submitBtn.addEventListener("click", submit);
     window.addEventListener("themechange", function () {
         if (lastPrediction) {
-            drawChart(lastPrediction);
+            drawChart(lastPrediction, lastOverall);
         }
     });
     textEl.addEventListener("keydown", function (e) {
