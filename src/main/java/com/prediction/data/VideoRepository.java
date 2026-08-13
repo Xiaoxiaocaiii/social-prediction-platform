@@ -87,7 +87,7 @@ public class VideoRepository {
         pageParams.add(safeSize);
         pageParams.add(offset);
         List<VideoSummary> items = jdbc.query(
-                "SELECT video_id, title, category, user_id, user_image, day30 FROM videos"
+                "SELECT video_id, title, category, user_id, user_image, day01, day30 FROM videos"
                         + where + order
                         + " LIMIT ? OFFSET ?",
                 summaryMapper(), pageParams.toArray());
@@ -112,7 +112,7 @@ public class VideoRepository {
         pageParams.add(pageSize);
         pageParams.add(offset);
         List<VideoSummary> items = jdbc.query(
-                "SELECT video_id, title, category, user_id, user_image, day30 FROM videos WHERE "
+                "SELECT video_id, title, category, user_id, user_image, day01, day30 FROM videos WHERE "
                         + where + order + " LIMIT ? OFFSET ?",
                 summaryMapper(), pageParams.toArray());
         return new PageResult<>(total == null ? 0 : total, items);
@@ -262,6 +262,7 @@ public class VideoRepository {
                     rs.getString("title"),
                     rs.getString("category"),
                     coverPath(videoId),
+                    rs.getDouble("day01"),
                     rs.getDouble("day30"),
                     rs.getString("user_id"),
                     rs.getString("user_image"));

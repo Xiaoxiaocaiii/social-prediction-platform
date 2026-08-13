@@ -6,6 +6,7 @@ public record VideoSummary(
         String title,
         String category,
         String coverPath,
+        double day1,
         double day30,
         String userId,
         String userImage) {
