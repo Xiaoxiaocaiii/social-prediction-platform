@@ -2680,3 +2680,132 @@ html[data-theme="light"] .heat-relative-fill {
 .result-kpi-trend .kpi-spark {
     height: 28px;
 }
+
+/* ---- 批2：洞察结论 callout + 区块超大序号 + 极淡噪点纹理 ---- */
+.insight-conclusion {
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 16px;
+    padding: 18px 22px 16px;
+    border: 1px solid rgba(103, 232, 249, 0.28);
+    border-radius: 12px;
+    background:
+        linear-gradient(135deg, rgba(34, 211, 238, 0.10), rgba(167, 139, 250, 0.08) 55%, transparent),
+        rgba(10, 16, 31, 0.55);
+    box-shadow: inset 0 0 26px rgba(34, 211, 238, 0.08), 0 10px 26px rgba(2, 6, 16, 0.32);
+}
+
+.insight-conclusion-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #67e8f9;
+    margin-bottom: 10px;
+}
+
+.insight-conclusion-label::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #22d3ee;
+    box-shadow: 0 0 10px rgba(34, 211, 238, 0.7);
+}
+
+.insight-conclusion-body {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.insight-conclusion-item {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--text);
+}
+
+.insight-conclusion-num {
+    flex-shrink: 0;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: rgba(103, 232, 249, 0.85);
+}
+
+.insight-conclusion-item strong {
+    color: #67e8f9;
+    font-weight: 700;
+}
+
+html[data-theme="light"] .insight-conclusion {
+    border-color: rgba(8, 145, 178, 0.28);
+    background:
+        linear-gradient(135deg, rgba(8, 145, 178, 0.06), rgba(124, 58, 237, 0.05) 55%, transparent),
+        #ffffff;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 10px 24px rgba(15, 23, 42, 0.06);
+}
+
+html[data-theme="light"] .insight-conclusion-label {
+    color: #0891b2;
+}
+
+html[data-theme="light"] .insight-conclusion-label::before {
+    background: #0891b2;
+    box-shadow: 0 0 8px rgba(8, 145, 178, 0.35);
+}
+
+html[data-theme="light"] .insight-conclusion-num {
+    color: rgba(8, 145, 178, 0.85);
+}
+
+html[data-theme="light"] .insight-conclusion-item strong {
+    color: #0891b2;
+}
+
+.insight-index {
+    position: absolute;
+    top: 14px;
+    right: 18px;
+    font-size: 46px;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -1px;
+    font-variant-numeric: tabular-nums;
+    pointer-events: none;
+    user-select: none;
+    z-index: 2;
+    background: linear-gradient(180deg, rgba(103, 232, 249, 0.30), rgba(167, 139, 250, 0.12));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+html[data-theme="light"] .insight-index {
+    background: linear-gradient(180deg, rgba(8, 145, 178, 0.28), rgba(124, 58, 237, 0.12));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.insight-card::after,
+.insight-conclusion::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0.05;
+    mix-blend-mode: soft-light;
+    background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='140'%20height='140'%3E%3Cfilter%20id='n'%3E%3CfeTurbulence%20type='fractalNoise'%20baseFrequency='0.85'%20numOctaves='2'%20stitchTiles='stitch'/%3E%3CfeColorMatrix%20type='saturate'%20values='0'/%3E%3C/filter%3E%3Crect%20width='100%25'%20height='100%25'%20filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+html[data-theme="light"] .insight-card::after,
+html[data-theme="light"] .insight-conclusion::after {
+    opacity: 0.04;
+}

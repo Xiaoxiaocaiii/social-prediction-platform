@@ -52,7 +52,7 @@
 
 - 分支：`main`；远程：`origin = https://github.com/Xiaoxiaocaiii/social-prediction-platform.git`
 - 最近已推送提交：`8170b4a`（docs: 删除项目重构报告…）
-- 截至 2026-08-18：交接记录与「批 1 视觉优化」均已本地提交、未推送
+- 截至 2026-08-18：交接记录与「批 1 / 批 2 视觉优化」均已本地提交、未推送
 - 本交接文档 `codex-handoff.md` 属内部使用，默认不推送 GitHub
 - 沙箱对 `.git` 只读，所有 git 写操作需提权执行
 
@@ -67,6 +67,7 @@
 7. **uv / browser-act 安装失败**：Miniconda Python SSL 证书问题 → skill 安装改用 `--method git`；uv 安装 browser-act-cli 卡死占锁，最终放弃并清理（uv 缓存 10.2GB 已删、技能目录已删）。
 8. **ECharts 实例在模块闭包内**：外部无法直接 dispose；主题切换通过 `window` 派发 `themechange` 事件、各模块自行重绘，验证用 `echarts.getInstanceByDom(el)`。
 9. **PowerShell 细节**：`$pid` 是保留变量；递归删除前需先清只读属性并校验目标路径在预期目录内。
+10. **洞察页刷新空白**：`#/insights` 直接打开或刷新时，`insights.js` 的 `onPageShown` 注册晚于 router 首次 `showRoute`，导致数据不加载；已在 `insights.js` 注册 `onPageShown` 后补一次自触发。
 
 ## 5. 禁止修改的模块（铁律）
 
@@ -82,8 +83,8 @@
 **已确认方向：视觉美化（纯视觉效果，4 批）**
 
 - 批 1：✅ 已完成（2026-08-18）——封面 hover 视觉层 + 卡片热度相对条 + KPI 卡迷你趋势线
-- 批 2：洞察结论 callout 高亮卡 + 区块超大序号（01/02/03 编辑感）+ 极淡噪点纹理 —— 下一步
-- 批 3：主按钮扫光（shine）+ 骨架屏 shimmer（替换「加载中…」）+ Hero 微视差
+- 批 2：✅ 已完成（2026-08-18）——洞察结论 callout 高亮卡 + 区块超大序号 + 极淡噪点纹理
+- 批 3：主按钮扫光（shine）+ 骨架屏 shimmer（替换「加载中…」）+ Hero 微视差 —— 下一步
 - 批 4：双主题进一步分化（浅色纸感/深色屏感）+ 全站回归 + 截图与文档更新 + 推送 GitHub
 
 每批完成后必须：双主题截图验证 + `git` 提交 + 向用户汇报，用户批准后才进入下一批。

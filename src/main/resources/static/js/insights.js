@@ -32,11 +32,19 @@
         load();
     };
 
+    // 直接打开或刷新 #/insights 时，router 的首次 showRoute 早于本文件执行，
+    // 这里补一次触发，保证洞察页数据与结论卡能正常加载。
+    if (document.getElementById("page-insights") &&
+            document.getElementById("page-insights").classList.contains("active")) {
+        window.onPageShown("insights");
+    }
+
     async function load() {
         try {
             data = await API.get("/api/insights");
             fillKpis();
             fillSubtitles();
+            fillConclusion();
             renderCategory();
             renderCorrelation();
             fillDecayOptions();
@@ -92,6 +100,28 @@
             "早期热度决定最终热度：Day1 越高，Day30 通常越高";
         document.getElementById("insight-decay-sub").textContent =
             "整体热度峰值集中在第 " + peakDayOf(data.decayCurves.overall) + " 天，随后逐步衰减";
+    }
+
+    function fillConclusion() {
+        const corr = data.correlation.pearson.toFixed(4);
+        const peak = peakDayOf(data.decayCurves.overall);
+        const top = data.categoryStats.slice().sort(function (a, b) {
+            return b.avgDay30 - a.avgDay30;
+        })[0];
+        document.getElementById("insight-conclusion-body").innerHTML =
+            '<div class="insight-conclusion-item">' +
+            '<span class="insight-conclusion-num">01</span>' +
+            '<span>早期热度决定最终热度：<strong>r = ' + corr + "</strong></span>" +
+            "</div>" +
+            '<div class="insight-conclusion-item">' +
+            '<span class="insight-conclusion-num">02</span>' +
+            '<span>整体热度峰值集中在 <strong>第 ' + peak + " 天</strong>，随后逐步衰减。</span>" +
+            "</div>" +
+            '<div class="insight-conclusion-item">' +
+            '<span class="insight-conclusion-num">03</span>' +
+            '<span>平均热度最高的分类是 <strong>「' + escapeHtml(top.category) + "」</strong>，" +
+            "Day30 平均 " + round(top.avgDay30) + "。</span>" +
+            "</div>";
     }
 
     function renderCategory() {
