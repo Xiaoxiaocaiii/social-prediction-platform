@@ -846,6 +846,7 @@ main {
 }
 
 .predict-refs-wrap {
+    flex-basis: 100%;
     margin-top: 22px;
 }
 
