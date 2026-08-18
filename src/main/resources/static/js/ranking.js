@@ -83,7 +83,7 @@
             return;
         }
         loading = true;
-        grid.innerHTML = '<div class="loading">加载中…</div>';
+        grid.innerHTML = window.skeletonCards(8);
         try {
             const data = await API.get("/api/videos?" + buildQuery());
             total = data.total;
@@ -150,7 +150,7 @@
     async function openDetail(videoId) {
         currentVideoId = videoId;
         showModal("detail-modal");
-        document.getElementById("detail-body").innerHTML = '<div class="loading">加载中…</div>';
+        document.getElementById("detail-body").innerHTML = window.skeletonDetail();
         try {
             const video = await API.get("/api/videos/" + encodeURIComponent(videoId));
             renderDetail(video);

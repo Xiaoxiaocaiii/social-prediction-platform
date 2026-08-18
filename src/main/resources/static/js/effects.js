@@ -187,6 +187,41 @@
     });
     tryCounters();
 
+    /* ---- Hero 微视差 ---- */
+    var trendHero = document.querySelector("#page-trend .trend-hero");
+    if (trendHero && !reduced) {
+        var heroLayers = [
+            { el: trendHero.querySelector(".page-overline"), speed: 0.06 },
+            { el: trendHero.querySelector("h1"), speed: 0.04 },
+            { el: trendHero.querySelector("p"), speed: 0.10 },
+            { el: trendHero.querySelector(".trend-search-wrap"), speed: 0.14 },
+            { el: trendHero.querySelector(".trend-chips"), speed: 0.17 }
+        ];
+        var updateHeroParallax = function () {
+            if (!document.getElementById("page-trend").classList.contains("active")) {
+                trendHero.style.opacity = "";
+                heroLayers.forEach(function (layer) {
+                    if (layer.el) {
+                        layer.el.style.transform = "";
+                    }
+                });
+                return;
+            }
+            var y = window.scrollY || document.documentElement.scrollTop || 0;
+            var h = Math.max(window.innerHeight, 1);
+            var p = Math.min(Math.max(y / h, 0), 1);
+            trendHero.style.opacity = String(Math.max(1 - p * 0.9, 0));
+            heroLayers.forEach(function (layer) {
+                if (layer.el) {
+                    layer.el.style.transform = "translateY(" + (y * layer.speed).toFixed(1) + "px)";
+                }
+            });
+        };
+        window.addEventListener("scroll", updateHeroParallax, { passive: true });
+        window.addEventListener("resize", updateHeroParallax);
+        updateHeroParallax();
+    }
+
     /* ---- 背景粒子 ---- */
     var canvas = document.getElementById("bg-particles");
     if (canvas && !reduced) {

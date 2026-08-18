@@ -109,6 +109,37 @@
             "</svg>";
     };
 
+    window.skeletonCards = function (count) {
+        var html = "";
+        for (var i = 0; i < count; i++) {
+            html += '<div class="skeleton-card">' +
+                '<div class="skeleton skeleton-cover"></div>' +
+                '<div class="skeleton-card-body">' +
+                '<div class="skeleton skeleton-line" style="width:88%"></div>' +
+                '<div class="skeleton skeleton-line" style="width:58%"></div>' +
+                '<div class="skeleton skeleton-line" style="width:38%"></div>' +
+                "</div>" +
+                "</div>";
+        }
+        return html;
+    };
+
+    window.skeletonDetail = function () {
+        return '<div class="skeleton-detail">' +
+            '<div class="skeleton skeleton-detail-cover"></div>' +
+            '<div class="skeleton skeleton-line" style="width:70%"></div>' +
+            '<div class="skeleton skeleton-line" style="width:44%"></div>' +
+            '<div class="skeleton-detail-metrics">' +
+            '<div class="skeleton skeleton-metric"></div>' +
+            '<div class="skeleton skeleton-metric"></div>' +
+            '<div class="skeleton skeleton-metric"></div>' +
+            "</div>" +
+            '<div class="skeleton skeleton-chart"></div>' +
+            '<div class="skeleton skeleton-line" style="width:90%"></div>' +
+            '<div class="skeleton skeleton-line" style="width:74%"></div>' +
+            "</div>";
+    };
+
     // ---- modal ----
     window.showModal = function (id) {
         document.getElementById(id).classList.remove("hidden");
