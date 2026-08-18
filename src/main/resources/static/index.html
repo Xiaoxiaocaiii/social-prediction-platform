@@ -31,30 +31,56 @@
 
 <main>
     <section id="page-trend" class="page active">
-        <div class="page-head trend-hero">
-            <div class="page-overline">POPULARITY PREDICTION PLATFORM</div>
-            <h1>预测内容 30 天流行度</h1>
-            <p>输入文案或关键词，基于 282,481 条真实 YouTube 视频，检索相似案例并生成未来 30 天热度趋势。</p>
-            <div class="trend-search-wrap">
-                <input id="trend-search" class="input trend-search" type="text"
-                       placeholder="输入文案或关键词，例如：三毛水果艺术">
-                <button id="trend-search-btn" class="btn primary">开始预测</button>
+        <div class="hero-split">
+            <div class="hero-copy">
+                <div class="page-overline">POPULARITY PREDICTION PLATFORM</div>
+                <h1>预测内容<br>30 天流行度</h1>
+                <p class="hero-sub">输入文案或关键词，基于 282,481 条真实 YouTube 视频，检索相似案例并生成未来 30 天热度趋势。</p>
+                <div class="trend-search-wrap">
+                    <input id="trend-search" class="input trend-search" type="text"
+                           placeholder="输入文案或关键词，例如：三毛水果艺术">
+                    <button id="trend-search-btn" class="btn primary">开始预测</button>
+                </div>
+                <div class="trend-chips">
+                    <span class="trend-chip">三毛水果艺术</span>
+                    <span class="trend-chip">火锅</span>
+                    <span class="trend-chip">cooking</span>
+                    <span class="trend-chip">美食</span>
+                </div>
+                <div class="hero-stats">
+                    <div class="hero-stat"><span class="hero-stat-num">282,481</span><span class="hero-stat-label">真实视频</span></div>
+                    <div class="hero-stat"><span class="hero-stat-num">15</span><span class="hero-stat-label">内容分类</span></div>
+                    <div class="hero-stat"><span class="hero-stat-num">30</span><span class="hero-stat-label">天热度序列</span></div>
+                </div>
             </div>
-            <div class="trend-chips">
-                <span class="trend-chip">三毛水果艺术</span>
-                <span class="trend-chip">火锅</span>
-                <span class="trend-chip">cooking</span>
-                <span class="trend-chip">美食</span>
+            <div class="hero-preview reveal" id="hero-preview" aria-label="今日爆款预览">
+                <div class="preview-skeleton skeleton"></div>
             </div>
-            <button id="trend-scroll-down" class="trend-scroll-down" type="button"
-                    aria-label="向下浏览更多趋势">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                     stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M12 5v14M5 12l7 7 7-7"></path>
-                </svg>
-            </button>
         </div>
-        <div class="trend-hot">
+
+        <div class="section-block how-section reveal">
+            <div class="section-eyebrow">HOW IT WORKS</div>
+            <h2 class="section-title">三步看懂流行度</h2>
+            <div class="how-grid">
+                <div class="how-step">
+                    <span class="how-num">01</span>
+                    <h3>输入文案或关键词</h3>
+                    <p>描述你想发布的内容，或直接搜索一个选题。</p>
+                </div>
+                <div class="how-step">
+                    <span class="how-num">02</span>
+                    <h3>匹配真实历史案例</h3>
+                    <p>在 28 万条视频中，检索最相似的参考案例。</p>
+                </div>
+                <div class="how-step">
+                    <span class="how-num">03</span>
+                    <h3>生成 30 天热度趋势</h3>
+                    <p>基于参考案例的真实曲线，生成未来 30 天预测。</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="trend-hot section-block reveal">
             <div class="trend-hot-head">
                 <span class="trend-hot-title">今日正在爆发的选题</span>
                 <span class="trend-hot-sub">按 Day30 热度排序 · 全部真实数据</span>
@@ -62,6 +88,31 @@
             <div id="trend-hot-grid" class="trend-hot-grid"></div>
             <div class="trend-more">
                 <a class="trend-more-link" href="#/ranking">查看完整热度排行榜 →</a>
+            </div>
+        </div>
+
+        <div class="section-block capability-section reveal">
+            <div class="section-eyebrow">EXPLORE</div>
+            <h2 class="section-title">用真实数据做判断</h2>
+            <div class="capability-grid">
+                <a class="capability-card" href="#/ranking">
+                    <span class="capability-num">01</span>
+                    <h3>热度排行榜</h3>
+                    <p>浏览 28 万条真实视频，按分类与热度口径筛选。</p>
+                    <span class="capability-link">进入 →</span>
+                </a>
+                <a class="capability-card" href="#/insights">
+                    <span class="capability-num">02</span>
+                    <h3>数据洞察</h3>
+                    <p>看分类对比、相关性，以及热度衰减规律。</p>
+                    <span class="capability-link">进入 →</span>
+                </a>
+                <a class="capability-card" href="#/compare">
+                    <span class="capability-num">03</span>
+                    <h3>曲线对比</h3>
+                    <p>叠加 2~3 个视频的真实热度曲线。</p>
+                    <span class="capability-link">进入 →</span>
+                </a>
             </div>
         </div>
     </section>

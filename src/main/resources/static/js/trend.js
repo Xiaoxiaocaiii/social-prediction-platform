@@ -4,16 +4,7 @@
     const searchInput = document.getElementById("trend-search");
     const searchBtn = document.getElementById("trend-search-btn");
     const hotGrid = document.getElementById("trend-hot-grid");
-    const scrollDown = document.getElementById("trend-scroll-down");
-
-    if (scrollDown) {
-        scrollDown.addEventListener("click", function () {
-            const hot = document.querySelector(".trend-hot");
-            if (hot) {
-                hot.scrollIntoView({ behavior: "smooth", block: "start" });
-            }
-        });
-    }
+    const previewEl = document.getElementById("hero-preview");
 
     function goPredict(keyword) {
         location.hash = "#/predict";
@@ -54,11 +45,10 @@
         });
     });
 
-    function buildHot(item, rank, maxDay30) {
+    function buildHot(item, rank) {
         const delta = item.day1 > 0 ? ((item.day30 - item.day1) / item.day1) * 100 : 0;
         const deltaClass = delta >= 0 ? "delta-up" : "delta-down";
         const deltaText = (delta >= 0 ? "↑" : "↓") + Math.abs(delta).toFixed(1) + "%";
-        const pct = maxDay30 > 0 ? ((item.day30 / maxDay30) * 100).toFixed(1) : 0;
         const el = document.createElement("div");
         el.className = "video-card";
         el.innerHTML =
@@ -75,11 +65,6 @@
             '<span class="delta-badge ' + deltaClass + '">' + deltaText + "</span>" +
             "</span>" +
             "</div>" +
-            '<div class="heat-relative">' +
-            '<span class="heat-relative-track">' +
-            '<span class="heat-relative-fill" style="width:' + pct + '%"></span>' +
-            "</span>" +
-            "</div>" +
             "</div>";
         el.addEventListener("click", function () {
             if (typeof window.openVideoDetail === "function") {
@@ -89,18 +74,44 @@
         return el;
     }
 
+    function renderPreview(video) {
+        const color = window.chartColors ? window.chartColors().cyan : "#2563eb";
+        previewEl.innerHTML =
+            '<div class="preview-card">' +
+            '<div class="preview-card-head">' +
+            '<span class="preview-live-dot"></span>LIVE · 今日爆款' +
+            "</div>" +
+            '<img class="preview-cover" src="' + coverSrc(coverPathFor(video.videoId)) + '" alt="">' +
+            '<div class="preview-body">' +
+            '<div class="preview-title">' + escapeHtml(video.title) + "</div>" +
+            '<div class="preview-meta">' + escapeHtml(video.category) +
+            " · 热度 " + formatNumber(video.day30) + "</div>" +
+            '<div class="preview-chart">' + window.miniTrend(video.curve, color) + "</div>" +
+            '<div class="preview-metrics">' +
+            '<div class="preview-metric"><span>峰值</span><strong>第 ' + video.peakDay + " 天</strong></div>" +
+            '<div class="preview-metric"><span>Day30</span><strong>' + formatNumber(video.day30) + "</strong></div>" +
+            '<div class="preview-metric"><span>衰减</span><strong>' +
+            (video.decayRate * 100).toFixed(1) + "%</strong></div>" +
+            "</div>" +
+            "</div>" +
+            "</div>";
+    }
+
     API.get("/api/videos?sort=day30_desc&page=1&pageSize=5")
         .then(function (data) {
             if (!data.items || !data.items.length) {
                 hotGrid.innerHTML = '<div class="empty">暂无数据</div>';
                 return;
             }
-            const maxDay30 = data.items.reduce(function (m, it) {
-                return Math.max(m, it.day30 || 0);
-            }, 0);
             data.items.forEach(function (item, i) {
-                hotGrid.appendChild(buildHot(item, i + 1, maxDay30));
+                hotGrid.appendChild(buildHot(item, i + 1));
             });
+            return API.get("/api/videos/" + encodeURIComponent(data.items[0].videoId))
+                .then(renderPreview)
+                .catch(function () {
+                    previewEl.innerHTML =
+                        '<div class="preview-card"><div class="preview-empty">预览加载失败</div></div>';
+                });
         })
         .catch(function (e) {
             hotGrid.innerHTML = '<div class="empty">加载失败：' + escapeHtml(e.message) + "</div>";
