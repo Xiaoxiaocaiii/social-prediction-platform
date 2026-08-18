@@ -47,12 +47,6 @@
     window.coverHtml = function (coverPath) {
         return '<div class="video-cover-wrap">' +
             '<img class="video-cover" loading="lazy" src="' + coverSrc(coverPath) + '" alt="">' +
-            '<span class="cover-overlay"></span>' +
-            '<svg class="cover-trend-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
-            'stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
-            '<polyline points="3 17 9 11 13 15 21 7"></polyline>' +
-            '<polyline points="15 7 21 7 21 13"></polyline>' +
-            '</svg>' +
             '</div>';
     };
 

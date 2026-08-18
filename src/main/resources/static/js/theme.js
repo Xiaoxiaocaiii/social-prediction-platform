@@ -4,67 +4,15 @@
         return;
     }
 
-    var axisLine = { lineStyle: { color: "rgba(103, 232, 249, 0.28)" } };
-    var axisTick = { lineStyle: { color: "rgba(103, 232, 249, 0.28)" } };
-    var axisLabel = { color: "#94a3b8" };
+    var axisLine = { lineStyle: { color: "rgba(15, 23, 42, 0.16)" } };
+    var axisTick = { lineStyle: { color: "rgba(15, 23, 42, 0.16)" } };
+    var axisLabel = { color: "#475569" };
 
-    echarts.registerTheme("neon", {
-        color: ["#22d3ee", "#a78bfa", "#fb7185", "#34d399", "#fbbf24", "#60a5fa"],
+    echarts.registerTheme("light", {
+        color: ["#2563eb", "#f97316", "#ef4444", "#10b981", "#8b5cf6", "#0ea5e9"],
         backgroundColor: "transparent",
         textStyle: {
-            color: "#94a3b8",
-            fontFamily: '"PingFang SC", "Microsoft YaHei", "Segoe UI", system-ui, sans-serif'
-        },
-        title: {
-            textStyle: { color: "#e2e8f0" }
-        },
-        legend: {
-            textStyle: { color: "#94a3b8" },
-            pageTextStyle: { color: "#94a3b8" }
-        },
-        categoryAxis: {
-            axisLine: axisLine,
-            axisTick: axisTick,
-            axisLabel: axisLabel,
-            splitLine: { show: false }
-        },
-        valueAxis: {
-            axisLine: axisLine,
-            axisTick: axisTick,
-            axisLabel: axisLabel,
-            splitLine: { lineStyle: { color: "rgba(103, 232, 249, 0.08)" } }
-        },
-        xAxis: {
-            axisLine: axisLine,
-            axisTick: axisTick,
-            axisLabel: axisLabel,
-            splitLine: { show: false }
-        },
-        yAxis: {
-            axisLine: axisLine,
-            axisTick: axisTick,
-            axisLabel: axisLabel,
-            splitLine: { lineStyle: { color: "rgba(103, 232, 249, 0.08)" } }
-        },
-        tooltip: {
-            backgroundColor: "rgba(13, 21, 38, 0.94)",
-            borderColor: "rgba(103, 232, 249, 0.35)",
-            borderWidth: 1,
-            padding: [8, 12],
-            textStyle: { color: "#e2e8f0", fontSize: 12 },
-            axisPointer: {
-                lineStyle: { color: "rgba(103, 232, 249, 0.45)" },
-                crossStyle: { color: "rgba(103, 232, 249, 0.45)" },
-                shadowStyle: { color: "rgba(34, 211, 238, 0.08)" }
-            }
-        }
-    });
-
-    echarts.registerTheme("dawn", {
-        color: ["#0891b2", "#7c3aed", "#e11d48", "#059669", "#d97706", "#2563eb"],
-        backgroundColor: "transparent",
-        textStyle: {
-            color: "#475569",
+            color: "#334155",
             fontFamily: '"PingFang SC", "Microsoft YaHei", "Segoe UI", system-ui, sans-serif'
         },
         title: {
@@ -75,58 +23,57 @@
             pageTextStyle: { color: "#475569" }
         },
         categoryAxis: {
-            axisLine: { lineStyle: { color: "rgba(15, 23, 42, 0.18)" } },
-            axisTick: { lineStyle: { color: "rgba(15, 23, 42, 0.18)" } },
-            axisLabel: { color: "#475569" },
+            axisLine: axisLine,
+            axisTick: axisTick,
+            axisLabel: axisLabel,
             splitLine: { show: false }
         },
         valueAxis: {
-            axisLine: { lineStyle: { color: "rgba(15, 23, 42, 0.18)" } },
-            axisTick: { lineStyle: { color: "rgba(15, 23, 42, 0.18)" } },
-            axisLabel: { color: "#475569" },
+            axisLine: axisLine,
+            axisTick: axisTick,
+            axisLabel: axisLabel,
             splitLine: { lineStyle: { color: "rgba(15, 23, 42, 0.08)" } }
         },
         xAxis: {
-            axisLine: { lineStyle: { color: "rgba(15, 23, 42, 0.18)" } },
-            axisTick: { lineStyle: { color: "rgba(15, 23, 42, 0.18)" } },
-            axisLabel: { color: "#475569" },
+            axisLine: axisLine,
+            axisTick: axisTick,
+            axisLabel: axisLabel,
             splitLine: { show: false }
         },
         yAxis: {
-            axisLine: { lineStyle: { color: "rgba(15, 23, 42, 0.18)" } },
-            axisTick: { lineStyle: { color: "rgba(15, 23, 42, 0.18)" } },
-            axisLabel: { color: "#475569" },
+            axisLine: axisLine,
+            axisTick: axisTick,
+            axisLabel: axisLabel,
             splitLine: { lineStyle: { color: "rgba(15, 23, 42, 0.08)" } }
         },
         tooltip: {
-            backgroundColor: "rgba(255, 255, 255, 0.96)",
+            backgroundColor: "rgba(255, 255, 255, 0.97)",
             borderColor: "#e2e8f0",
             borderWidth: 1,
             padding: [8, 12],
             textStyle: { color: "#0f172a", fontSize: 12 },
             axisPointer: {
-                lineStyle: { color: "rgba(15, 23, 42, 0.35)" },
-                crossStyle: { color: "rgba(15, 23, 42, 0.35)" },
-                shadowStyle: { color: "rgba(37, 99, 235, 0.08)" }
+                lineStyle: { color: "rgba(37, 99, 235, 0.45)" },
+                crossStyle: { color: "rgba(37, 99, 235, 0.45)" },
+                shadowStyle: { color: "rgba(37, 99, 235, 0.06)" }
             }
         }
     });
 
     window.chartTheme = function () {
-        return document.documentElement.getAttribute("data-theme") === "light" ? "dawn" : "neon";
+        return "light";
     };
 
     window.chartColors = function () {
-        var light = document.documentElement.getAttribute("data-theme") === "light";
         return {
-            cyan: light ? "#0891b2" : "#22d3ee",
-            cyanSoft: light ? "rgba(8, 145, 178, 0.24)" : "rgba(34, 211, 238, 0.28)",
-            cyanSoft2: light ? "rgba(8, 145, 178, 0.03)" : "rgba(34, 211, 238, 0.03)",
-            cyanGlow: light ? "rgba(8, 145, 178, 0.3)" : "rgba(34, 211, 238, 0.55)",
-            cyanText: light ? "#0e7490" : "#67e8f9",
-            violet: light ? "#7c3aed" : "#a78bfa",
-            pink: light ? "#e11d48" : "#fb7185",
-            gray: light ? "#94a3b8" : "#64748b"
+            cyan: "#2563eb",
+            cyanSoft: "rgba(37, 99, 235, 0.18)",
+            cyanSoft2: "rgba(37, 99, 235, 0.03)",
+            cyanGlow: "rgba(37, 99, 235, 0.22)",
+            cyanText: "#1d4ed8",
+            violet: "#f97316",
+            pink: "#ef4444",
+            gray: "#94a3b8"
         };
     };
 })();
