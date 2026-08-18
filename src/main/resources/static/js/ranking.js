@@ -28,6 +28,7 @@
     API.get("/api/insights")
         .then(function (d) {
             const overall = d.decayCurves && d.decayCurves.overall;
+            const C = window.chartColors ? window.chartColors() : { cyan: "#22d3ee" };
             if (overall && overall.length >= 30) {
                 document.getElementById("stat-avgday30").textContent = formatNumber(overall[29]);
                 let peak = 0;
@@ -37,9 +38,28 @@
                     }
                 }
                 document.getElementById("stat-avgpeak").textContent = peak + 1;
+                addStatSpark("stat-avgday30", overall, C.cyan);
+                addStatSpark("stat-avgpeak", overall, C.cyan);
+            }
+            if (d.categoryStats && d.categoryStats.length) {
+                addStatSpark("stat-categories", d.categoryStats.map(function (c) {
+                    return c.count;
+                }), C.cyan);
             }
         })
         .catch(function () {});
+
+    function addStatSpark(id, values, color) {
+        const el = document.getElementById(id);
+        const stat = el && el.closest(".stat");
+        if (!stat || stat.querySelector(".stat-spark")) {
+            return;
+        }
+        const spark = document.createElement("div");
+        spark.className = "stat-spark";
+        spark.innerHTML = window.miniTrend(values, color);
+        stat.appendChild(spark);
+    }
 
     function buildQuery() {
         const params = new URLSearchParams();
@@ -83,8 +103,11 @@
             grid.innerHTML = '<div class="empty">没有找到匹配的视频</div>';
         } else {
             grid.innerHTML = "";
+            const maxDay30 = items.reduce(function (m, it) {
+                return Math.max(m, it.day30 || 0);
+            }, 0);
             items.forEach(function (item, i) {
-                grid.appendChild(buildCard(item, (page - 1) * pageSize + i + 1));
+                grid.appendChild(buildCard(item, (page - 1) * pageSize + i + 1, maxDay30));
             });
         }
         const pages = Math.max(1, Math.ceil(total / pageSize));
@@ -93,15 +116,16 @@
         nextBtn.disabled = page >= pages;
     }
 
-    function buildCard(item, rank) {
+    function buildCard(item, rank, maxDay30) {
         const el = document.createElement("div");
         el.className = "video-card";
         const delta = item.day1 > 0 ? ((item.day30 - item.day1) / item.day1) * 100 : 0;
         const deltaClass = delta >= 0 ? "delta-up" : "delta-down";
         const deltaText = (delta >= 0 ? "↑" : "↓") + Math.abs(delta).toFixed(1) + "%";
+        const pct = maxDay30 > 0 ? ((item.day30 / maxDay30) * 100).toFixed(1) : 0;
         el.innerHTML =
             '<span class="rank-num">' + String(rank).padStart(2, "0") + "</span>" +
-            '<img class="video-cover" loading="lazy" src="' + coverSrc(item.coverPath) + '" alt="">' +
+            coverHtml(item.coverPath) +
             '<div class="video-card-body">' +
             '<div class="video-title">' + escapeHtml(item.title) + "</div>" +
             '<div class="video-meta">' +
@@ -109,6 +133,11 @@
             '<span class="meta-right">' +
             '<span class="heat-badge">热度 ' + formatNumber(item.day30) + "</span>" +
             '<span class="delta-badge ' + deltaClass + '">' + deltaText + "</span>" +
+            "</span>" +
+            "</div>" +
+            '<div class="heat-relative">' +
+            '<span class="heat-relative-track">' +
+            '<span class="heat-relative-fill" style="width:' + pct + '%"></span>' +
             "</span>" +
             "</div>" +
             "</div>";

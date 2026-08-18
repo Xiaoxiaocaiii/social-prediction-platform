@@ -65,6 +65,23 @@
             return s + c.count;
         }, 0);
         document.getElementById("ik-samples").textContent = samples.toLocaleString("zh-CN");
+        addKpiSpark("ik-peak", data.decayCurves.overall);
+        addKpiSpark("ik-cats", data.categoryStats.map(function (c) {
+            return c.count;
+        }));
+    }
+
+    function addKpiSpark(id, values) {
+        const el = document.getElementById(id);
+        const card = el && el.closest(".insight-kpi");
+        if (!card || card.querySelector(".kpi-spark")) {
+            return;
+        }
+        const C = window.chartColors ? window.chartColors() : { cyan: "#22d3ee" };
+        const spark = document.createElement("div");
+        spark.className = "kpi-spark-wrap";
+        spark.innerHTML = window.miniTrend(values, C.cyan);
+        card.appendChild(spark);
     }
 
     function fillSubtitles() {

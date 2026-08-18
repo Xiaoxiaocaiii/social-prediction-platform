@@ -133,6 +133,9 @@
         document.getElementById("kpi-day30").textContent = formatNumber(data.prediction[29]);
         document.getElementById("kpi-refs").textContent =
             (data.references ? data.references.length : 0);
+        const C = window.chartColors ? window.chartColors() : { cyan: "#22d3ee" };
+        document.getElementById("predict-kpi-trend").innerHTML =
+            window.miniTrend(data.prediction, C.cyan);
         const overall = await getOverall();
         drawChart(data.prediction, overall);
         resultEl.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -212,7 +215,7 @@
         const el = document.createElement("div");
         el.className = "video-card";
         el.innerHTML =
-            '<img class="video-cover" loading="lazy" src="' + coverSrc(item.coverPath) + '" alt="">' +
+            coverHtml(item.coverPath) +
             '<div class="video-card-body">' +
             '<div class="video-title">' + escapeHtml(item.title) + "</div>" +
             '<div class="video-meta">' +

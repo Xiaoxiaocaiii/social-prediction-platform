@@ -54,15 +54,16 @@
         });
     });
 
-    function buildHot(item, rank) {
+    function buildHot(item, rank, maxDay30) {
         const delta = item.day1 > 0 ? ((item.day30 - item.day1) / item.day1) * 100 : 0;
         const deltaClass = delta >= 0 ? "delta-up" : "delta-down";
         const deltaText = (delta >= 0 ? "↑" : "↓") + Math.abs(delta).toFixed(1) + "%";
+        const pct = maxDay30 > 0 ? ((item.day30 / maxDay30) * 100).toFixed(1) : 0;
         const el = document.createElement("div");
         el.className = "video-card";
         el.innerHTML =
             '<span class="rank-num">' + String(rank).padStart(2, "0") + "</span>" +
-            '<img class="video-cover" loading="lazy" src="' + coverSrc(item.coverPath) + '" alt="">' +
+            coverHtml(item.coverPath) +
             '<div class="video-card-body">' +
             '<div class="video-title">' + escapeHtml(item.title) + "</div>" +
             '<div class="trend-card-note">Day30 较 Day1 ' +
@@ -72,6 +73,11 @@
             '<span class="meta-right">' +
             '<span class="heat-badge">热度 ' + formatNumber(item.day30) + "</span>" +
             '<span class="delta-badge ' + deltaClass + '">' + deltaText + "</span>" +
+            "</span>" +
+            "</div>" +
+            '<div class="heat-relative">' +
+            '<span class="heat-relative-track">' +
+            '<span class="heat-relative-fill" style="width:' + pct + '%"></span>' +
             "</span>" +
             "</div>" +
             "</div>";
@@ -89,8 +95,11 @@
                 hotGrid.innerHTML = '<div class="empty">暂无数据</div>';
                 return;
             }
+            const maxDay30 = data.items.reduce(function (m, it) {
+                return Math.max(m, it.day30 || 0);
+            }, 0);
             data.items.forEach(function (item, i) {
-                hotGrid.appendChild(buildHot(item, i + 1));
+                hotGrid.appendChild(buildHot(item, i + 1, maxDay30));
             });
         })
         .catch(function (e) {
