@@ -123,8 +123,9 @@
             <h1>上传预测</h1>
             <p>上传图片与文案，检索最相似的历史视频，预测未来 30 天热度曲线。</p>
         </div>
-        <div class="predict-panel card-panel reveal">
-            <div class="predict-input-row">
+        <div class="predict-stack">
+            <div class="card-panel reveal">
+                <div class="result-subtitle">上传图片</div>
                 <div id="upload-zone" class="upload-zone">
                     <input id="predict-file" type="file" accept="image/*" hidden>
                     <div id="upload-hint" class="upload-hint">
@@ -137,23 +138,25 @@
                         <button id="upload-clear" class="btn" type="button">移除图片</button>
                     </div>
                 </div>
-                <div class="predict-fields">
-                    <label class="field-label" for="predict-text">文案</label>
-                    <textarea id="predict-text" class="input textarea" rows="5"
-                              placeholder="输入视频文案，例如：今天教大家做一道红烧肉"></textarea>
-                    <div class="predict-actions">
-                        <label class="field-label" for="predict-topk">参考案例数</label>
-                        <select id="predict-topk" class="input">
-                            <option value="3">3</option>
-                            <option value="5" selected>5</option>
-                            <option value="10">10</option>
-                        </select>
-                        <button id="predict-submit" class="btn primary">开始预测</button>
-                    </div>
+            </div>
+            <div class="card-panel reveal">
+                <div class="result-subtitle">文案</div>
+                <label class="field-label" for="predict-text">描述你想发布的内容</label>
+                <textarea id="predict-text" class="input textarea" rows="4"
+                          placeholder="输入视频文案，例如：今天教大家做一道红烧肉"></textarea>
+                <div class="predict-actions">
+                    <label class="field-label" for="predict-topk">参考案例数</label>
+                    <select id="predict-topk" class="input">
+                        <option value="3">3</option>
+                        <option value="5" selected>5</option>
+                        <option value="10">10</option>
+                    </select>
+                    <button id="predict-submit" class="btn primary">开始预测</button>
                 </div>
             </div>
         </div>
             <div id="predict-result" class="predict-result card-panel hidden">
+                <div class="result-subtitle">基线预测</div>
                 <div id="predict-note" class="result-note"></div>
                 <div class="result-kpis">
                     <div class="result-kpi">
