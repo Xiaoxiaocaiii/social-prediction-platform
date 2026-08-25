@@ -21,3 +21,7 @@
 
 # 本机 Maven settings（机器相关，不入版本库）
 mvn-settings.xml
+
+# 项目文档仅本地保留，不上传 GitHub
+/docs/
+/codex-handoff.md
