@@ -1713,3 +1713,45 @@ h3,
 .capability-num {
     color: var(--blue);
 }
+
+/* ---- 首页区块划入效果 ---- */
+.how-section.reveal {
+    transform: translateX(-42px);
+}
+
+.capability-section.reveal {
+    transform: translateX(42px);
+}
+
+.how-section.reveal.in,
+.capability-section.reveal.in {
+    transform: none;
+}
+
+.how-step,
+.capability-card {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.how-section.reveal.in .how-step,
+.capability-section.reveal.in .capability-card {
+    opacity: 1;
+    transform: none;
+}
+
+.how-section.reveal.in .how-step:nth-child(1),
+.capability-section.reveal.in .capability-card:nth-child(1) {
+    transition-delay: 0ms;
+}
+
+.how-section.reveal.in .how-step:nth-child(2),
+.capability-section.reveal.in .capability-card:nth-child(2) {
+    transition-delay: 90ms;
+}
+
+.how-section.reveal.in .how-step:nth-child(3),
+.capability-section.reveal.in .capability-card:nth-child(3) {
+    transition-delay: 180ms;
+}
