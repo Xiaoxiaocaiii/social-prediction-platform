@@ -9,7 +9,7 @@
     var axisLabel = { color: "#475569" };
 
     echarts.registerTheme("light", {
-        color: ["#2563eb", "#f97316", "#ef4444", "#10b981", "#8b5cf6", "#0ea5e9"],
+        color: ["#ff7a3c", "#4a5fd0", "#17a37c", "#f59e0b", "#8b5cf6", "#0ea5e9"],
         backgroundColor: "transparent",
         textStyle: {
             color: "#334155",
@@ -66,13 +66,13 @@
 
     window.chartColors = function () {
         return {
-            cyan: "#2563eb",
-            cyanSoft: "rgba(37, 99, 235, 0.18)",
-            cyanSoft2: "rgba(37, 99, 235, 0.03)",
-            cyanGlow: "rgba(37, 99, 235, 0.22)",
-            cyanText: "#1d4ed8",
-            violet: "#f97316",
-            pink: "#ef4444",
+            cyan: "#ff7a3c",
+            cyanSoft: "rgba(255, 122, 60, 0.18)",
+            cyanSoft2: "rgba(255, 122, 60, 0.03)",
+            cyanGlow: "rgba(255, 122, 60, 0.22)",
+            cyanText: "#f06523",
+            violet: "#4a5fd0",
+            pink: "#17a37c",
             gray: "#94a3b8"
         };
     };

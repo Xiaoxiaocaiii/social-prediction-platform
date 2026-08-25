@@ -1,17 +1,20 @@
 :root {
-    --bg: #f7f8fa;
+    --bg: #ffffff;
     --surface: #ffffff;
-    --surface-soft: #f0f2f5;
-    --border: #e6e9ef;
-    --border-strong: #d6dbe4;
-    --text: #17202b;
-    --text-secondary: #4b5563;
-    --text-muted: #6b7280;
-    --primary: #2563eb;
-    --primary-strong: #1d4ed8;
-    --primary-weak: #eef4ff;
-    --accent: #f97316;
+    --surface-soft: #f3f5f9;
+    --border: #e9ecf2;
+    --border-strong: #d8dee8;
+    --text: #1c1c26;
+    --text-secondary: #4b4b58;
+    --text-muted: #6f6f7a;
+    --primary: #ff7a3c;
+    --primary-strong: #f06523;
+    --primary-weak: #fff1e7;
+    --accent: #ff7a3c;
     --accent-weak: #fff1e7;
+    --blue: #4a5fd0;
+    --blue-weak: #eef3fd;
+    --green: #17a37c;
     --danger: #dc2626;
     --success: #16a34a;
     --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
@@ -233,7 +236,7 @@ main {
     border-color: var(--primary);
     color: #ffffff;
     font-weight: 600;
-    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.22);
+    box-shadow: 0 6px 16px rgba(255, 122, 60, 0.22);
 }
 
 .btn.primary:hover:not(:disabled) {
@@ -1671,4 +1674,42 @@ main {
     .compare-picker {
         width: 100%;
     }
+}
+
+/* ---- 圆润字体与主色强调 ---- */
+:root {
+    --font-round: "Arial Rounded MT Bold", "YouYuan", "幼圆", "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+h1,
+h2,
+h3,
+.hero-copy h1,
+.page-head h1,
+.section-title,
+.how-step h3,
+.capability-card h3,
+.preview-title,
+.card-title {
+    font-family: var(--font-round);
+}
+
+.hero-stat-num,
+.stat b,
+.result-kpi-value,
+.insight-kpi-value,
+.metric-value,
+.rank-num,
+.how-num,
+.capability-num,
+.hero-copy .mark {
+    font-family: var(--font-round);
+}
+
+.hero-copy .mark {
+    color: var(--accent);
+}
+
+.capability-num {
+    color: var(--blue);
 }
