@@ -4,23 +4,23 @@
 
 ## 功能特性
 
-- **趋势发现首页**：全屏沉浸式落地页（Hero 大标题 + 超大搜索框 + 示例关键词 + 向下引导），第二屏「今日正在爆发的选题」+ 完整榜单入口；独立 URL（`#/`、`#/predict`…）支持刷新保持、浏览器前进后退与分享
+- **趋势发现首页**：落地页包含大标题、搜索框、示例关键词、真实数据预览卡，以及「三步看懂流行度」「用真实数据做判断」两个区块；支持 `#/`、`#/predict` 等独立 URL，刷新保持、前进后退与分享
 - **上传预测**：输入文案，检索最相似的历史视频（BM25 + FTS5 trigram 中文全文检索），以参考案例的真实曲线平均生成未来 30 天热度预测曲线；结果区含 KPI（峰值天 / 预测 Day30 / 参考案例数）与全站平均对照虚线
 - **热度排行榜**：浏览 282,481 条真实视频，支持榜单范围（全站 / 15 个分类）× 榜单口径（Day30 总榜 / Day1 新热榜 / 长红榜）切换，标题/标签/描述检索、分页与详情弹窗；视频卡带排名序号、涨跌角标与 KPI 指标行
 - **数据洞察**：分类平均热度对比、Day1 与 Day30 热度相关性散点（r = 0.9296，早期热度决定最终热度）、平均热度衰减曲线（整体 / 分类切换），顶部 KPI 行 + 结论先行标题
 - **曲线对比**：任选 2~3 个视频叠加真实热度曲线，对比峰值天与衰减率，表格内嵌 30 点迷你趋势线，含预置示例
-- **深色 / 浅色双主题**：顶栏图标一键切换，图表实时重绘，选择持久化到 localStorage
-- **动效与交互**：预加载动画、背景粒子与极光光斑、滚动进度条、磁吸按钮、卡片 3D 倾斜、图表入场生长动画；滚动期间自动暂停重特效保证流畅
+- **清爽浅色单主题**：白底、橙色主按钮 + 蓝色辅助，圆润字体，突出真实数据
+- **动效与交互**：滚动渐入，首页「三步说明」与「能力卡」区块左右划入、卡片错峰入场，交互轻量不干扰阅读
 
 ## 截图
 
-| 深色模式 | 浅色模式 |
+| 页面 | 截图 |
 | --- | --- |
-| ![趋势发现-深色](docs/screenshots/trend-dark.png) | ![趋势发现-浅色](docs/screenshots/trend-light.png) |
-| ![预测-深色](docs/screenshots/predict-dark.png) | ![预测-浅色](docs/screenshots/predict-light.png) |
-| ![排行榜-深色](docs/screenshots/ranking-dark.png) | ![排行榜-浅色](docs/screenshots/ranking-light.png) |
-| ![洞察-深色](docs/screenshots/insights-dark.png) | ![洞察-浅色](docs/screenshots/insights-light.png) |
-| ![对比-深色](docs/screenshots/compare-dark.png) | ![对比-浅色](docs/screenshots/compare-light.png) |
+| 趋势发现首页 | ![趋势发现首页](docs/screenshots/home.png) |
+| 上传预测 | ![上传预测](docs/screenshots/predict.png) |
+| 热度排行榜 | ![热度排行榜](docs/screenshots/ranking.png) |
+| 数据洞察 | ![数据洞察](docs/screenshots/insights.png) |
+| 曲线对比 | ![曲线对比](docs/screenshots/compare.png) |
 
 ## 技术栈
 
@@ -89,15 +89,9 @@ mvn -s mvn-settings.xml test
 src/main/java/com/prediction/   # Spring Boot 后端（api / data / service / config）
 src/main/resources/static/      # 前端五页面（index.html + css / js / lib）
 scripts/                        # 数据处理脚本（建索引 / 封面提取 / 分卷还原）
-docs/                           # 方案、演示脚本、成果清单、重构报告
+docs/                           # 方案、演示脚本、成果清单（本地保留）
 data/                           # 数据资产（git 忽略）
 ```
-
-## 文档索引
-
-- [docs/成果清单.md](docs/成果清单.md)：成果与软著申报素材
-- [docs/DEMO.md](docs/DEMO.md)：演示脚本与故障应对
-- [docs/PLAN.md](docs/PLAN.md)：完整方案与变更记录
 
 ## 数据来源与声明
 

@@ -22,6 +22,8 @@
 # 本机 Maven settings（机器相关，不入版本库）
 mvn-settings.xml
 
-# 项目文档仅本地保留，不上传 GitHub
-/docs/
+# 项目文档仅本地保留（README 与截图上传）
+/docs/PLAN.md
+/docs/成果清单.md
+/docs/DEMO.md
 /codex-handoff.md
