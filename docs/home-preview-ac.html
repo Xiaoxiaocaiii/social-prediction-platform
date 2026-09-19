@@ -1,0 +1,554 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>方案 A+C：首页融合型原型</title>
+    <style>
+        :root {
+            --paper: #f6f7f9;
+            --paper-deep: #edf1f5;
+            --white: #fff;
+            --ink: #1d2735;
+            --muted: #69778a;
+            --blue: #3a5a8c;
+            --blue-deep: #29476e;
+            --rust: #c2703d;
+            --line: #e1e6ec;
+            --header: 74px;
+            --font-body: "Noto Sans SC", "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+            --font-rounded: "Microsoft YaHei UI", "Segoe UI", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+            --font-display: "Noto Serif SC", "Source Han Serif SC", "STSong", "Songti SC", serif;
+            --font-feature: "SimYou", "YouYuan", "STKaiti", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+            --font-ui: Inter, "IBM Plex Sans", "Segoe UI", sans-serif;
+            --font-mono: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+            --font-script: "Segoe Print", "Bradley Hand", "STXingkai", cursive;
+        }
+        * { box-sizing: border-box; }
+        html { scroll-behavior: smooth; scroll-padding-top: calc(var(--header) + 24px); background: var(--paper); }
+        body {
+            margin: 0;
+            color: var(--ink);
+            background: #e5eaee;
+            font: 16px/1.72 var(--font-body);
+            min-width: 1200px;
+        }
+        a { color: inherit; text-decoration: none; }
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 32px;
+            height: var(--header);
+            padding: 14px max(28px, calc((100vw - 1520px) / 2));
+            background: rgba(255,255,255,.94);
+            border-bottom: 1px solid var(--line);
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+        }
+        .brand { display: flex; flex-direction: column; gap: 2px; color: var(--blue-deep); text-decoration: none; }
+        .brand-row { display: flex; align-items: center; gap: 9px; }
+        .brand-mark { width: 22px; height: 22px; color: var(--blue); }
+        .brand-copy { display: contents; }
+        .brand-title { color: var(--ink); font: 700 17px/1.2 var(--font-body); white-space: nowrap; }
+        .brand small { color: var(--muted); font: 400 12px/1.2 var(--font-body); white-space: nowrap; }
+        .product-nav {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-left: auto;
+        }
+        .product-nav a {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 14px;
+            border-radius: 8px;
+            color: var(--muted);
+            font-size: 14px;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        .product-nav a:hover { color: var(--blue); background: #f2f5f8; }
+        .product-nav a:focus-visible, .start-btn:focus-visible, .chapter-link:focus-visible, button:focus-visible, input:focus-visible {
+            outline: 3px solid rgba(194,112,61,.3);
+            outline-offset: 3px;
+        }
+        .start-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            margin-left: 6px;
+            padding: 8px 14px;
+            border: 0;
+            border-radius: 8px;
+            color: var(--blue);
+            background: transparent;
+            font-size: 14px;
+            font-weight: 500;
+            text-align: center;
+        }
+        .start-btn::before { content: "←"; font: 14px/1 var(--font-ui); }
+        .start-btn:hover { color: var(--blue-deep); background: #f2f5f8; }
+        .page { width: min(100% - 64px, 1520px); margin: 0 auto; }
+        .hero {
+            position: relative;
+            isolation: isolate;
+            overflow: hidden;
+            height: auto;
+            min-height: 0;
+            display: grid;
+            grid-template-columns: minmax(0, 1.05fr) minmax(0, .75fr);
+            align-items: stretch;
+            gap: clamp(48px, 6vw, 104px);
+            padding: 48px 28px 56px;
+            scroll-margin-top: var(--header);
+        }
+        .hero > .start-btn {
+            position: absolute;
+            left: 28px;
+            bottom: 68px;
+            z-index: 3;
+        }
+        .hero-copy, .evidence { min-width: 0; }
+        .hero::before {
+            content: "";
+            position: absolute;
+            z-index: -2;
+            left: -8%;
+            top: 58px;
+            width: 61%;
+            height: 585px;
+            background: #d6e4ef;
+            box-shadow: 18px 22px 0 rgba(41,71,110,.08);
+            transform: rotate(-4deg);
+            pointer-events: none;
+        }
+        .hero::after {
+            content: "";
+            position: absolute;
+            z-index: -1;
+            right: -4%;
+            top: 125px;
+            width: 49%;
+            height: 470px;
+            background: #f7eee5;
+            box-shadow: -14px 18px 0 rgba(194,112,61,.1);
+            transform: rotate(3deg);
+            pointer-events: none;
+        }
+        .hero-copy { position: relative; }
+        .hero-copy::before {
+            content: "01 / DATA     02 / RETRIEVAL     03 / FORECAST";
+            position: absolute;
+            z-index: 0;
+            left: 0;
+            bottom: -40px;
+            width: 610px;
+            padding: 13px 0;
+            border-top: 2px solid rgba(194,112,61,.45);
+            border-bottom: 1px solid rgba(41,71,110,.2);
+            color: rgba(41,71,110,.45);
+            font: 10px/1 var(--font-mono);
+            letter-spacing: .12em;
+            pointer-events: none;
+        }
+        .hero-copy::after {
+            content: "RESEARCH ISSUE 01";
+            position: absolute;
+            z-index: 0;
+            right: -22px;
+            top: -12px;
+            color: rgba(41,71,110,.3);
+            font: 11px/1 var(--font-mono);
+            letter-spacing: .16em;
+            transform: rotate(-90deg);
+            transform-origin: right top;
+            pointer-events: none;
+        }
+        .hero-copy > * { position: relative; z-index: 1; }
+        .evidence { position: relative; }
+        .evidence::after {
+            content: "CASE STUDY";
+            position: absolute;
+            z-index: 2;
+            right: -30px;
+            top: 60px;
+            color: rgba(194,112,61,.35);
+            font: 10px/1 var(--font-mono);
+            letter-spacing: .14em;
+            transform: rotate(90deg);
+            pointer-events: none;
+        }
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            color: var(--rust);
+            font-family: var(--font-ui);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .19em;
+        }
+        .eyebrow::before { content: ""; width: 30px; height: 1px; background: var(--rust); }
+        h1 { font-family: var(--font-display); font-weight: 400; }
+        h2, h3 { font-family: var(--font-rounded); font-weight: 650; }
+        h1 { max-width: 790px; margin: 18px 0 21px; font-size: clamp(40px, 4.5vw, 58px); line-height: 1.1; letter-spacing: -.03em; }
+        h1 span { display: block; }
+        h1 .title-lead { color: var(--ink); font-family: var(--font-display); }
+        h1 .title-accent { color: var(--rust); font-family: var(--font-display); font-weight: 400; letter-spacing: -.04em; }
+        .hero-copy > p { max-width: 590px; margin: 0; color: var(--muted); font-family: var(--font-feature); font-size: 15px; }
+        .search {
+            display: flex;
+            max-width: 620px;
+            gap: 7px;
+            margin-top: 30px;
+            padding: 6px;
+            border: 1px solid #c9d4e0;
+            border-radius: 12px;
+            background: #fff;
+            box-shadow: 0 12px 28px rgba(38,57,79,.08);
+        }
+        .search input { min-width: 0; flex: 1; border: 0; outline: 0; padding: 0 12px; font: 15px/1.4 var(--font-feature); }
+        button { border: 0; border-radius: 8px; padding: 10px 16px; color: #fff; background: var(--blue); font: 600 15px/1.4 var(--font-feature); cursor: pointer; transition: background .2s ease, transform .2s ease, opacity .2s ease; }
+        button:hover { background: var(--blue-deep); }
+        button:active { transform: translateY(1px); }
+        button.is-loading { opacity: .72; cursor: wait; }
+        .hero-note { margin-top: 11px !important; color: #8793a1 !important; font: 13px/1.6 var(--font-feature) !important; }
+        .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: 590px; gap: 18px; margin-top: 30px; }
+        .stat { position: relative; padding: 12px 0 0 14px; border-top: 1px solid var(--line); }
+        .stat::before { content: ""; position: absolute; top: -1px; left: 0; width: 24px; height: 2px; background: var(--rust); }
+        .stat-index { display: block; margin-bottom: 8px; color: var(--muted); font: 10px/1 var(--font-mono); letter-spacing: .08em; }
+        .stat strong { display: block; color: var(--blue-deep); font: 600 22px/1.2 var(--font-ui); font-variant-numeric: tabular-nums; }
+        .stat span:not(.stat-index) { color: var(--muted); font-family: var(--font-feature); font-size: 12px; }
+        .evidence {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            background: #fff;
+            box-shadow: 0 14px 32px rgba(38,57,79,.09);
+        }
+        .evidence-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 56px; padding: 15px 22px; color: var(--blue-deep); border-bottom: 1px solid var(--line); font-weight: 400; }
+        .evidence-head > span:first-child { font-family: var(--font-feature); }
+        .evidence-head::before { content: ""; width: 3px; height: 18px; margin-right: -3px; background: var(--rust); opacity: .75; }
+        .evidence-source { margin-left: auto; color: var(--muted); font: 11px/1 var(--font-mono); letter-spacing: .04em; }
+        .cover {
+            position: relative;
+            height: clamp(220px, 20vw, 280px);
+            overflow: hidden;
+            background:
+                linear-gradient(135deg, rgba(41,71,110,.82), rgba(58,90,140,.28) 48%, rgba(194,112,61,.7)),
+                repeating-linear-gradient(125deg, rgba(255,255,255,.12) 0 1px, transparent 1px 18px),
+                #a8bfd7;
+        }
+        .cover::after { content: "VIDEO CASE / DAY30"; position: absolute; right: 16px; bottom: 14px; color: rgba(255,255,255,.78); font: 10px/1 var(--font-mono); letter-spacing: .1em; }
+        .cover-caption { position: absolute; left: 18px; bottom: 16px; color: #fff; font-size: 13px; font-weight: 600; }
+        .evidence-body { display: flex; flex: 1; flex-direction: column; padding: 16px; }
+        .curve {
+            position: relative;
+            height: 76px;
+            margin: auto 0 12px;
+            overflow: hidden;
+            border-top: 1px solid var(--line);
+            border-bottom: 1px solid var(--line);
+            background: repeating-linear-gradient(to right, transparent 0 36px, rgba(58,90,140,.08) 36px 37px), #f7f9fb;
+        }
+        .curve::before { content: ""; position: absolute; inset: 16px 10px 14px; background: linear-gradient(164deg, transparent 0 8%, var(--blue) 9% 11%, transparent 12% 20%, var(--blue) 21% 23%, transparent 24% 35%, var(--blue) 36% 38%, transparent 39% 51%, var(--blue) 52% 54%, transparent 55% 66%, var(--blue) 67% 69%, transparent 70% 81%, var(--blue) 82% 84%, transparent 85%); opacity: .8; }
+        .curve::after { content: "DAY 01"; position: absolute; left: 10px; bottom: 3px; color: #9aa8b7; font: 9px/1 var(--font-mono); }
+        .evidence-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+        .evidence-metrics span { min-height: 58px; padding: 9px 8px; border: 1px solid var(--line); border-radius: 8px; color: var(--muted); font-size: 11px; }
+        .evidence-metrics b { display: block; margin-top: 4px; color: var(--blue-deep); font: 600 18px/1.1 var(--font-ui); font-variant-numeric: tabular-nums; }
+        .chapter-layout { display: grid; grid-template-columns: 164px 1fr; gap: 42px; border-top: 1px solid var(--line); }
+        .chapter-content, .chapter { min-width: 0; }
+        .chapter-bar {
+            position: sticky;
+            top: calc(var(--header) + 24px);
+            align-self: start;
+            display: grid;
+            gap: 2px;
+            padding: 28px 0;
+        }
+        .chapter-link {
+            position: relative;
+            padding: 10px 14px;
+            border-left: 2px solid transparent;
+            color: var(--muted);
+            font-size: 15px;
+        }
+        .chapter-link::before {
+            content: attr(data-index);
+            display: inline-block;
+            width: 24px;
+            margin-right: 5px;
+            color: #a4afbc;
+            font: 10px/1 var(--font-mono);
+        }
+        .chapter-link.active { color: var(--blue); font-weight: 700; }
+        .chapter-link.active::after {
+            content: "●";
+            position: absolute;
+            right: 13px;
+            color: var(--rust);
+            font-size: 9px;
+        }
+        .chapter {
+            min-height: calc(100vh - var(--header) - 57px);
+            display: flex;
+            align-items: center;
+            padding: 84px 28px;
+            scroll-margin-top: calc(var(--header) + 24px);
+            border-bottom: 1px solid var(--line);
+        }
+        .chapter-inner { width: 100%; min-height: 485px; }
+        .chapter-split { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); gap: 36px; align-items: start; }
+        .chapter-copy h2 { max-width: 620px; margin: 10px 0 15px; color: var(--ink); font-family: var(--font-display); font-size: 34px; font-weight: 700; line-height: 1.28; }
+        .chapter-copy > p { max-width: 590px; color: var(--muted); }
+        .chapter-close { margin-top: 24px; color: var(--blue-deep); font-size: 14px; line-height: 1.7; }
+        .chapter-heading { display: flex; justify-content: space-between; gap: 40px; align-items: end; margin-bottom: 35px; }
+        .chapter-heading h2 { margin: 10px 0 0; font-size: 34px; line-height: 1.28; }
+        .chapter-heading p { max-width: 400px; margin: 0; color: var(--muted); }
+        .method-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+        .method { min-height: 0; padding: 18px 20px; border: 1px solid var(--line); border-top: 3px solid var(--rust); border-radius: 10px; background: rgba(255,255,255,.76); }
+        .method-num { color: var(--rust); font: 600 22px/1 var(--font-mono); }
+        .method h3 { margin: 18px 0 9px; font-size: 18px; }
+        .method p { margin: 0; color: var(--muted); }
+        .evidence-label { display: block; margin-top: 18px; color: var(--rust); font: 10px/1 var(--font-mono); letter-spacing: .1em; text-transform: uppercase; }
+        .evidence-value { display: block; margin-top: 6px; color: var(--blue-deep); font-weight: 650; }
+        .data-grid { display: grid; grid-template-columns: 1.15fr .85fr; gap: 36px; align-items: start; }
+        .data-copy h2, .retrieval-copy h2 { max-width: 620px; margin: 10px 0 15px; color: var(--ink); font-family: var(--font-display); font-size: 34px; font-weight: 700; line-height: 1.28; }
+        .data-copy p { max-width: 560px; color: var(--muted); }
+        .data-points { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; padding: 26px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+        .data-point { padding: 0 18px; border-right: 1px solid var(--line); }
+        .data-point:first-child { padding-left: 0; }
+        .data-point:last-child { border-right: 0; }
+        .data-point strong { display: block; color: var(--blue-deep); font: 600 26px/1.2 var(--font-ui); font-variant-numeric: tabular-nums; }
+        .data-point span { color: var(--muted); font-size: 12px; }
+        .data-diagram { display: grid; grid-template-columns: 1fr; gap: 10px; align-content: center; min-height: 260px; padding: 18px; border: 1px solid var(--line); background: rgba(255,255,255,.72); }
+        .data-evidence { display: grid; grid-template-columns: 42px 1fr; gap: 12px; align-items: start; padding: 13px 14px; border: 1px solid var(--line); border-radius: 8px; background: #fff; }
+        .data-evidence strong { color: var(--rust); font: 600 18px/1 var(--font-mono); }
+        .data-evidence b { display: block; color: var(--blue-deep); font-size: 14px; }
+        .data-evidence span { display: block; margin-top: 3px; color: var(--muted); font-size: 12px; line-height: 1.5; }
+        .retrieval-layout { display: block; }
+        .retrieval-copy h2 { margin: 10px 0 14px; font-size: 34px; }
+        .retrieval-copy p { color: var(--muted); }
+        .data-copy .chapter-close, .retrieval-copy .chapter-close, .chapter-copy .chapter-close { color: var(--blue-deep); }
+        .retrieval-flow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 34px; }
+        .flow-card { position: relative; min-height: 170px; padding: 20px 22px; border: 1px solid var(--line); border-top: 3px solid var(--rust); border-radius: 10px; background: #fff; box-shadow: 0 8px 20px rgba(38,57,79,.05); }
+        .flow-card b { display: block; margin-bottom: 8px; color: var(--blue); }
+        .flow-card span { display: block; color: var(--muted); font-size: 13px; }
+        .flow-meta { display: block; margin-top: 18px; padding-top: 10px; border-top: 1px solid var(--line); color: var(--rust); font: 10px/1.4 var(--font-mono); letter-spacing: .04em; }
+        .temporal-layout { display: block; }
+        .temporal-layout .chapter-copy { max-width: 900px; }
+        .temporal-layout .method-grid { grid-template-columns: repeat(3, 1fr); margin-top: 34px; }
+        .case-section { display: block; }
+        .case-section .chapter-copy { max-width: 900px; }
+        .case-layout { display: grid; grid-template-columns: 1.1fr .9fr; gap: 20px; margin-top: 34px; }
+        .case-card, .route-card { min-height: 0; padding: 18px; border: 1px solid var(--line); border-radius: 10px; background: #fff; }
+        .case-card { display: grid; grid-template-columns: 130px 1fr; gap: 16px; }
+        .case-cover { min-height: 140px; border-radius: 7px; background: linear-gradient(135deg, rgba(41,71,110,.88), rgba(194,112,61,.66)), repeating-linear-gradient(135deg, rgba(255,255,255,.12) 0 1px, transparent 1px 14px), #a8bfd7; }
+        .case-card h3, .route-card h3 { margin: 0 0 8px; font: 650 20px/1.3 var(--font-body); }
+        .case-card p, .route-card p { color: var(--muted); font-size: 14px; line-height: 1.55; }
+        .case-meta { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 14px; }
+        .case-meta span { padding: 3px 8px; border-radius: 999px; color: var(--blue); background: #f1f5f8; font-size: 11px; }
+        .case-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 14px; }
+        .case-stats div { padding: 9px; border-top: 1px solid var(--line); }
+        .case-stats small { display: block; color: var(--muted); font-size: 11px; }
+        .case-stats b { display: block; margin-top: 3px; color: var(--blue-deep); font: 600 16px/1.1 var(--font-ui); font-variant-numeric: tabular-nums; }
+        .route-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; min-width: 0; margin-top: 16px; }
+        .route-card, .route { min-width: 0; }
+        .route { min-height: 64px; padding: 10px; border: 1px solid var(--line); background: var(--paper-deep); color: var(--blue); overflow-wrap: anywhere; }
+        .route span { display: block; margin-top: 4px; color: var(--muted); font-size: 12px; }
+        .prototype-label { position: fixed; right: 14px; bottom: 14px; z-index: 30; padding: 6px 10px; border-radius: 20px; color: #fff; background: rgba(29,39,53,.78); font-size: 11px; }
+        .toast { position: fixed; left: 50%; bottom: 28px; z-index: 40; max-width: min(440px, calc(100% - 32px)); padding: 12px 16px; border: 1px solid rgba(58,90,140,.18); border-radius: 10px; color: var(--blue-deep); background: rgba(255,255,255,.96); box-shadow: 0 10px 28px rgba(38,57,79,.14); opacity: 0; pointer-events: none; transform: translate(-50%, 10px); transition: opacity .2s ease, transform .2s ease; }
+        .toast.show { opacity: 1; transform: translate(-50%, 0); }
+        @supports not ((backdrop-filter: blur(10px)) or (-webkit-backdrop-filter: blur(10px))) {
+            .topbar, .chapter-bar { background: #fff; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            html { scroll-behavior: auto; }
+            *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+        }
+    </style>
+</head>
+<body>
+<header class="topbar">
+    <a class="brand" href="#hero">
+        <span class="brand-row">
+            <svg class="brand-mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                <polyline points="3 17 9 11 13 15 21 7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <polyline points="15 7 21 7 21 13" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <strong class="brand-title">流行度预测平台</strong>
+        </span>
+        <small>SMTPD · 282,481 条真实数据</small>
+    </a>
+    <nav class="product-nav" aria-label="平台功能">
+        <a href="#/predict" data-route="上传预测">上传预测</a>
+        <a href="#/ranking" data-route="热度排行榜">热度排行榜</a>
+        <a href="#/insights" data-route="数据洞察">数据洞察</a>
+        <a href="#/compare" data-route="曲线对比">曲线对比</a>
+    </nav>
+</header>
+
+<main class="page">
+    <section class="hero" id="hero">
+        <div class="hero-copy">
+            <div class="eyebrow">A REAL-DATA POPULARITY STUDY</div>
+            <h1><span class="title-lead">从真实案例，</span><span class="title-accent">理解内容如何变热</span></h1>
+            <p>平台把视频文本、封面和 30 天热度序列组织成可检索、可预测、可追溯的分析过程。</p>
+            <div class="search"><input placeholder="输入你想研究的选题，例如：三毛水果艺术"><button>开始研究</button></div>
+            <p class="hero-note">当前展示的是基线预测路径：检索相关案例，平均真实 30 天曲线。</p>
+            <div class="stats">
+                <div class="stat"><span class="stat-index">DATASET / 01</span><strong>282,481</strong><span>真实视频</span></div>
+                <div class="stat"><span class="stat-index">SCOPE / 02</span><strong>15</strong><span>内容分类</span></div>
+                <div class="stat"><span class="stat-index">TIME / 03</span><strong>30</strong><span>天热度序列</span></div>
+            </div>
+        </div>
+        <a class="start-btn" href="#data">研究路径</a>
+        <article class="evidence">
+            <div class="evidence-head"><span>真实案例预览</span><span class="evidence-source">DAY30 RANKING</span></div>
+            <div class="cover"><span class="cover-caption">A TRACEABLE VIDEO SAMPLE</span></div>
+            <div class="evidence-body">
+                <div class="curve"></div>
+                <div class="evidence-metrics">
+                    <span>Peak Day<b>03</b></span>
+                    <span>Day30<b>6.4</b></span>
+                    <span>Decay Rate<b>42%</b></span>
+                </div>
+            </div>
+        </article>
+    </section>
+
+    <div class="chapter-layout">
+        <nav class="chapter-bar" aria-label="首页章节">
+            <a class="chapter-link active" data-index="01" href="#data">数据基础</a>
+            <a class="chapter-link" data-index="02" href="#retrieval">检索增强</a>
+            <a class="chapter-link" data-index="03" href="#temporal">时序预测</a>
+            <a class="chapter-link" data-index="04" href="#case">真实案例</a>
+        </nav>
+        <div class="chapter-content">
+    <section class="chapter" id="data">
+        <div class="chapter-inner data-grid">
+            <div class="data-copy"><div class="eyebrow">01 · DATA FOUNDATION</div><h2>先把每条视频还原成一组真实数据</h2><p>平台分析的不是一张静态榜单，而是同一视频里的文本、封面和 30 天热度序列。三类信息放在一起，才能同时理解内容是什么，以及热度如何变化。</p><div class="data-points"><div class="data-point"><strong>282,481</strong><span>真实视频</span></div><div class="data-point"><strong>15</strong><span>内容分类</span></div><div class="data-point"><strong>30</strong><span>天序列</span></div></div><span class="evidence-label">OUTPUT · 可检索的真实样本</span><p class="chapter-close">先确认数据对象，再进入检索和时序分析，后续每个结论都能回到这组原始证据。</p></div>
+            <div class="data-diagram">
+                <div class="data-evidence"><strong>01</strong><div><b>文本内容</b><span>标题、标签和描述，说明视频在讨论什么，也为相似选题检索提供文本依据。</span></div></div>
+                <div class="data-evidence"><strong>02</strong><div><b>视频封面</b><span>保留案例的视觉线索，帮助用户回看原始视频，不把封面当成当前预测输入。</span></div></div>
+                <div class="data-evidence"><strong>03</strong><div><b>热度序列</b><span>统一记录 Day1 到 Day30 的热度位置，为后续峰值、Day30 和衰减率提供依据。</span></div></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="chapter" id="retrieval">
+        <div class="chapter-inner retrieval-layout">
+            <div class="retrieval-copy"><div class="eyebrow">02 · RETRIEVAL AUGMENTATION</div><h2>从研究选题找到可回看的真实参考</h2><p>用户输入一个研究选题或文案后，平台会从标题、标签和描述等真实文本字段中寻找相似内容，先建立可解释的参考范围。</p><span class="evidence-label">OUTPUT · 可追溯参考集合</span><p class="chapter-close">检索不是替用户做结论，而是把值得比较的历史案例先找出来。</p></div>
+            <div class="retrieval-flow">
+                <div class="flow-card"><b>输入内容</b><span>标题、标签、描述与可选图片。</span><small class="flow-meta">BASIS · 用户研究选题</small></div>
+                <div class="flow-card"><b>相关检索</b><span>本地全文检索（FTS5）先找候选文本，再用 BM25 按相关度排序；短文本或异常查询会走 LIKE 兜底。</span><small class="flow-meta">ROLE · 缩小参考范围</small></div>
+                <div class="flow-card"><b>参考集合</b><span>保留视频标题、分类和完整热度曲线，便于继续查看真实案例。</span><small class="flow-meta">OUTPUT · 可回看的邻居</small></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="chapter" id="temporal">
+        <div class="chapter-inner temporal-layout">
+            <div class="chapter-copy"><div class="eyebrow">03 · TEMPORAL PREDICTION</div><h2>把离散热度放回同一条时间线上</h2><p>参考案例都有统一的 Day1 到 Day30 位置。平台逐日平均这些真实曲线，形成当前的基线趋势，再提取峰值天、Day30 和衰减率。</p><span class="evidence-label">OUTPUT · 可解释的预测路径</span><p class="chapter-close">这是一条用于理解共同趋势的基线路径，不代表已经训练完成的模型，也不承诺未来走势。</p></div>
+            <div class="method-grid"><article class="method"><div class="method-num">01</div><h3>对齐时间</h3><p>每个案例都使用统一的 Day1 到 Day30 热度位置。</p><span class="evidence-label">BASIS · 30 天序列</span></article><article class="method"><div class="method-num">02</div><h3>聚合曲线</h3><p>按照每天的热度位置逐日平均，形成基线趋势。</p><span class="evidence-label">ROLE · 形成预测路径</span></article><article class="method"><div class="method-num">03</div><h3>提取指标</h3><p>通过峰值天、Day30 和衰减率继续比较真实视频。</p><span class="evidence-label">OUTPUT · 可解释结果</span></article></div>
+        </div>
+    </section>
+
+    <section class="chapter" id="case">
+        <div class="chapter-inner case-section">
+            <div class="chapter-copy"><div class="eyebrow">04 · TRACEABLE EVIDENCE</div><h2>每个结论，都能回到具体视频</h2><p>预测和洞察不是脱离数据源的结论。用户可以回看标题、分类、Day30、峰值天和完整 30 天曲线，继续验证平台展示的规律。</p><span class="evidence-label">OUTPUT · 可回到证据源</span><p class="chapter-close">从整体规律回到单个案例，才能知道一个结论适用于谁，也能看见它的边界。</p></div>
+            <div class="case-layout"><article class="case-card"><div class="case-cover"></div><div><div class="evidence-kicker">CASE DETAIL · TRACEABLE</div><h3>真实视频案例</h3><div class="case-meta"><span>People  Blogs</span><span>Day30 排行</span></div><p>回看标题、分类、Day30 热度、峰值天和完整 30 天趋势。</p><div class="case-stats"><div><small>Peak Day</small><b>03</b></div><div><small>Day30</small><b>6.4</b></div></div></div></article><article class="route-card"><h3>继续验证</h3><p>三个正式页面分别回答“谁更热”“整体怎样”“差异在哪里”。</p><div class="route-list"><div class="route"><b>排行榜</b><span>筛选真实视频</span></div><div class="route"><b>数据洞察</b><span>查看整体规律</span></div><div class="route"><b>曲线对比</b><span>验证个体差异</span></div></div><span class="evidence-label">ROLE · 回到证据源</span></article></div>
+    </section>
+        </div>
+        </div>
+    </div>
+</main>
+<div class="prototype-label">方案 A+C · 独立原型</div>
+<div class="toast" role="status" aria-live="polite"></div>
+<script>
+    var links = document.querySelectorAll(".chapter-link");
+    var sections = document.querySelectorAll(".chapter");
+    var toast = document.querySelector(".toast");
+    var search = document.querySelector(".search");
+    var searchInput = search.querySelector("input");
+    var searchButton = search.querySelector("button");
+    var toastTimer;
+    function scrollToChapter(link, behavior) {
+        var target = document.querySelector(link.getAttribute("href"));
+        if (!target) return;
+        var header = document.querySelector(".topbar");
+        var headerOffset = (header ? header.getBoundingClientRect().height : 74) + 22;
+        var targetTop = target.getBoundingClientRect().top + window.scrollY - headerOffset;
+        window.scrollTo({ top: Math.max(0, targetTop), behavior: behavior || "smooth" });
+    }
+    links.forEach(function (link) {
+        link.addEventListener("click", function (event) {
+            event.preventDefault();
+            history.pushState(null, "", link.getAttribute("href"));
+            scrollToChapter(link);
+        });
+    });
+    var startLink = document.querySelector(".start-btn");
+    startLink.addEventListener("click", function (event) {
+        event.preventDefault();
+        history.pushState(null, "", startLink.getAttribute("href"));
+        scrollToChapter(startLink);
+    });
+    window.addEventListener("load", function () {
+        if (!location.hash || !document.querySelector(location.hash)) return;
+        var initialLink = document.querySelector('.chapter-link[href="' + location.hash + '"]');
+        if (initialLink) setTimeout(function () { scrollToChapter(initialLink, "auto"); }, 0);
+    });
+    function showToast(message) {
+        toast.textContent = message;
+        toast.classList.add("show");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () { toast.classList.remove("show"); }, 2600);
+    }
+    document.querySelectorAll(".product-nav a[data-route]").forEach(function (link) {
+        link.addEventListener("click", function (event) {
+            event.preventDefault();
+            history.replaceState(null, "", link.getAttribute("href"));
+            showToast("原型已记录路由：" + link.dataset.route + "。正式平台将进入对应页面。");
+        });
+    });
+    document.querySelector(".start-btn").addEventListener("click", function () {
+        showToast("正在查看研究路径");
+    });
+    searchButton.addEventListener("click", function () {
+        var value = searchInput.value.trim();
+        if (!value) {
+            searchInput.focus();
+            showToast("请先输入一个研究选题");
+            return;
+        }
+        searchButton.classList.add("is-loading");
+        searchButton.disabled = true;
+        searchButton.textContent = "检索中…";
+        setTimeout(function () {
+            searchButton.classList.remove("is-loading");
+            searchButton.disabled = false;
+            searchButton.textContent = "开始研究";
+            showToast("已提交“" + value + "”，原型将从真实案例开始检索");
+        }, 850);
+    });
+    searchInput.addEventListener("keydown", function (event) {
+        if (event.key === "Enter") searchButton.click();
+    });
+    var observer = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+            if (!entry.isIntersecting) return;
+            links.forEach(function (link) {
+                link.classList.toggle("active", link.getAttribute("href") === "#" + entry.target.id);
+            });
+        });
+    }, { rootMargin: "-45% 0px -45% 0px" });
+    sections.forEach(function (section) { observer.observe(section); });
+</script>
+</body>
+</html>

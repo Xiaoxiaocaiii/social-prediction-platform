@@ -36,35 +36,55 @@
         }
     });
 
-    document.querySelectorAll(".trend-chip").forEach(function (chip) {
-        chip.addEventListener("click", function () {
-            const word = chip.textContent.trim();
-            searchInput.value = word;
-            searchInput.focus();
+    function scrollToChapter(target) {
+        if (!target) {
+            return;
+        }
+        var header = document.querySelector(".topbar");
+        var offset = (header ? header.getBoundingClientRect().height : 74) + 22;
+        var top = target.getBoundingClientRect().top + window.scrollY - offset;
+        window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+    }
+
+    document.querySelectorAll(".chapter-link, .start-btn").forEach(function (link) {
+        link.addEventListener("click", function (event) {
+            var target = document.querySelector(link.getAttribute("href"));
+            if (!target) {
+                return;
+            }
+            event.preventDefault();
+            history.pushState(null, "", "#/");
+            scrollToChapter(target);
+            document.querySelectorAll(".chapter-link").forEach(function (chapterLink) {
+                chapterLink.classList.toggle("active", chapterLink.getAttribute("href") === "#" + target.id);
+            });
+        });
+    });
+
+    document.querySelectorAll(".route[href]").forEach(function (link) {
+        link.addEventListener("click", function () {
+            location.hash = link.getAttribute("href").slice(1);
         });
     });
 
     function renderPreview(video) {
-        const color = window.chartColors ? window.chartColors().cyan : "#ff7a3c";
+        const color = window.chartColors ? window.chartColors().cyan : "#3a5a8c";
         previewEl.innerHTML =
-            '<div class="preview-card">' +
-            '<div class="preview-card-head">' +
-            '<span class="preview-live-dot"></span>LIVE · 今日爆款' +
-            "</div>" +
-            '<img class="preview-cover" src="' + coverSrc(coverPathFor(video.videoId)) + '" alt="">' +
-            '<div class="preview-body">' +
-            '<div class="preview-title">' + escapeHtml(video.title) + "</div>" +
-            '<div class="preview-meta">' + escapeHtml(video.category) +
+            '<article class="evidence">' +
+            '<div class="evidence-head"><span>真实案例预览</span><span class="evidence-source">DAY30 RANKING</span></div>' +
+            '<div class="cover"><img src="' + coverSrc(coverPathFor(video.videoId)) + '" alt=""><span class="cover-caption">A TRACEABLE VIDEO SAMPLE</span></div>' +
+            '<div class="evidence-body">' +
+            '<div class="evidence-title">' + escapeHtml(video.title) + "</div>" +
+            '<div class="evidence-meta">' + escapeHtml(video.category) +
             " · 热度 " + formatNumber(video.day30) + "</div>" +
-            '<div class="preview-chart">' + window.miniTrend(video.curve, color) + "</div>" +
-            '<div class="preview-metrics">' +
-            '<div class="preview-metric"><span>峰值</span><strong>第 ' + video.peakDay + " 天</strong></div>" +
-            '<div class="preview-metric"><span>Day30</span><strong>' + formatNumber(video.day30) + "</strong></div>" +
-            '<div class="preview-metric"><span>衰减</span><strong>' +
-            (video.decayRate * 100).toFixed(1) + "%</strong></div>" +
+            '<div class="curve">' + window.miniTrend(video.curve, color) + "</div>" +
+            '<div class="evidence-metrics">' +
+            '<span>Peak Day<b>' + String(video.peakDay).padStart(2, "0") + "</b></span>" +
+            '<span>Day30<b>' + formatNumber(video.day30) + "</b></span>" +
+            '<span>Decay Rate<b>' + (video.decayRate * 100).toFixed(1) + "%</b></span>" +
             "</div>" +
             "</div>" +
-            "</div>";
+            "</article>";
     }
 
     API.get("/api/videos?sort=day30_desc&page=1&pageSize=1")

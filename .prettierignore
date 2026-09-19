@@ -1,0 +1,4 @@
+target/
+data/
+src/main/resources/static/lib/echarts.min.js
+.trae/

@@ -32,6 +32,14 @@
 | 数据处理 | Python 脚本（CSV → SQLite 索引、封面提取、跨磁盘分卷还原） |
 | 测试 | JUnit 5 + MockMvc，24 个用例全部通过 |
 
+## 浏览器与开发边界
+
+- 项目仅面向桌面端 Microsoft Edge 浏览器开发与验收，覆盖最新 3 个正式版本以及 Edge 企业版。
+- 支持的桌面分辨率包括 `1920×1080`、`2560×1440`、`3840×2160`，布局采用固定桌面基线。
+- 永久禁止新增任何移动端、手机、平板、触摸设备或响应式断点适配需求。
+- 新增需求进入开发前，必须确认不涉及移动端适配；代码提交由 `scripts/check-desktop-only.ps1` 自动校验。
+- CSS 仅允许保留无障碍动效控制 `@media (prefers-reduced-motion: reduce)`，禁止新增尺寸媒体查询。
+
 ## 快速开始
 
 环境要求：JDK 17、Maven 3.9+，数据文件位于 `data/`（见「数据说明」）。
@@ -89,7 +97,7 @@ mvn -s mvn-settings.xml test
 src/main/java/com/prediction/   # Spring Boot 后端（api / data / service / config）
 src/main/resources/static/      # 前端五页面（index.html + css / js / lib）
 scripts/                        # 数据处理脚本（建索引 / 封面提取 / 分卷还原）
-docs/                           # 方案、演示脚本、成果清单（本地保留）
+docs/                           # 当前交接、首页规范、变更总结与截图
 data/                           # 数据资产（git 忽略）
 ```
 

@@ -1,0 +1,23 @@
+{
+  "env": {
+    "browser": true,
+    "es2021": true
+  },
+  "parserOptions": {
+    "ecmaVersion": "latest",
+    "sourceType": "script"
+  },
+  "rules": {
+    "no-restricted-syntax": [
+      "error",
+      {
+        "selector": "Literal[value=/mobile|tablet|touchstart|touchmove|touchend|viewport/i]",
+        "message": "项目仅支持桌面 Edge，禁止移动端适配相关字符串。"
+      },
+      {
+        "selector": "CallExpression[callee.property.name='matchMedia'][arguments.0.value!=/prefers-reduced-motion/]",
+        "message": "禁止使用设备尺寸、方向或触摸能力媒体查询。"
+      }
+    ]
+  }
+}

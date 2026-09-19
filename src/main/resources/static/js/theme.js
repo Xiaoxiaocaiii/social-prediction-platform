@@ -4,23 +4,23 @@
         return;
     }
 
-    var axisLine = { lineStyle: { color: "rgba(15, 23, 42, 0.16)" } };
-    var axisTick = { lineStyle: { color: "rgba(15, 23, 42, 0.16)" } };
-    var axisLabel = { color: "#475569" };
+    var axisLine = { lineStyle: { color: "rgba(58, 90, 140, 0.22)" } };
+    var axisTick = { lineStyle: { color: "rgba(58, 90, 140, 0.16)" } };
+    var axisLabel = { color: "#667386" };
 
     echarts.registerTheme("light", {
-        color: ["#ff7a3c", "#4a5fd0", "#17a37c", "#f59e0b", "#8b5cf6", "#0ea5e9"],
+        color: ["#3a5a8c", "#c2703d", "#5f8b7c", "#a88a58", "#7d7896", "#6f91ae"],
         backgroundColor: "transparent",
         textStyle: {
-            color: "#334155",
-            fontFamily: '"PingFang SC", "Microsoft YaHei", "Segoe UI", system-ui, sans-serif'
+            color: "#536071",
+            fontFamily: '"Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif'
         },
         title: {
-            textStyle: { color: "#0f172a" }
+            textStyle: { color: "#1e2532", fontFamily: '"Noto Serif SC", "Songti SC", serif' }
         },
         legend: {
-            textStyle: { color: "#475569" },
-            pageTextStyle: { color: "#475569" }
+            textStyle: { color: "#536071" },
+            pageTextStyle: { color: "#536071" }
         },
         categoryAxis: {
             axisLine: axisLine,
@@ -32,7 +32,7 @@
             axisLine: axisLine,
             axisTick: axisTick,
             axisLabel: axisLabel,
-            splitLine: { lineStyle: { color: "rgba(15, 23, 42, 0.08)" } }
+            splitLine: { lineStyle: { color: "rgba(58, 90, 140, 0.09)" } }
         },
         xAxis: {
             axisLine: axisLine,
@@ -44,18 +44,18 @@
             axisLine: axisLine,
             axisTick: axisTick,
             axisLabel: axisLabel,
-            splitLine: { lineStyle: { color: "rgba(15, 23, 42, 0.08)" } }
+            splitLine: { lineStyle: { color: "rgba(58, 90, 140, 0.09)" } }
         },
         tooltip: {
             backgroundColor: "rgba(255, 255, 255, 0.97)",
-            borderColor: "#e2e8f0",
+            borderColor: "#e6eaf0",
             borderWidth: 1,
             padding: [8, 12],
-            textStyle: { color: "#0f172a", fontSize: 12 },
+            textStyle: { color: "#1e2532", fontSize: 12 },
             axisPointer: {
-                lineStyle: { color: "rgba(37, 99, 235, 0.45)" },
-                crossStyle: { color: "rgba(37, 99, 235, 0.45)" },
-                shadowStyle: { color: "rgba(37, 99, 235, 0.06)" }
+                lineStyle: { color: "rgba(58, 90, 140, 0.45)" },
+                crossStyle: { color: "rgba(58, 90, 140, 0.45)" },
+                shadowStyle: { color: "rgba(58, 90, 140, 0.06)" }
             }
         }
     });
@@ -66,14 +66,14 @@
 
     window.chartColors = function () {
         return {
-            cyan: "#ff7a3c",
-            cyanSoft: "rgba(255, 122, 60, 0.18)",
-            cyanSoft2: "rgba(255, 122, 60, 0.03)",
-            cyanGlow: "rgba(255, 122, 60, 0.22)",
-            cyanText: "#f06523",
-            violet: "#4a5fd0",
-            pink: "#17a37c",
-            gray: "#94a3b8"
+            cyan: "#3a5a8c",
+            cyanSoft: "rgba(58, 90, 140, 0.18)",
+            cyanSoft2: "rgba(58, 90, 140, 0.03)",
+            cyanGlow: "rgba(58, 90, 140, 0.22)",
+            cyanText: "#2f4b77",
+            violet: "#c2703d",
+            pink: "#5f8b7c",
+            gray: "#8994a3"
         };
     };
 })();

@@ -3,8 +3,7 @@
 > 生成日期：2026-09-14 ｜ 分支：`main` ｜ 最新提交：`7bfebf6`
 > 远程仓库：https://github.com/Xiaoxiaocaiii/social-prediction-platform.git
 > 用途：把项目完整交接给接手方继续开发
-> 说明：本文件与 `docs/trae-prompt.md` 已入库并推送 GitHub，方便接手方在仓库里直接阅读；
-> 而 `docs/PLAN.md`、`docs/DEMO.md`、`docs/成果清单.md`、`codex-handoff.md` 仍属**本地文档**，不在仓库里
+> 说明：本文件是当前项目交接主文档，首页规范和改动总结位于 `docs/` 目录。
 
 ---
 
@@ -49,6 +48,14 @@
 | 数据处理 | Python 脚本（CSV → SQLite、封面提取、跨磁盘分卷还原） |
 
 > **重要**：这是**纯本地运行**的项目。不做 Docker、不做线上部署，**没有** npm / webpack / Vite 等前端构建链。前端就是静态文件，改完刷新浏览器即可（注意第 11 节的静态资源缓存坑）。
+
+### 桌面 Edge 专用边界
+
+- 项目仅面向桌面端 Microsoft Edge 浏览器开发与验收，覆盖最新 3 个正式版本及 Edge 企业版。
+- 桌面验收分辨率为 `1920×1080`、`2560×1440`、`3840×2160`；页面采用固定桌面布局。
+- 永久禁止接入移动端、手机、平板、触摸设备或任何响应式断点需求。
+- CSS 禁止新增尺寸媒体查询；仅保留 `prefers-reduced-motion` 无障碍规则。
+- 每次提交前必须运行 `pwsh -File scripts/check-desktop-only.ps1`，需求评审必须确认“不涉及移动端适配”。
 
 ### 启动
 
@@ -100,12 +107,12 @@ social-prediction-platform/
 │  ├─ extract_covers.py                 # 从 img_yt.zip 批量提取封面
 │  └─ extract_spanning_zip.py           # 跨磁盘分卷 zip 还原（见第 10 节坑 1）
 ├─ docs/
-│  ├─ PLAN.md                           # 完整历史方案（v1.0→v2.17，接口契约与数据结构源头）
-│  ├─ DEMO.md                           # 演示脚本 + 备用文案 + 故障应对
-│  ├─ 成果清单.md                        # 软著 / 成果申报素材
-│  ├─ screenshots/                      # 5 张界面截图（浅色单主题，已入库）
+│  ├─ screenshots/                      # 5 张界面截图
+│  ├─ home-preview-ac.html              # 当前首页原型
+│  ├─ home-nav-improvement.md           # 首页导航规范
+│  ├─ home-content-writing-plan.md      # 首页内容规范
+│  ├─ project-change-summary.md         # 当前改动总结
 │  └─ trae-handoff.md                   # 本文件
-├─ codex-handoff.md                     # 上一轮开发者的任务交接记录（历史备忘）
 ├─ data/                                # 数据资产（gitignore，见第 4 节）
 ├─ start.bat                            # 一键启动
 ├─ mvn-settings.xml                     # 本机 Maven 配置（gitignore）
@@ -474,7 +481,7 @@ window.dispatchEvent(new Event("themechange"));   // 各模块自行监听并 se
 - 预测：基线实现（BM25 + 参考案例曲线平均）+ 远程模型双实现可切换
 - 前端：5 个页面（hash 路由、独立 URL、刷新保持、前进后退、分享）
 - 视觉：**浅色单主题**（白底 + 橙主蓝辅 + 圆润字体），轻量动效（滚动渐入 + 卡片错峰入场）
-- 文档：README（GitHub）+ PLAN / DEMO / 成果清单 / 交接记录（本地）；5 张浅色截图已入库
+- 文档：README、交接文档、首页规范、改动总结和 5 张界面截图
 - 测试：24 个用例全部通过
 
 ### 已知未完成 / 待定
@@ -482,14 +489,12 @@ window.dispatchEvent(new Event("themechange"));   // 各模块自行监听并 se
 1. **模型未接入**：`app.prediction-mode` 仍是 `baseline`，LSTM 预测服务与扩散模型（`flax/stable-diffusion-2-1`）样例都还没到位。
 2. **图片不参与预测**：需要模型支持后启用（当前页面已如实说明）。
 3. **`POST /api/generate` 只预留未实现**（生成增强契约，暂不交互化）。
-4. **软著材料整理**：`docs/成果清单.md` 已有素材，正式申报材料还没定稿。
 5. **暂缓/未批准的功能**（用户当前只要视觉，别自作主张加）：搜索联想下拉、热门词滚动 ticker。
 
 ### 文档层面已知的小瑕疵（顺手可修）
 
 - `README.md` 的数据说明里写 `basic_view_pn.csv` 是「35 列」，**实际是 45 列**（15 基础列 + Day 1~30），建议改正。
 - `README.md` 写 `img_yt.zip` 9.25GB / `smtpd.db` 1.89GB，实际分别为 9.93GB / 2.03GB（数据增长导致，非必须修）。
-- `codex-handoff.md` 里「踩坑」「已完成」等章节已过期，仅作历史参考，**不要以它为准**，以本文件为准。
 - ~~`docs/附件3：大学生创新训练项目申报书-陈梓华.doc`（6.3MB）未被忽略也未入库~~ → 已于 2026-09-14 由用户删除，此项已解决。
 
 ---
@@ -503,7 +508,7 @@ window.dispatchEvent(new Event("themechange"));   // 各模块自行监听并 se
 3. 启动后 `curl http://localhost:8080/api/health` → `totalVideos=282481`、`categories=15`
 4. 前端改动过的话先 `mvn -s mvn-settings.xml process-resources`，再 `Ctrl+F5`
 5. 浏览器逐页走查：
-   - `#/` 首页：Hero + 今日爆款卡（有真实视频）+ 三步说明 + 能力卡（**滚到底应全部可见**，不能空白）
+   - `#/` 首页：Hero + 真实案例卡 + 四章节研究路径
    - `#/predict`：输入「三毛水果艺术」→ 出参考案例 + 曲线 + KPI（峰值天 / 预测 Day30 / 参考案例数）
    - `#/ranking`：切「榜单范围 + 榜单口径」→ 搜索「火锅」（约 167 条）→ 点卡片开详情弹窗 → Esc 关闭
    - `#/insights`：直开/刷新都能加载（r = 0.9296），三张图正常
@@ -520,19 +525,12 @@ window.dispatchEvent(new Event("themechange"));   // 各模块自行监听并 se
 
 - 分支 `main`，远程 `origin`；工作区应保持干净，提交信息用中文描述性短句（沿用现有风格）。
 - **提交前必查**：`git status` + `git check-ignore data/ target/ mvn-settings.xml`
-- `.gitignore` 当前忽略：`/data/`、`/target/`、`/logs/`、`*.log`、`.m2/`、`.idea/`、`*.iml`、`.vscode/`、`.claude/`、`mvn-settings.xml`、`/docs/PLAN.md`、`/docs/成果清单.md`、`/docs/DEMO.md`、`/codex-handoff.md`
-- GitHub 上包含：`README.md`、`LICENSE`、`docs/screenshots/*.png`、`docs/trae-handoff.md`、`docs/trae-prompt.md` 与源码
+- `.gitignore` 当前忽略：`/data/`、`/target/`、`/logs/`、`*.log`、`.m2/`、`.idea/`、`*.iml`、`.vscode/`、`.claude/`、`mvn-settings.xml`
+- 当前文档资产包括：`README.md`、`docs/trae-handoff.md`、首页规范、改动总结、界面截图与源码
 
 ### 文档策略
 
-内部文档默认「本地保留」（避免大体量内部材料进仓库）：
-`docs/PLAN.md`、`docs/DEMO.md`、`docs/成果清单.md`、`codex-handoff.md` 都**不在** Git 里。
-
-**例外**：本文件 `docs/trae-handoff.md` 与配套的 `docs/trae-prompt.md` 已入库并推送 GitHub，
-所以接手方只要拿到仓库就能读到交接说明。
-
-> 若 Trae 在另一台机器上工作，PLAN / DEMO / 成果清单 / 上一轮交接记录需要用户额外提供；
-> 拿不到也不影响接手 —— 本文件已把这些文档的关键结论都收进来了。
+当前只保留与运行、维护、首页规范和改动追踪直接相关的文档；历史方案、重复提示词和旧版原型已清理。
 
 ### 沟通约定
 

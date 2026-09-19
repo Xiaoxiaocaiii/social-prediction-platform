@@ -2,11 +2,10 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="light">
     <title>多模态社交媒体流行度预测与可视化分析平台</title>
     <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="css/style.css?v=20260818">
+    <link rel="stylesheet" href="css/style.css?v=20260918-home-grid-2">
 </head>
 <body>
 <header class="topbar">
@@ -31,77 +30,85 @@
 
 <main>
     <section id="page-trend" class="page active">
-        <div class="hero-split">
+        <section class="hero" id="hero">
             <div class="hero-copy">
-                <div class="page-overline">POPULARITY PREDICTION PLATFORM</div>
-                <h1>预测内容<br><span class="mark">30天流行度</span></h1>
-                <p class="hero-sub">输入文案或关键词，基于 282,481 条真实 YouTube 视频，检索相似案例并生成未来 30 天热度趋势。</p>
-                <div class="trend-search-wrap">
-                    <input id="trend-search" class="input trend-search" type="text"
-                           placeholder="输入文案或关键词，例如：三毛水果艺术">
-                    <button id="trend-search-btn" class="btn primary">开始预测</button>
+                <div class="eyebrow">A REAL-DATA POPULARITY STUDY</div>
+                <h1><span class="title-lead">从真实案例，</span><span class="title-accent">理解内容如何变热</span></h1>
+                <p>平台把视频文本、封面和 30 天热度序列组织成可检索、可预测、可追溯的分析过程。</p>
+                <div class="search">
+                    <input id="trend-search" type="text" placeholder="输入你想研究的选题，例如：三毛水果艺术">
+                    <button id="trend-search-btn" type="button">开始研究</button>
                 </div>
-                <div class="trend-chips">
-                    <span class="trend-chip">三毛水果艺术</span>
-                    <span class="trend-chip">火锅</span>
-                    <span class="trend-chip">cooking</span>
-                    <span class="trend-chip">美食</span>
-                </div>
-                <div class="hero-stats">
-                    <div class="hero-stat"><span class="hero-stat-num">282,481</span><span class="hero-stat-label">真实视频</span></div>
-                    <div class="hero-stat"><span class="hero-stat-num">15</span><span class="hero-stat-label">内容分类</span></div>
-                    <div class="hero-stat"><span class="hero-stat-num">30</span><span class="hero-stat-label">天热度序列</span></div>
+                <p class="hero-note">当前展示的是基线预测路径：检索相关案例，平均真实 30 天曲线。</p>
+                <div class="stats">
+                    <div class="stat"><span class="stat-index">DATASET / 01</span><strong>282,481</strong><span>真实视频</span></div>
+                    <div class="stat"><span class="stat-index">SCOPE / 02</span><strong>15</strong><span>内容分类</span></div>
+                    <div class="stat"><span class="stat-index">TIME / 03</span><strong>30</strong><span>天热度序列</span></div>
                 </div>
             </div>
-            <div class="hero-preview reveal" id="hero-preview" aria-label="今日爆款预览">
+            <a class="start-btn" href="#data">研究路径</a>
+            <div class="hero-preview" id="hero-preview" aria-label="真实案例预览">
                 <div class="preview-skeleton skeleton"></div>
             </div>
-        </div>
+        </section>
 
-        <div class="section-block how-section reveal">
-            <div class="section-eyebrow">HOW IT WORKS</div>
-            <h2 class="section-title">三步看懂流行度</h2>
-            <div class="how-grid">
-                <div class="how-step">
-                    <span class="how-num">01</span>
-                    <h3>输入文案或关键词</h3>
-                    <p>描述你想发布的内容，或直接搜索一个选题。</p>
-                </div>
-                <div class="how-step">
-                    <span class="how-num">02</span>
-                    <h3>匹配真实历史案例</h3>
-                    <p>在 28 万条视频中，检索最相似的参考案例。</p>
-                </div>
-                <div class="how-step">
-                    <span class="how-num">03</span>
-                    <h3>生成 30 天热度趋势</h3>
-                    <p>基于参考案例的真实曲线，生成未来 30 天预测。</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="section-block capability-section reveal">
-            <div class="section-eyebrow">EXPLORE</div>
-            <h2 class="section-title">用真实数据做判断</h2>
-            <div class="capability-grid">
-                <a class="capability-card" href="#/ranking">
-                    <span class="capability-num">01</span>
-                    <h3>热度排行榜</h3>
-                    <p>浏览 28 万条真实视频，按分类与热度口径筛选。</p>
-                    <span class="capability-link">进入 →</span>
-                </a>
-                <a class="capability-card" href="#/insights">
-                    <span class="capability-num">02</span>
-                    <h3>数据洞察</h3>
-                    <p>看分类对比、相关性，以及热度衰减规律。</p>
-                    <span class="capability-link">进入 →</span>
-                </a>
-                <a class="capability-card" href="#/compare">
-                    <span class="capability-num">03</span>
-                    <h3>曲线对比</h3>
-                    <p>叠加 2~3 个视频的真实热度曲线。</p>
-                    <span class="capability-link">进入 →</span>
-                </a>
+        <div class="chapter-layout">
+            <nav class="chapter-bar" aria-label="首页章节">
+                <a class="chapter-link active" data-index="01" href="#data">数据基础</a>
+                <a class="chapter-link" data-index="02" href="#retrieval">检索增强</a>
+                <a class="chapter-link" data-index="03" href="#temporal">时序预测</a>
+                <a class="chapter-link" data-index="04" href="#case">真实案例</a>
+            </nav>
+            <div class="chapter-content">
+                <section class="chapter" id="data">
+                    <div class="chapter-inner data-grid">
+                        <div class="data-copy">
+                            <div class="eyebrow">01 · DATA FOUNDATION</div>
+                            <h2>先把每条视频还原成一组真实数据</h2>
+                            <p>平台分析的不是一张静态榜单，而是同一视频里的文本、封面和 30 天热度序列。三类信息放在一起，才能同时理解内容是什么，以及热度如何变化。</p>
+                            <div class="data-points">
+                                <div class="data-point"><strong>282,481</strong><span>真实视频</span></div>
+                                <div class="data-point"><strong>15</strong><span>内容分类</span></div>
+                                <div class="data-point"><strong>30</strong><span>天序列</span></div>
+                            </div>
+                            <span class="evidence-label">OUTPUT · 可检索的真实样本</span>
+                            <p class="chapter-close">先确认数据对象，再进入检索和时序分析，后续每个结论都能回到这组原始证据。</p>
+                        </div>
+                        <div class="data-diagram">
+                            <div class="data-evidence"><strong>01</strong><div><b>文本内容</b><span>标题、标签和描述，说明视频在讨论什么，也为相似选题检索提供文本依据。</span></div></div>
+                            <div class="data-evidence"><strong>02</strong><div><b>视频封面</b><span>保留案例的视觉线索，帮助用户回看原始视频，不把封面当成当前预测输入。</span></div></div>
+                            <div class="data-evidence"><strong>03</strong><div><b>热度序列</b><span>统一记录 Day1 到 Day30 的热度位置，为后续峰值、Day30 和衰减率提供依据。</span></div></div>
+                        </div>
+                    </div>
+                </section>
+                <section class="chapter" id="retrieval">
+                    <div class="chapter-inner retrieval-layout">
+                        <div class="retrieval-copy">
+                            <div class="eyebrow">02 · RETRIEVAL AUGMENTATION</div>
+                            <h2>从研究选题找到可回看的真实参考</h2>
+                            <p>用户输入一个研究选题或文案后，平台会从标题、标签和描述等真实文本字段中寻找相似内容，先建立可解释的参考范围。</p>
+                            <span class="evidence-label">OUTPUT · 可追溯参考集合</span>
+                            <p class="chapter-close">检索不是替用户做结论，而是把值得比较的历史案例先找出来。</p>
+                        </div>
+                        <div class="retrieval-flow">
+                            <div class="flow-card"><b>输入内容</b><span>标题、标签、描述与可选图片。</span><small class="flow-meta">BASIS · 用户研究选题</small></div>
+                            <div class="flow-card"><b>相关检索</b><span>本地全文检索（FTS5）先找候选文本，再用 BM25 按相关度排序；短文本或异常查询会走 LIKE 兜底。</span><small class="flow-meta">ROLE · 缩小参考范围</small></div>
+                            <div class="flow-card"><b>参考集合</b><span>保留视频标题、分类和完整热度曲线，便于继续查看真实案例。</span><small class="flow-meta">OUTPUT · 可回看的邻居</small></div>
+                        </div>
+                    </div>
+                </section>
+                <section class="chapter" id="temporal">
+                    <div class="chapter-inner temporal-layout">
+                        <div class="chapter-copy"><div class="eyebrow">03 · TEMPORAL PREDICTION</div><h2>把离散热度放回同一条时间线上</h2><p>参考案例都有统一的 Day1 到 Day30 位置。平台逐日平均这些真实曲线，形成当前的基线趋势，再提取峰值天、Day30 和衰减率。</p><span class="evidence-label">OUTPUT · 可解释的预测路径</span><p class="chapter-close">这是一条用于理解共同趋势的基线路径，不代表已经训练完成的模型，也不承诺未来走势。</p></div>
+                        <div class="method-grid"><article class="method"><div class="method-num">01</div><h3>对齐时间</h3><p>每个案例都使用统一的 Day1 到 Day30 热度位置。</p><span class="evidence-label">BASIS · 30 天序列</span></article><article class="method"><div class="method-num">02</div><h3>聚合曲线</h3><p>按照每天的热度位置逐日平均，形成基线趋势。</p><span class="evidence-label">ROLE · 形成预测路径</span></article><article class="method"><div class="method-num">03</div><h3>提取指标</h3><p>通过峰值天、Day30 和衰减率继续比较真实视频。</p><span class="evidence-label">OUTPUT · 可解释结果</span></article></div>
+                    </div>
+                </section>
+                <section class="chapter" id="case">
+                    <div class="chapter-inner case-section">
+                        <div class="chapter-copy"><div class="eyebrow">04 · TRACEABLE EVIDENCE</div><h2>每个结论，都能回到具体视频</h2><p>预测和洞察不是脱离数据源的结论。用户可以回看标题、分类、Day30、峰值天和完整 30 天曲线，继续验证平台展示的规律。</p><span class="evidence-label">OUTPUT · 可回到证据源</span><p class="chapter-close">从整体规律回到单个案例，才能知道一个结论适用于谁，也能看见它的边界。</p></div>
+                        <div class="case-layout"><article class="case-card"><div class="case-cover"></div><div><div class="evidence-kicker">CASE DETAIL · TRACEABLE</div><h3>真实视频案例</h3><div class="case-meta"><span>People Blogs</span><span>Day30 排行</span></div><p>回看标题、分类、Day30 热度、峰值天和完整 30 天趋势。</p><div class="case-stats"><div><small>Peak Day</small><b>03</b></div><div><small>Day30</small><b>6.4</b></div></div></div></article><article class="route-card"><h3>继续验证</h3><p>三个正式页面分别回答“谁更热”“整体怎样”“差异在哪里”。</p><div class="route-list"><a class="route" href="#/ranking"><b>排行榜</b><span>筛选真实视频</span></a><a class="route" href="#/insights"><b>数据洞察</b><span>查看整体规律</span></a><a class="route" href="#/compare"><b>曲线对比</b><span>验证个体差异</span></a></div><span class="evidence-label">ROLE · 回到证据源</span></article></div>
+                    </div>
+                </section>
             </div>
         </div>
     </section>
@@ -363,16 +370,16 @@
 
 <div id="toast" class="toast"></div>
 
-<script src="lib/echarts.min.js?v=20260818"></script>
-<script src="js/theme.js?v=20260818"></script>
+<script src="lib/echarts.min.js?v=20260917"></script>
+<script src="js/theme.js?v=20260917"></script>
 <script src="js/effects.js?v=20260818"></script>
 <script src="js/api.js?v=20260818"></script>
-<script src="js/app.js?v=20260818"></script>
-<script src="js/router.js?v=20260818"></script>
+<script src="js/app.js?v=20260918-home-migration"></script>
+<script src="js/router.js?v=20260918-home-migration"></script>
 <script src="js/predict.js?v=20260818"></script>
 <script src="js/ranking.js?v=20260818"></script>
 <script src="js/insights.js?v=20260818"></script>
 <script src="js/compare.js?v=20260818"></script>
-<script src="js/trend.js?v=20260818"></script>
+<script src="js/trend.js?v=20260918-home-migration"></script>
 </body>
 </html>

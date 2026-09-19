@@ -9,6 +9,7 @@
         navButtons.forEach(function (btn) {
             btn.classList.toggle("active", btn.dataset.page === name);
         });
+        document.body.classList.toggle("home-route", name === "trend");
         pages.forEach(function (page) {
             page.classList.toggle("active", page.id === "page-" + name);
         });
