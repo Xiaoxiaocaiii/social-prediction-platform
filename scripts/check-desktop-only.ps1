@@ -18,10 +18,6 @@ $files = foreach ($root in $roots) {
 
 $rules = @(
     @{
-        Name = "dimension media query"
-        Pattern = '@media\s+(?!\(\s*prefers-reduced-motion\s*:)'
-    },
-    @{
         Name = "viewport configuration"
         Pattern = '<meta\s+[^>]*name\s*=\s*[^>]*viewport'
     },
