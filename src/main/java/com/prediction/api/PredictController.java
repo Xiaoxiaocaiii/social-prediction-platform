@@ -32,7 +32,7 @@ public class PredictController {
     @PostMapping(value = "/predict", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<PredictionResult>> predict(
             @RequestParam("text") String text,
-            @RequestParam(defaultValue = "5") int topK,
+            @RequestParam(defaultValue = "30") int topK,
             @RequestPart(value = "file", required = false) MultipartFile file) throws IOException {
         if (text == null || text.isBlank()) {
             return ResponseEntity.badRequest().body(ApiResponse.error(400, "text 不能为空"));

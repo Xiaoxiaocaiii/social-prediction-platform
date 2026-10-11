@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="color-scheme" content="light">
-    <title>多模态社交媒体流行度预测与可视化分析平台</title>
+    <title>社交媒体分析平台</title>
     <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="css/style.css?v=20260918-home-grid-2">
+    <link rel="stylesheet" href="css/style.css?v=20261007-predict-title-scale-1">
 </head>
 <body>
 <header class="topbar">
@@ -16,117 +16,403 @@
                 <polyline points="3 17 9 11 13 15 21 7"></polyline>
                 <polyline points="15 7 21 7 21 13"></polyline>
             </svg>
-            <div class="brand-title">流行度预测平台</div>
+            <div id="brand-title" class="brand-title">社交媒体分析平台</div>
         </div>
-        <div class="brand-sub">SMTPD · 282,481 条真实数据</div>
+        <div id="brand-sub" class="brand-sub">REAL DATA · RESEARCH WORKSPACE</div>
     </a>
-    <nav class="nav">
-        <a class="nav-btn" href="#/predict" data-page="predict">上传预测</a>
-        <a class="nav-btn" href="#/ranking" data-page="ranking">热度排行榜</a>
-        <a class="nav-btn" href="#/insights" data-page="insights">数据洞察</a>
-        <a class="nav-btn" href="#/compare" data-page="compare">曲线对比</a>
-    </nav>
+    <div class="topbar-actions">
+        <div id="workbench-menu" class="workbench-menu">
+            <button id="workbench-toggle" class="workbench-toggle" type="button"
+                    aria-label="打开工作台菜单" aria-expanded="false" aria-haspopup="menu">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <rect x="4" y="5" width="16" height="14" rx="2"></rect>
+                    <path d="M8 9h8M8 13h5"></path>
+                </svg>
+                <span id="workbench-current">工作台</span>
+                <span class="workbench-chevron" aria-hidden="true">⌄</span>
+            </button>
+            <div id="workbench-panel" class="workbench-panel" role="menu">
+                <div class="workbench-panel-label">切换工作台</div>
+                <a class="workbench-link" data-route="trend" href="#/" role="menuitem">
+                    <span class="workbench-index">00</span>
+                    <span>
+                        <strong>首页</strong>
+                        <small>研究工作台总览</small>
+                    </span>
+                </a>
+                <a class="workbench-link" data-route="predict" href="#/predict" role="menuitem">
+                    <span class="workbench-index">01</span>
+                    <span>
+                        <strong>流行度预测</strong>
+                        <small>热度参考趋势</small>
+                    </span>
+                </a>
+                <a class="workbench-link" data-route="social-network" href="#/social-network" role="menuitem">
+                    <span class="workbench-index">02</span>
+                    <span>
+                        <strong>社交网络分析</strong>
+                        <small>关系、互动与主题</small>
+                    </span>
+                </a>
+            </div>
+        </div>
+        <nav id="nav-shell" class="nav" aria-label="页面返回">
+            <a id="nav-back" class="nav-back hidden" href="#/" aria-label="返回首页" title="返回首页">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M19 12H5"></path>
+                    <path d="M11 6 5 12l6 6"></path>
+                </svg>
+            </a>
+        </nav>
+    </div>
 </header>
 
 <main>
-    <section id="page-trend" class="page active">
-        <section class="hero" id="hero">
-            <div class="hero-copy">
-                <div class="eyebrow">A REAL-DATA POPULARITY STUDY</div>
-                <h1><span class="title-lead">从真实案例，</span><span class="title-accent">理解内容如何变热</span></h1>
-                <p>平台把视频文本、封面和 30 天热度序列组织成可检索、可预测、可追溯的分析过程。</p>
-                <div class="search">
-                    <input id="trend-search" type="text" placeholder="输入你想研究的选题，例如：三毛水果艺术">
-                    <button id="trend-search-btn" type="button">开始研究</button>
+    <section id="page-trend" class="page active" aria-label="平台首页">
+        <div class="home-landing">
+            <section class="home-intro-shell" aria-label="平台介绍">
+                <div class="home-intro-content">
+                    <div class="home-kicker">REAL DATA · RESEARCH WORKSPACE</div>
+                    <div class="home-brand-lockup">
+                        <svg class="home-brand-mark" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M4 17 9 12l4 3 7-8"></path>
+                            <path d="M15 7h5v5"></path>
+                        </svg>
+                        <span>社交媒体分析平台</span>
+                    </div>
+                    <h1>让社交媒体研究<br><span>更清晰</span></h1>
+                    <p class="home-intro-description">
+                        基于真实内容、热度序列、用户关系与互动数据，
+                        完成可追溯的分析。
+                    </p>
+                    <div class="home-actions" aria-label="进入分析工作台">
+                        <a class="home-action home-action-primary" href="#/predict">
+                            <span>进入流行度预测</span>
+                            <b aria-hidden="true">↗</b>
+                        </a>
+                        <a class="home-action home-action-secondary" href="#/social-network">
+                            <span>进入社交网络分析</span>
+                            <b aria-hidden="true">↗</b>
+                        </a>
+                    </div>
+                    <div class="home-evidence-line">
+                        <span>真实视频样本</span>
+                        <i aria-hidden="true"></i>
+                        <span>用户关系数据</span>
+                        <i aria-hidden="true"></i>
+                        <span>30 天热度序列</span>
+                    </div>
                 </div>
-                <p class="hero-note">当前展示的是基线预测路径：检索相关案例，平均真实 30 天曲线。</p>
-                <div class="stats">
-                    <div class="stat"><span class="stat-index">DATASET / 01</span><strong>282,481</strong><span>真实视频</span></div>
-                    <div class="stat"><span class="stat-index">SCOPE / 02</span><strong>15</strong><span>内容分类</span></div>
-                    <div class="stat"><span class="stat-index">TIME / 03</span><strong>30</strong><span>天热度序列</span></div>
+            </section>
+            <section class="home-demo-shell" aria-label="产品演示">
+                <div class="home-demo-window">
+                    <div class="home-demo-chrome">
+                        <span class="home-demo-dot" aria-hidden="true"></span>
+                        <span class="home-demo-dot" aria-hidden="true"></span>
+                        <span class="home-demo-dot" aria-hidden="true"></span>
+                        <span class="home-demo-address">research.workspace</span>
+                        <button id="home-demo-pause" class="home-demo-pause" type="button"
+                                aria-label="暂停首页演示" aria-pressed="false">暂停</button>
+                    </div>
+                    <div class="home-demo-body">
+                        <div class="home-demo-header">
+                            <div>
+                                <span class="home-demo-overline">LIVE WORKSPACE PREVIEW</span>
+                                <strong id="home-demo-title">流行度预测</strong>
+                            </div>
+                            <span id="home-demo-state" class="home-demo-state" aria-live="polite">分析完成</span>
+                        </div>
+                        <div class="home-demo-toolbar">
+                            <span class="home-demo-tool-label">研究主题</span>
+                            <span id="home-demo-input" class="home-demo-input">城市夜跑装备分享</span>
+                            <span id="home-demo-submit" class="home-demo-submit">开始推演</span>
+                        </div>
+                        <div id="home-demo-predict" class="home-demo-content home-demo-mode">
+                            <div class="home-demo-chart-panel">
+                                <div class="home-demo-panel-heading">
+                                    <span>30 天热度参考趋势</span>
+                                    <small>真实案例聚合</small>
+                                </div>
+                                <div class="home-demo-chart" aria-label="热度趋势预览">
+                                    <span class="home-demo-chart-grid"></span>
+                                    <svg viewBox="0 0 520 180" preserveAspectRatio="none" aria-hidden="true">
+                                        <path id="home-demo-chart-line" d="M8 148 C55 116 76 68 123 76 S181 118 224 95 S283 46 324 61 S381 91 422 62 S467 48 512 25"></path>
+                                        <path id="home-demo-chart-area" class="home-demo-chart-area" d="M8 148 C55 116 76 68 123 76 S181 118 224 95 S283 46 324 61 S381 91 422 62 S467 48 512 25 L512 170 L8 170 Z"></path>
+                                    </svg>
+                                </div>
+                                <div class="home-demo-kpis">
+                                    <div><small>峰值天</small><strong id="home-demo-peak">12</strong></div>
+                                    <div><small>第 30 天热度</small><strong id="home-demo-day30">8.42</strong></div>
+                                    <div><small>参与样本</small><strong id="home-demo-samples">36</strong></div>
+                                </div>
+                            </div>
+                            <div class="home-demo-side-panel">
+                                <span class="home-demo-panel-heading">参考案例</span>
+                                <div class="home-demo-case"></div>
+                                <div class="home-demo-case"></div>
+                                <div class="home-demo-case"></div>
+                            </div>
+                        </div>
+                        <div id="home-demo-social" class="home-demo-social home-demo-mode hidden">
+                            <div class="home-demo-network-panel">
+                                <div class="home-demo-panel-heading">
+                                    <span>局部关系网络</span>
+                                    <small>真实关注关系</small>
+                                </div>
+                                <div class="home-demo-network" aria-label="社交网络关系预览">
+                                    <span class="home-demo-network-grid"></span>
+                                    <span class="home-demo-edge edge-a"></span>
+                                    <span class="home-demo-edge edge-b"></span>
+                                    <span class="home-demo-edge edge-c"></span>
+                                    <span class="home-demo-edge edge-d"></span>
+                                    <span class="home-demo-node node-main">WEF</span>
+                                    <span class="home-demo-node node-a">CFR</span>
+                                    <span class="home-demo-node node-b">CSIS</span>
+                                    <span class="home-demo-node node-c">RAND</span>
+                                    <span class="home-demo-node node-d">OECD</span>
+                                </div>
+                            </div>
+                            <div class="home-demo-user-panel">
+                                <span class="home-demo-panel-heading">用户详情</span>
+                                <strong>World Economic Forum</strong>
+                                <span class="home-demo-user-meta">节点状态 · available</span>
+                                <div class="home-demo-user-stat"><span>入度</span><b>239</b></div>
+                                <div class="home-demo-user-stat"><span>互动推文</span><b>1,284</b></div>
+                                <span class="home-demo-drawer-line"></span>
+                                <span class="home-demo-drawer-line short"></span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
+            </section>
+            <a class="home-scroll-cue" href="#home-quickstart-section" aria-label="继续探索快速上手">
+                <span class="home-scroll-line" aria-hidden="true"></span>
+                <span class="home-scroll-arrow" aria-hidden="true"></span>
+            </a>
+        </div>
+        <section id="home-quickstart-section" class="home-section home-quickstart"
+                 aria-labelledby="home-quickstart-title">
+            <div class="home-section-heading">
+                <span class="home-section-kicker">GET STARTED · 快速上手</span>
+                <h2 id="home-quickstart-title">三步进入研究工作台</h2>
+                <p>从选择研究方向开始，逐步完成输入、分析和结果查看。</p>
             </div>
-            <a class="start-btn" href="#data">研究路径</a>
-            <div class="hero-preview" id="hero-preview" aria-label="真实案例预览">
-                <div class="preview-skeleton skeleton"></div>
+            <div class="home-quickstart-track">
+                <article class="home-quick-card">
+                    <span class="home-quick-number">01</span>
+                    <div class="home-quick-visual quick-select" aria-hidden="true">
+                        <span>选择工作台</span>
+                        <i></i>
+                        <b></b>
+                    </div>
+                    <h3>选择研究方向</h3>
+                    <p>进入流行度预测或社交网络分析。</p>
+                </article>
+                <span class="home-quick-connector" aria-hidden="true">→</span>
+                <article class="home-quick-card">
+                    <span class="home-quick-number">02</span>
+                    <div class="home-quick-visual quick-input" aria-hidden="true">
+                        <span>研究对象</span>
+                        <b>城市夜跑装备分享</b>
+                        <i></i>
+                    </div>
+                    <h3>输入研究对象</h3>
+                    <p>输入主题，或查看当前可用数据集。</p>
+                </article>
+                <span class="home-quick-connector" aria-hidden="true">→</span>
+                <article class="home-quick-card">
+                    <span class="home-quick-number">03</span>
+                    <div class="home-quick-visual quick-result" aria-hidden="true">
+                        <i></i><i></i><i></i><b>分析结果</b>
+                    </div>
+                    <h3>查看分析结果</h3>
+                    <p>查看趋势、关系网络和可追溯的分析依据。</p>
+                </article>
             </div>
         </section>
-
-        <div class="chapter-layout">
-            <nav class="chapter-bar" aria-label="首页章节">
-                <a class="chapter-link active" data-index="01" href="#data">数据基础</a>
-                <a class="chapter-link" data-index="02" href="#retrieval">检索增强</a>
-                <a class="chapter-link" data-index="03" href="#temporal">时序预测</a>
-                <a class="chapter-link" data-index="04" href="#case">真实案例</a>
-            </nav>
-            <div class="chapter-content">
-                <section class="chapter" id="data">
-                    <div class="chapter-inner data-grid">
-                        <div class="data-copy">
-                            <div class="eyebrow">01 · DATA FOUNDATION</div>
-                            <h2>先把每条视频还原成一组真实数据</h2>
-                            <p>平台分析的不是一张静态榜单，而是同一视频里的文本、封面和 30 天热度序列。三类信息放在一起，才能同时理解内容是什么，以及热度如何变化。</p>
-                            <div class="data-points">
-                                <div class="data-point"><strong>282,481</strong><span>真实视频</span></div>
-                                <div class="data-point"><strong>15</strong><span>内容分类</span></div>
-                                <div class="data-point"><strong>30</strong><span>天序列</span></div>
-                            </div>
-                            <span class="evidence-label">OUTPUT · 可检索的真实样本</span>
-                            <p class="chapter-close">先确认数据对象，再进入检索和时序分析，后续每个结论都能回到这组原始证据。</p>
-                        </div>
-                        <div class="data-diagram">
-                            <div class="data-evidence"><strong>01</strong><div><b>文本内容</b><span>标题、标签和描述，说明视频在讨论什么，也为相似选题检索提供文本依据。</span></div></div>
-                            <div class="data-evidence"><strong>02</strong><div><b>视频封面</b><span>保留案例的视觉线索，帮助用户回看原始视频，不把封面当成当前预测输入。</span></div></div>
-                            <div class="data-evidence"><strong>03</strong><div><b>热度序列</b><span>统一记录 Day1 到 Day30 的热度位置，为后续峰值、Day30 和衰减率提供依据。</span></div></div>
-                        </div>
-                    </div>
-                </section>
-                <section class="chapter" id="retrieval">
-                    <div class="chapter-inner retrieval-layout">
-                        <div class="retrieval-copy">
-                            <div class="eyebrow">02 · RETRIEVAL AUGMENTATION</div>
-                            <h2>从研究选题找到可回看的真实参考</h2>
-                            <p>用户输入一个研究选题或文案后，平台会从标题、标签和描述等真实文本字段中寻找相似内容，先建立可解释的参考范围。</p>
-                            <span class="evidence-label">OUTPUT · 可追溯参考集合</span>
-                            <p class="chapter-close">检索不是替用户做结论，而是把值得比较的历史案例先找出来。</p>
-                        </div>
-                        <div class="retrieval-flow">
-                            <div class="flow-card"><b>输入内容</b><span>标题、标签、描述与可选图片。</span><small class="flow-meta">BASIS · 用户研究选题</small></div>
-                            <div class="flow-card"><b>相关检索</b><span>本地全文检索（FTS5）先找候选文本，再用 BM25 按相关度排序；短文本或异常查询会走 LIKE 兜底。</span><small class="flow-meta">ROLE · 缩小参考范围</small></div>
-                            <div class="flow-card"><b>参考集合</b><span>保留视频标题、分类和完整热度曲线，便于继续查看真实案例。</span><small class="flow-meta">OUTPUT · 可回看的邻居</small></div>
-                        </div>
-                    </div>
-                </section>
-                <section class="chapter" id="temporal">
-                    <div class="chapter-inner temporal-layout">
-                        <div class="chapter-copy"><div class="eyebrow">03 · TEMPORAL PREDICTION</div><h2>把离散热度放回同一条时间线上</h2><p>参考案例都有统一的 Day1 到 Day30 位置。平台逐日平均这些真实曲线，形成当前的基线趋势，再提取峰值天、Day30 和衰减率。</p><span class="evidence-label">OUTPUT · 可解释的预测路径</span><p class="chapter-close">这是一条用于理解共同趋势的基线路径，不代表已经训练完成的模型，也不承诺未来走势。</p></div>
-                        <div class="method-grid"><article class="method"><div class="method-num">01</div><h3>对齐时间</h3><p>每个案例都使用统一的 Day1 到 Day30 热度位置。</p><span class="evidence-label">BASIS · 30 天序列</span></article><article class="method"><div class="method-num">02</div><h3>聚合曲线</h3><p>按照每天的热度位置逐日平均，形成基线趋势。</p><span class="evidence-label">ROLE · 形成预测路径</span></article><article class="method"><div class="method-num">03</div><h3>提取指标</h3><p>通过峰值天、Day30 和衰减率继续比较真实视频。</p><span class="evidence-label">OUTPUT · 可解释结果</span></article></div>
-                    </div>
-                </section>
-                <section class="chapter" id="case">
-                    <div class="chapter-inner case-section">
-                        <div class="chapter-copy"><div class="eyebrow">04 · TRACEABLE EVIDENCE</div><h2>每个结论，都能回到具体视频</h2><p>预测和洞察不是脱离数据源的结论。用户可以回看标题、分类、Day30、峰值天和完整 30 天曲线，继续验证平台展示的规律。</p><span class="evidence-label">OUTPUT · 可回到证据源</span><p class="chapter-close">从整体规律回到单个案例，才能知道一个结论适用于谁，也能看见它的边界。</p></div>
-                        <div class="case-layout"><article class="case-card"><div class="case-cover"></div><div><div class="evidence-kicker">CASE DETAIL · TRACEABLE</div><h3>真实视频案例</h3><div class="case-meta"><span>People Blogs</span><span>Day30 排行</span></div><p>回看标题、分类、Day30 热度、峰值天和完整 30 天趋势。</p><div class="case-stats"><div><small>Peak Day</small><b>03</b></div><div><small>Day30</small><b>6.4</b></div></div></div></article><article class="route-card"><h3>继续验证</h3><p>三个正式页面分别回答“谁更热”“整体怎样”“差异在哪里”。</p><div class="route-list"><a class="route" href="#/ranking"><b>排行榜</b><span>筛选真实视频</span></a><a class="route" href="#/insights"><b>数据洞察</b><span>查看整体规律</span></a><a class="route" href="#/compare"><b>曲线对比</b><span>验证个体差异</span></a></div><span class="evidence-label">ROLE · 回到证据源</span></article></div>
-                    </div>
-                </section>
+        <section class="home-section home-scenes" aria-labelledby="home-scenes-title">
+            <div class="home-section-heading">
+                <span class="home-section-kicker">USE CASES · 适用场景</span>
+                <h2 id="home-scenes-title">让研究从一个问题开始</h2>
+                <p>选择与你的研究任务最接近的入口，快速进入可验证的分析过程。</p>
             </div>
-        </div>
+            <div class="home-scene-grid">
+                <article class="home-scene-card" tabindex="0" aria-expanded="false" data-scene="predict">
+                    <div class="home-scene-icon" aria-hidden="true">
+                        <svg viewBox="0 0 48 48"><path d="M8 34 18 24l7 5 15-17"></path><path d="M31 12h9v9"></path></svg>
+                    </div>
+                    <span class="home-scene-index">01</span>
+                    <h3>热度趋势研究</h3>
+                    <p>从真实内容和历史序列中，观察主题热度如何变化。</p>
+                    <span class="home-scene-link">查看研究方向 <b aria-hidden="true">↗</b></span>
+                    <div class="home-scene-detail">
+                        <p>你将看到主题热度参考趋势、历史序列和结果边界。</p>
+                        <a href="#/predict">进入流行度预测 <b aria-hidden="true">↗</b></a>
+                    </div>
+                </article>
+                <article class="home-scene-card" tabindex="0" aria-expanded="false" data-scene="social-network">
+                    <div class="home-scene-icon" aria-hidden="true">
+                        <svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="5"></circle><circle cx="10" cy="12" r="4"></circle><circle cx="38" cy="13" r="4"></circle><circle cx="37" cy="37" r="4"></circle><path d="m20 21-7-6m15 5 7-4m-8 12 7 6"></path></svg>
+                    </div>
+                    <span class="home-scene-index">02</span>
+                    <h3>传播关系判断</h3>
+                    <p>从用户关系和互动数据中，识别关键节点与连接。</p>
+                    <span class="home-scene-link">查看研究方向 <b aria-hidden="true">↗</b></span>
+                    <div class="home-scene-detail">
+                        <p>你将看到关键节点、关系连接和互动结构。</p>
+                        <a href="#/social-network">进入社交网络分析 <b aria-hidden="true">↗</b></a>
+                    </div>
+                </article>
+                <article class="home-scene-card" tabindex="0" aria-expanded="false" data-scene="evidence">
+                    <div class="home-scene-icon" aria-hidden="true">
+                        <svg viewBox="0 0 48 48"><rect x="9" y="8" width="30" height="32" rx="3"></rect><path d="M16 17h16M16 24h16M16 31h9"></path></svg>
+                    </div>
+                    <span class="home-scene-index">03</span>
+                    <h3>研究证据整理</h3>
+                    <p>把数据、指标和分析结果放在同一个研究工作台中。</p>
+                    <span class="home-scene-link">查看研究说明 <b aria-hidden="true">↗</b></span>
+                    <div class="home-scene-detail">
+                        <p>平台会保留数据集、指标口径和分析结果之间的对应关系。</p>
+                    </div>
+                </article>
+                <article class="home-scene-card" tabindex="0" aria-expanded="false" data-scene="limits">
+                    <div class="home-scene-icon" aria-hidden="true">
+                        <svg viewBox="0 0 48 48"><path d="M24 8v32M8 24h32"></path><circle cx="24" cy="24" r="15"></circle><path d="m17 25 5 5 10-12"></path></svg>
+                    </div>
+                    <span class="home-scene-index">04</span>
+                    <h3>结果辅助判断</h3>
+                    <p>用清晰的趋势和关系结果，支持下一步研究判断。</p>
+                    <span class="home-scene-link">查看研究说明 <b aria-hidden="true">↗</b></span>
+                    <div class="home-scene-detail">
+                        <p>数据不足、部分可用和不可判断状态会被明确标记。</p>
+                    </div>
+                </article>
+            </div>
+        </section>
+        <section class="home-section home-advantages" aria-labelledby="home-advantages-title">
+            <div class="home-section-heading">
+                <span class="home-section-kicker">PRODUCT VALUE · 产品优势</span>
+                <h2 id="home-advantages-title">把分析过程讲清楚</h2>
+                <p>每一个结果，都对应真实的数据输入、清晰的过程和可复核的判断。</p>
+            </div>
+            <article class="home-advantage">
+                <div class="home-advantage-copy">
+                    <span class="home-advantage-index">01 / REAL DATA</span>
+                    <h3>从真实内容开始</h3>
+                    <p>把视频内容、热度序列和研究主题放进同一个分析起点，减少脱离数据的猜测。</p>
+                    <span class="home-advantage-note">真实样本 · 历史序列 · 研究主题</span>
+                </div>
+                <div class="home-advantage-visual home-advantage-data" aria-label="真实数据进入分析流程的动画">
+                    <span class="home-data-column column-a"></span>
+                    <span class="home-data-column column-b"></span>
+                    <span class="home-data-column column-c"></span>
+                    <svg class="home-data-trend" viewBox="0 0 320 160"
+                         preserveAspectRatio="none" aria-hidden="true">
+                        <polyline points="16,126 160,45 304,88"></polyline>
+                    </svg>
+                    <span class="home-data-label label-a">VIDEO</span>
+                    <span class="home-data-label label-b">TOPIC</span>
+                    <span class="home-data-label label-c">TREND</span>
+                </div>
+            </article>
+            <article class="home-advantage is-reversed">
+                <div class="home-advantage-copy">
+                    <span class="home-advantage-index">02 / TRACEABLE PROCESS</span>
+                    <h3>过程可以被追溯</h3>
+                    <p>从研究对象到指标口径，再到结果展示，让每一步都保留清晰的分析边界。</p>
+                    <span class="home-advantage-note">输入对象 → 分析过程 → 结果输出</span>
+                </div>
+                <div class="home-advantage-visual home-advantage-process" aria-label="分析过程步骤动画">
+                    <span class="home-process-line"></span>
+                    <span class="home-process-step step-a"><b>01</b><small>输入</small></span>
+                    <span class="home-process-step step-b"><b>02</b><small>计算</small></span>
+                    <span class="home-process-step step-c"><b>03</b><small>输出</small></span>
+                </div>
+            </article>
+            <article class="home-advantage">
+                <div class="home-advantage-copy">
+                    <span class="home-advantage-index">03 / NETWORK INSIGHT</span>
+                    <h3><span>看见关系，</span><span>而不只是数字</span></h3>
+                    <p>用关系网络呈现用户、主题和互动之间的连接，快速定位值得继续研究的节点。</p>
+                    <span class="home-advantage-note">中心节点 · 关系边 · 用户详情</span>
+                </div>
+                <div class="home-advantage-visual home-advantage-network" aria-label="社交网络关系展开动画">
+                    <span class="home-network-orbit orbit-a"></span>
+                    <span class="home-network-orbit orbit-b"></span>
+                    <span class="home-network-core">WEF</span>
+                    <span class="home-network-point point-a">CFR</span>
+                    <span class="home-network-point point-b">CSIS</span>
+                    <span class="home-network-point point-c">RAND</span>
+                </div>
+            </article>
+        </section>
+        <section class="home-section home-evidence" aria-labelledby="home-evidence-title">
+            <div class="home-section-heading">
+                <span class="home-section-kicker">EVIDENCE · 权威性支撑</span>
+                <h2 id="home-evidence-title">结论有依据，边界说清楚</h2>
+                <p>平台不夸大结果，只展示数据能够支持的判断，并保留分析过程中的限制。</p>
+            </div>
+            <div class="home-evidence-board">
+                <div class="home-evidence-main">
+                    <span class="home-evidence-status">RESEARCH WORKSPACE / AVAILABLE</span>
+                    <h3>每个结果都能回到数据</h3>
+                    <p>从数据集状态到指标目录，再到页面展示和导出结果，平台使用统一口径记录分析依据。</p>
+                    <div class="home-evidence-trace">
+                        <span><b>01</b> 数据集版本</span>
+                        <i aria-hidden="true"></i>
+                        <span><b>02</b> 指标口径</span>
+                        <i aria-hidden="true"></i>
+                        <span><b>03</b> 分析结果</span>
+                    </div>
+                </div>
+                <div class="home-evidence-list">
+                    <article class="home-evidence-card">
+                        <span class="home-evidence-card-icon">DATA</span>
+                        <div>
+                            <h3>真实数据范围</h3>
+                            <p>明确展示内容样本、用户关系和互动数据的可用状态。</p>
+                        </div>
+                    </article>
+                    <article class="home-evidence-card">
+                        <span class="home-evidence-card-icon">METRIC</span>
+                        <div>
+                            <h3>统一指标口径</h3>
+                            <p>页面统计和导出结果遵循同一套指标定义。</p>
+                        </div>
+                    </article>
+                    <article class="home-evidence-card">
+                        <span class="home-evidence-card-icon">LIMIT</span>
+                        <div>
+                            <h3>结果边界透明</h3>
+                            <p>数据不足、部分可用和不可判断状态会被明确标记。</p>
+                        </div>
+                    </article>
+                </div>
+            </div>
+        </section>
     </section>
 
     <section id="page-predict" class="page">
         <div class="page-head">
-            <div class="page-overline">SOCIAL PREDICTION PLATFORM · 01 PREDICT</div>
-            <h1>上传预测</h1>
-            <p>上传图片与文案，检索最相似的历史视频，预测未来 30 天热度曲线。</p>
+            <div class="page-overline">REAL DATA · POPULARITY STUDY</div>
+            <h1>流行度预测</h1>
+            <p>基于真实历史视频数据的热度推演工作台，输入研究主题，查看 30 天热度参考趋势。</p>
         </div>
-        <div class="predict-panel card-panel reveal">
+        <div id="predict-subject" class="predict-section">
+            <div class="predict-section-head">
+                <div class="page-overline">RESEARCH SUBJECT</div>
+                <h2>研究对象</h2>
+            </div>
+            <div class="predict-panel card-panel reveal">
             <div class="predict-input-row">
                 <div id="upload-zone" class="upload-zone">
                     <input id="predict-file" type="file" accept="image/*" hidden>
+                    <div class="field-label">图片材料（可选）</div>
                     <div id="upload-hint" class="upload-hint">
                         <div class="upload-icon">＋</div>
-                        <div>拖拽图片到此处，或点击选择</div>
-                        <div class="upload-sub">支持 JPG / PNG / WebP · 图片暂不参与预测</div>
+                        <div>拖拽图片到此处，或点击选择图片</div>
+                        <div class="upload-sub">支持 JPG / PNG / WebP</div>
+                        <div class="upload-sub">当前图片仅作记录和预览，不参与文本检索或热度计算</div>
                     </div>
                     <div id="upload-preview" class="upload-preview hidden">
                         <img id="upload-preview-img" alt="预览">
@@ -134,230 +420,422 @@
                     </div>
                 </div>
                 <div class="predict-fields">
-                    <label class="field-label" for="predict-text">文案</label>
+                    <label class="field-label" for="predict-text">研究文本</label>
                     <textarea id="predict-text" class="input textarea" rows="4"
-                              placeholder="输入视频文案，例如：今天教大家做一道红烧肉"></textarea>
+                              placeholder="输入视频标题、主题或文案，例如：今天教大家做一道红烧肉"></textarea>
+                    <div class="upload-sub">文本将匹配历史视频的标题、标签和描述字段。</div>
                     <div class="predict-actions">
-                        <label class="field-label" for="predict-topk">参考案例数</label>
-                        <select id="predict-topk" class="input">
-                            <option value="3">3</option>
-                            <option value="5" selected>5</option>
-                            <option value="10">10</option>
+                        <input id="predict-topk" type="hidden" value="30">
+                        <button id="predict-submit" class="btn primary">开始推演</button>
+                    </div>
+                    <div class="upload-sub">提交后将检索历史样本并生成 30 天热度参考趋势。</div>
+                </div>
+            </div>
+            </div>
+        </div>
+        <div id="predict-subject-summary" class="predict-subject-summary hidden">
+            <div>
+                <span class="page-overline">01 / RESEARCH SUBJECT</span>
+                <span class="predict-summary-label">研究对象</span>
+                <strong id="predict-summary-text" class="predict-summary-text"></strong>
+            </div>
+            <button id="predict-edit" class="btn" type="button">重新编辑</button>
+        </div>
+        <div id="predict-results-shell" class="predict-results-shell hidden">
+            <div class="predict-results-content">
+                <section id="predict-trend" class="predict-result-section card-panel">
+                    <div class="predict-section-head">
+                        <div class="page-overline">02 / POPULARITY PROJECTION</div>
+                        <h2>热度推演</h2>
+                    </div>
+                    <div id="predict-result" class="predict-result hidden">
+                        <div class="result-subtitle">30 天热度参考趋势</div>
+                        <div id="predict-note" class="result-note"></div>
+                        <div id="predict-status" class="predict-status result-note" aria-live="polite">
+                            <span id="predict-status-normal" class="predict-status-item hidden" data-status="normal">当前趋势由本次文本检索返回的历史案例曲线计算形成，仅用于查看相关历史数据的变化情况，不代表全部相关视频，也不代表未来热度。</span>
+                            <span id="predict-status-sparse" class="predict-status-item hidden" data-status="sparse">当前可用历史案例较少，该趋势仅用于辅助比较。</span>
+                            <span id="predict-status-fallback" class="predict-status-item hidden" data-status="fallback">未找到可展示的相似历史案例，当前曲线为全站平均热度参考趋势。</span>
+                        </div>
+                        <div class="result-kpis">
+                            <article class="result-kpi" aria-label="峰值天">
+                                <span class="result-kpi-label">峰值天</span>
+                                <span class="result-kpi-value" id="kpi-peak">—</span>
+                            </article>
+                            <article class="result-kpi" aria-label="第 30 天热度">
+                                <span class="result-kpi-label">第 30 天热度</span>
+                                <span class="result-kpi-value" id="kpi-day30">—</span>
+                            </article>
+                            <article class="result-kpi" aria-label="实际参与计算的样本数">
+                                <span class="result-kpi-label">实际参与计算的样本数</span>
+                                <span class="result-kpi-value" id="kpi-refs">—</span>
+                            </article>
+                        </div>
+                        <div id="predict-kpi-trend" class="result-kpi-trend"></div>
+                        <div id="predict-chart" class="predict-chart"></div>
+                    </div>
+                    <div id="predict-method" class="predict-method-block hidden">
+                        <div class="predict-section-head">
+                            <h3>数据口径</h3>
+                        </div>
+                        <div class="predict-method-grid">
+                            <div class="predict-method-row">
+                                <span class="predict-method-label">数据来源</span>
+                                <span id="predict-method-source" class="predict-method-value"></span>
+                            </div>
+                            <div class="predict-method-row">
+                                <span class="predict-method-label">匹配字段</span>
+                                <span id="predict-method-fields" class="predict-method-value"></span>
+                            </div>
+                            <div class="predict-method-row">
+                                <span class="predict-method-label">检索方式</span>
+                                <span id="predict-method-retrieval" class="predict-method-value"></span>
+                            </div>
+                            <div class="predict-method-row">
+                                <span class="predict-method-label">实际命中数</span>
+                                <span id="predict-method-matched-count" class="predict-method-value"></span>
+                            </div>
+                            <div class="predict-method-row">
+                                <span class="predict-method-label">实际参与计算数</span>
+                                <span id="predict-method-used-count" class="predict-method-value"></span>
+                            </div>
+                            <div class="predict-method-row">
+                                <span class="predict-method-label">计算方式</span>
+                                <span id="predict-method-aggregation" class="predict-method-value"></span>
+                            </div>
+                            <div class="predict-method-row">
+                                <span class="predict-method-label">图片状态</span>
+                                <span id="predict-method-image" class="predict-method-value"></span>
+                            </div>
+                            <div class="predict-method-row">
+                                <span class="predict-method-label">结果边界</span>
+                                <span id="predict-method-boundary" class="predict-method-value"></span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                <section id="predict-references" class="predict-result-section card-panel">
+                    <div class="predict-section-head">
+                        <div class="page-overline">03 / REFERENCE CASES</div>
+                        <h2>参考案例</h2>
+                    </div>
+                    <div id="predict-refs-wrap" class="predict-refs-wrap hidden">
+                        <div class="result-subtitle">本次文本检索返回的历史视频，可按需查看具体数据。</div>
+                        <div id="predict-refs" class="video-grid"></div>
+                        <button id="predict-refs-more" class="btn secondary predict-refs-more hidden" type="button">
+                            加载更多案例
+                        </button>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </section>
+
+    <section id="page-social-network" class="page social-network-page">
+        <div class="page-head social-network-head">
+            <div class="page-overline">REAL DATA · SOCIAL NETWORK STUDY</div>
+            <h1>社交网络分析</h1>
+            <p>基于真实用户关系、推文样本和质量报告，查看当前数据集与分析能力边界。</p>
+        </div>
+        <div id="social-network-status" class="social-network-status card-panel" aria-live="polite">
+            正在检查社交网络数据集…
+        </div>
+        <section id="social-network-dataset" class="social-network-dataset">
+            <div class="social-network-dataset-head">
+                <div>
+                    <div class="page-overline">01 / DATASET ENTRY</div>
+                    <h2>数据集入口</h2>
+                </div>
+                <span id="social-network-dataset-scope" class="social-network-version">当前数据集</span>
+            </div>
+            <div id="social-network-summary" class="social-network-summary">
+            <div class="social-network-summary-card card-panel">
+                <span class="social-network-label">数据集状态</span>
+                <strong id="social-network-dataset-status">-</strong>
+                <small id="social-network-dataset-version">版本检查中</small>
+            </div>
+            <div class="social-network-summary-card card-panel">
+                <span class="social-network-label">用户记录</span>
+                <strong id="social-network-user-count">-</strong>
+                <small>规范化用户样本</small>
+            </div>
+            <div class="social-network-summary-card card-panel">
+                <span class="social-network-label">关系候选</span>
+                <strong id="social-network-relationship-count">-</strong>
+                <small>关注关系候选数</small>
+            </div>
+            <div class="social-network-summary-card card-panel">
+                <span class="social-network-label">推文样本</span>
+                <strong id="social-network-tweet-count">-</strong>
+                <small>当前采集样本</small>
+            </div>
+            </div>
+            <section class="social-network-export card-panel">
+                <div class="social-network-export-heading">
+                    <div>
+                        <span class="social-network-tool-label">数据工具</span>
+                        <h2>导出结果</h2>
+                    </div>
+                    <span id="social-network-export-status" class="social-network-version">待选择</span>
+                </div>
+                <div class="social-network-export-controls">
+                    <label>结果范围
+                        <select id="social-network-export-type">
+                            <option value="network">网络总览</option>
+                            <option value="users">用户排行</option>
+                            <option value="tweets">推文样本</option>
+                            <option value="interactions">互动分析</option>
+                            <option value="topic">主题分析</option>
+                            <option value="quality">质量报告</option>
                         </select>
-                        <button id="predict-submit" class="btn primary">开始预测</button>
+                    </label>
+                    <label>格式
+                        <select id="social-network-export-format">
+                            <option value="json">JSON</option>
+                            <option value="csv">CSV</option>
+                            <option value="print">打印摘要</option>
+                        </select>
+                    </label>
+                    <button id="social-network-export-button" class="button button-primary" type="button">
+                        生成导出
+                    </button>
+                </div>
+                <pre id="social-network-export-result" class="social-network-export-result" aria-live="polite">选择范围和格式后生成结果。</pre>
+            </section>
+        </section>
+        <section id="social-network-overview" class="social-network-overview card-panel">
+            <div class="social-network-panel-head">
+                <div>
+                    <div class="page-overline">02 / NETWORK OVERVIEW</div>
+                    <h2>网络总览</h2>
+                </div>
+                <span id="social-network-scope" class="social-network-version">范围检查中</span>
+            </div>
+            <div class="social-network-overview-grid">
+                <div class="social-network-overview-block">
+                    <h3>网络结构</h3>
+                    <div class="social-network-metric-list">
+                        <div><span>网络密度</span><strong id="social-network-density">-</strong></div>
+                        <div><span>孤立节点</span><strong id="social-network-isolated-count">-</strong></div>
+                        <div><span>外部节点</span><strong id="social-network-external-count">-</strong></div>
+                        <div><span>PageRank</span><strong id="social-network-pagerank-state">-</strong></div>
                     </div>
+                    <p class="social-network-note">
+                        密度描述当前规范化有向关系结构，不表示关系亲密程度或社会影响力。
+                    </p>
                 </div>
-            </div>
-        </div>
-            <div id="predict-result" class="predict-result card-panel hidden">
-                <div class="result-subtitle">基线预测</div>
-                <div id="predict-note" class="result-note"></div>
-                <div class="result-kpis">
-                    <div class="result-kpi">
-                        <span class="result-kpi-value" id="kpi-peak">—</span>
-                        <span class="result-kpi-label">峰值天</span>
+                <div class="social-network-overview-block">
+                    <h3>互动规模</h3>
+                    <div id="social-network-interactions" class="social-network-interactions">
+                        <div class="social-network-empty">互动摘要加载中…</div>
                     </div>
-                    <div class="result-kpi">
-                        <span class="result-kpi-value" id="kpi-day30">—</span>
-                        <span class="result-kpi-label">预测 Day30</span>
-                    </div>
-                    <div class="result-kpi">
-                        <span class="result-kpi-value" id="kpi-refs">—</span>
-                        <span class="result-kpi-label">参考案例数</span>
-                    </div>
+                    <p class="social-network-note">
+                        点赞、评论、转发分别统计；推文数量表示当前采集样本。
+                    </p>
                 </div>
-                <div id="predict-kpi-trend" class="result-kpi-trend"></div>
-                <div id="predict-chart" class="predict-chart"></div>
             </div>
-            <div id="predict-refs-wrap" class="predict-refs-wrap card-panel hidden">
-                <div class="result-subtitle">参考案例（数据集中最相似的历史视频）</div>
-                <div id="predict-refs" class="video-grid"></div>
-            </div>
-    </section>
-
-    <section id="page-ranking" class="page">
-        <div class="page-head">
-            <div class="page-overline">REAL DATA · 02 RANKING</div>
-            <h1>热度排行榜</h1>
-            <p>浏览 282,481 条真实 YouTube 视频，支持全站/分类榜单切换与视频查找。</p>
-        </div>
-        <div class="stat-strip">
-            <div class="stat reveal">
-                <div class="stat-value">
-                    <span id="stat-videos" data-count="282481">—</span><span class="stat-unit">条视频</span>
+        </section>
+        <section id="social-network-local" class="social-network-local card-panel">
+            <div class="social-network-panel-head">
+                <div>
+                    <div class="page-overline">03 / LOCAL NETWORK</div>
+                    <h2>用户关注网络</h2>
                 </div>
-                <div class="stat-label">视频总数</div>
+                <span id="social-network-local-status" class="social-network-version">等待查询</span>
             </div>
-            <div class="stat reveal">
-                <div class="stat-value">
-                    <span id="stat-categories" data-count="15">—</span><span class="stat-unit">个分类</span>
-                </div>
-                <div class="stat-label">内容分类</div>
-            </div>
-            <div class="stat reveal">
-                <div class="stat-value">
-                    <span id="stat-avgday30">—</span>
-                </div>
-                <div class="stat-label">平均 Day30 热度</div>
-            </div>
-            <div class="stat reveal">
-                <div class="stat-value">
-                    <span id="stat-avgpeak">—</span><span class="stat-unit">天</span>
-                </div>
-                <div class="stat-label">平均峰值天</div>
-            </div>
-        </div>
-        <div class="filter-bar reveal">
-            <label class="field-label" for="rank-category">榜单范围</label>
-            <select id="rank-category" class="input">
-                <option value="">全站</option>
-                <option>People  Blogs</option>
-                <option>Gaming</option>
-                <option>Entertainment</option>
-                <option>News  Politics</option>
-                <option>Music</option>
-                <option>Education</option>
-                <option>Howto  Style</option>
-                <option>Sports</option>
-                <option>Film  Animation</option>
-                <option>Nonprofits  Activism</option>
-                <option>Travel  Events</option>
-                <option>Science  Technology</option>
-                <option>Comedy</option>
-                <option>Autos  Vehicles</option>
-                <option>Pets  Animals</option>
-            </select>
-            <label class="field-label" for="rank-sort">榜单口径</label>
-            <select id="rank-sort" class="input">
-                <option value="day30_desc">Day30 总榜</option>
-                <option value="day1_desc">Day1 新热榜</option>
-                <option value="longrun_desc">长红榜</option>
-            </select>
-            <input id="rank-q" class="input search-input" type="text" placeholder="搜索标题 / 标签 / 描述，例如：美食">
-            <button id="rank-search" class="btn primary">查找</button>
-        </div>
-        <div id="rank-total" class="rank-total"></div>
-        <div id="rank-grid" class="video-grid"></div>
-        <div class="pager reveal">
-            <button id="rank-prev" class="btn">上一页</button>
-            <span id="rank-page-info" class="pager-info"></span>
-            <button id="rank-next" class="btn">下一页</button>
-        </div>
-    </section>
-
-    <section id="page-insights" class="page">
-        <div class="page-head">
-            <div class="page-overline">DATA INSIGHTS · 03</div>
-            <h1>数据洞察</h1>
-            <p>分类热度对比、早期热度与最终热度相关性、平均热度衰减曲线。</p>
-        </div>
-        <div class="insight-kpis">
-            <div class="insight-kpi">
-                <span class="insight-kpi-value" id="ik-r">—</span>
-                <span class="insight-kpi-label">相关系数 r</span>
-            </div>
-            <div class="insight-kpi">
-                <span class="insight-kpi-value" id="ik-peak">—</span>
-                <span class="insight-kpi-label">平均峰值天</span>
-            </div>
-            <div class="insight-kpi">
-                <span class="insight-kpi-value" id="ik-cats">—</span>
-                <span class="insight-kpi-label">内容分类</span>
-            </div>
-            <div class="insight-kpi">
-                <span class="insight-kpi-value" id="ik-samples">—</span>
-                <span class="insight-kpi-label">样本量</span>
-            </div>
-        </div>
-        <div id="insight-conclusion" class="insight-conclusion reveal">
-            <div class="insight-conclusion-label">核心结论</div>
-            <div id="insight-conclusion-body" class="insight-conclusion-body">
-                <div class="skeleton skeleton-line" style="width:82%"></div>
-                <div class="skeleton skeleton-line" style="width:64%"></div>
-                <div class="skeleton skeleton-line" style="width:70%"></div>
-            </div>
-        </div>
-        <div class="insight-grid">
-            <div class="card-panel insight-card reveal">
-                <span class="insight-index" aria-hidden="true">01</span>
-                <div class="insight-title">分类平均热度对比</div>
-                <div class="insight-subtitle" id="insight-category-sub"></div>
-                <div id="insight-category-chart" class="insight-chart"></div>
-                <div class="insight-note">数据口径：按 15 个分类统计全部 282,481 条视频的 Day1 / Day30 平均热度分。</div>
-            </div>
-            <div class="card-panel insight-card reveal">
-                <span class="insight-index" aria-hidden="true">02</span>
-                <div class="insight-title" id="insight-correlation-title">早期热度与最终热度相关性</div>
-                <div class="insight-subtitle" id="insight-correlation-sub"></div>
-                <div id="insight-correlation-chart" class="insight-chart"></div>
-                <div class="insight-note">数据口径：全量 282,481 条视频 Day1 与 Day30 热度分的 Pearson 相关系数，散点为 3,000 个均匀抽样。</div>
-            </div>
-            <div class="card-panel insight-card reveal">
-                <span class="insight-index" aria-hidden="true">03</span>
-                <div class="insight-title">平均热度衰减曲线</div>
-                <div class="insight-subtitle" id="insight-decay-sub"></div>
-                <div class="insight-controls">
-                    <select id="insight-decay-category" class="input">
-                        <option value="__overall__">整体</option>
+            <div class="social-network-local-controls">
+                <label>
+                    <span>搜索用户</span>
+                    <input id="social-network-user-query" type="search"
+                           placeholder="输入用户 ID、用户名或显示名称">
+                </label>
+                <label>
+                    <span>展开深度</span>
+                    <select id="social-network-depth">
+                        <option value="1">一阶邻居</option>
+                        <option value="2">二阶邻居</option>
                     </select>
-                </div>
-                <div id="insight-decay-chart" class="insight-chart"></div>
-                <div class="insight-note">数据口径：第 1~30 天平均热度分的变化，反映热度随时间衰减的整体规律。</div>
+                </label>
+                <label>
+                    <span>Top-K</span>
+                    <select id="social-network-top-k">
+                        <option value="20">20</option>
+                        <option value="30" selected>30</option>
+                        <option value="50">50</option>
+                    </select>
+                </label>
+                <label class="social-network-checkbox">
+                    <input id="social-network-include-external" type="checkbox" checked>
+                    <span>显示外部节点</span>
+                </label>
+                <button id="social-network-search-button" class="button button-primary" type="button">
+                    查询
+                </button>
             </div>
-        </div>
-    </section>
-
-    <section id="page-compare" class="page">
-        <div class="page-head">
-            <div class="page-overline">CURVE COMPARISON · 04</div>
-            <h1>曲线对比</h1>
-            <p>任选 2~3 个视频，叠加比较真实热度曲线与峰值/衰减指标。</p>
-        </div>
-        <div class="compare-layout">
-            <div class="card-panel compare-picker reveal">
-                <div class="compare-row">
-                    <input id="compare-q" class="input search-input" type="text" placeholder="搜索视频并添加到对比列表">
-                    <button id="compare-search" class="btn">搜索</button>
-                </div>
-                <div id="compare-picker-results" class="picker-results"></div>
-                <div class="preset-row">
-                    <button id="compare-preset-a" class="btn">示例：热门 vs 冷门</button>
-                    <button id="compare-preset-b" class="btn">示例：不同分类</button>
-                </div>
-                <div class="selected-label">已选视频（2~3 个）</div>
-                <div id="compare-selected" class="chip-list"></div>
-                <button id="compare-run" class="btn primary" disabled>开始对比</button>
+            <div id="social-network-user-results" class="social-network-user-results">
+                <div class="social-network-empty">输入关键词后定位中心用户。</div>
             </div>
-            <div id="compare-result" class="compare-result card-panel hidden">
-                <div id="compare-chart" class="compare-chart"></div>
-                <table class="compare-table">
-                    <thead>
-                    <tr><th>视频</th><th>作者</th><th>峰值天</th><th>衰减率</th><th>Day30</th></tr>
-                    </thead>
-                    <tbody id="compare-table-body"></tbody>
-                </table>
+            <div id="social-network-local-view" class="social-network-local-view">
+                <div class="social-network-empty">选择用户后加载局部关系网络。</div>
             </div>
-        </div>
+        </section>
+        <section id="social-network-ranking" class="social-network-ranking card-panel">
+            <div class="social-network-panel-head">
+                <div>
+                    <div class="page-overline">04 / IMPORTANT NODES</div>
+                    <h2>重要节点分析</h2>
+                </div>
+                <span id="social-network-ranking-status" class="social-network-version">加载中</span>
+            </div>
+            <div class="social-network-ranking-controls">
+                <label>
+                    <span>指标分组</span>
+                    <select id="social-network-ranking-metric">
+                        <option value="indegree">入度（网络结构）</option>
+                        <option value="outdegree">出度（网络结构）</option>
+                        <option value="pagerank">PageRank（网络结构）</option>
+                        <option value="followers_count">粉丝数（原始账户字段）</option>
+                        <option value="following_count">关注数（原始账户字段）</option>
+                        <option value="tweet_count">推文总数（原始账户字段）</option>
+                    </select>
+                </label>
+                <button id="social-network-ranking-button" class="button button-secondary" type="button">
+                    刷新排行
+                </button>
+            </div>
+            <p id="social-network-ranking-note" class="social-network-note">
+                指标分开计算，不生成综合影响力分。
+            </p>
+            <div id="social-network-ranking-table" class="social-network-ranking-table">
+                <div class="social-network-empty">排行加载中…</div>
+            </div>
+        </section>
+        <section id="social-network-interaction-analysis" class="social-network-interaction-analysis card-panel">
+            <div class="social-network-panel-head">
+                <div>
+                    <div class="page-overline">05 / TWEET &amp; INTERACTION</div>
+                    <h2>推文与互动分析</h2>
+                </div>
+                <span id="social-network-interaction-status" class="social-network-version">加载中</span>
+            </div>
+            <div class="social-network-interaction-controls">
+                <label>
+                    <span>互动指标</span>
+                    <select id="social-network-interaction-metric">
+                        <option value="like_count">点赞</option>
+                        <option value="reply_count">评论</option>
+                        <option value="repost_count">转发</option>
+                    </select>
+                </label>
+                <button id="social-network-interaction-button" class="button button-primary" type="button">
+                    刷新分析
+                </button>
+            </div>
+            <div id="social-network-interaction-summary" class="social-network-interaction-summary">
+                <div class="social-network-empty">互动摘要加载中…</div>
+            </div>
+            <div class="social-network-interaction-grid">
+                <div class="social-network-interaction-block">
+                    <h3>推文排行</h3>
+                    <div id="social-network-interaction-tweets" class="social-network-interaction-table">
+                        <div class="social-network-empty">推文排行加载中…</div>
+                    </div>
+                </div>
+                <div class="social-network-interaction-block">
+                    <h3>用户聚合排行</h3>
+                    <div id="social-network-interaction-users" class="social-network-interaction-table">
+                        <div class="social-network-empty">用户排行加载中…</div>
+                    </div>
+                </div>
+            </div>
+            <div class="social-network-interaction-block social-network-timeseries-block">
+                <h3>时间分布</h3>
+                <div id="social-network-interaction-timeseries" class="social-network-timeseries">
+                    <div class="social-network-empty">时间分布加载中…</div>
+                </div>
+            </div>
+            <p id="social-network-interaction-note" class="social-network-note">
+                点赞、评论、转发分别统计；当前结果基于去重且纳入分析的推文样本。
+            </p>
+        </section>
+        <section id="social-network-topic-analysis" class="social-network-topic-analysis card-panel">
+            <div class="social-network-panel-head">
+                <div>
+                    <div class="page-overline">06 / TOPIC &amp; NETWORK LINKAGE</div>
+                    <h2>主题与网络联动</h2>
+                </div>
+                <span id="social-network-topic-status" class="social-network-version">等待查询</span>
+            </div>
+            <div class="social-network-topic-controls">
+                <label>
+                    <span>关键词或简短主题</span>
+                    <input id="social-network-topic-query" type="search"
+                        placeholder="例如：人工智能 / climate / public health">
+                </label>
+                <button id="social-network-topic-button" class="button button-primary" type="button" disabled>
+                    开始分析
+                </button>
+            </div>
+            <p class="social-network-note">
+                首版使用精确词元匹配；结果表示文本样本匹配关系，不代表立场、传播路径或因果影响。
+            </p>
+            <div id="social-network-topic-summary" class="social-network-topic-summary">
+                <div class="social-network-empty">输入关键词后查看主题样本。</div>
+            </div>
+            <div class="social-network-topic-grid">
+                <div class="social-network-interaction-block">
+                    <h3>相关推文</h3>
+                    <div id="social-network-topic-tweets" class="social-network-interaction-table">
+                        <div class="social-network-empty">等待查询</div>
+                    </div>
+                </div>
+                <div class="social-network-interaction-block">
+                    <h3>相关用户</h3>
+                    <div id="social-network-topic-users" class="social-network-interaction-table">
+                        <div class="social-network-empty">等待查询</div>
+                    </div>
+                </div>
+            </div>
+            <div class="social-network-interaction-block social-network-topic-network">
+                <h3>真实关注关系子图</h3>
+                <div id="social-network-topic-network" class="social-network-empty">
+                    主题用户子图将在查询后显示。
+                </div>
+            </div>
+        </section>
+        <section id="social-network-capability-panel" class="social-network-panel card-panel">
+            <div class="social-network-panel-head">
+                <div>
+                    <div class="page-overline">07 / CAPABILITY MATRIX</div>
+                    <h2>分析能力状态</h2>
+                </div>
+                <span id="social-network-capability-version" class="social-network-version">-</span>
+            </div>
+            <div id="social-network-capabilities" class="social-network-capabilities">
+                <div class="social-network-empty">能力矩阵加载中…</div>
+            </div>
+        </section>
+        <section class="social-network-quality card-panel">
+            <div class="social-network-panel-head">
+                <div>
+                    <div class="page-overline">DATA QUALITY</div>
+                    <h2>数据质量与覆盖提示</h2>
+                </div>
+                <span id="social-network-quality-status" class="social-network-version">-</span>
+            </div>
+            <div id="social-network-quality-items" class="social-network-quality-items">
+                <div class="social-network-empty">质量摘要加载中…</div>
+            </div>
+        </section>
+        <p class="social-network-boundary">
+            当前页面展示数据集、网络结构、用户关系、节点排行、用户详情、推文互动和主题网络联动；所有结果均保留数据范围与质量边界。
+        </p>
     </section>
 </main>
 
+
 <footer class="footer">
-    <div class="footer-brand">流行度预测平台</div>
-    <div class="footer-stats">
-        <div class="footer-stat">
-            <span class="footer-stat-num">282,481</span>
-            <span class="footer-stat-label">条真实视频</span>
-        </div>
-        <div class="footer-stat">
-            <span class="footer-stat-num">15</span>
-            <span class="footer-stat-label">个内容分类</span>
-        </div>
-        <div class="footer-stat">
-            <span class="footer-stat-num">30</span>
-            <span class="footer-stat-label">天热度序列</span>
-        </div>
-    </div>
-    <div class="footer-note">基于 SMTPD 数据集 · 全部数据与预测均为真实计算</div>
+    <div class="footer-brand">社交媒体分析平台</div>
+    <div class="footer-note">真实数据研究工作台 · 结果保留数据范围与分析边界</div>
 </footer>
 
 <div id="detail-modal" class="modal hidden">
@@ -368,18 +846,37 @@
     </div>
 </div>
 
+<aside id="social-network-user-drawer" class="social-network-user-drawer" aria-hidden="true">
+    <div class="social-network-user-drawer-backdrop" data-close-social-user-drawer></div>
+    <div class="social-network-user-drawer-panel" role="dialog"
+         aria-modal="true" aria-labelledby="social-network-user-drawer-title">
+        <div class="social-network-user-drawer-head">
+            <div>
+                <div class="page-overline">USER EVIDENCE</div>
+                <h2 id="social-network-user-drawer-title">用户详情</h2>
+            </div>
+            <button class="social-network-user-drawer-close" type="button"
+                    aria-label="关闭用户详情" data-close-social-user-drawer>×</button>
+        </div>
+        <div id="social-network-user-drawer-status" class="social-network-version">
+            正在加载用户详情…
+        </div>
+        <div id="social-network-user-drawer-body" class="social-network-detail-body">
+            <div class="social-network-empty">选择用户后查看证据。</div>
+        </div>
+    </div>
+</aside>
+
 <div id="toast" class="toast"></div>
 
 <script src="lib/echarts.min.js?v=20260917"></script>
 <script src="js/theme.js?v=20260917"></script>
 <script src="js/effects.js?v=20260818"></script>
 <script src="js/api.js?v=20260818"></script>
-<script src="js/app.js?v=20260918-home-migration"></script>
-<script src="js/router.js?v=20260918-home-migration"></script>
-<script src="js/predict.js?v=20260818"></script>
-<script src="js/ranking.js?v=20260818"></script>
-<script src="js/insights.js?v=20260818"></script>
-<script src="js/compare.js?v=20260818"></script>
-<script src="js/trend.js?v=20260918-home-migration"></script>
+<script src="js/app.js?v=20261007-home-structure-1"></script>
+  <script src="js/social-network.js?v=20261005-social-nav-2"></script>
+  <script src="js/router.js?v=20261005-route-init-3"></script>
+  <script src="js/predict.js?v=20261004-quick-nav-toggle-1"></script>
+<script src="js/home-demo.js?v=20261007-home-demo-timeline-1"></script>
 </body>
 </html>

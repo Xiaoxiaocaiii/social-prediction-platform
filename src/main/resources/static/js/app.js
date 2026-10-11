@@ -2,13 +2,64 @@
     "use strict";
 
     // ---- navigation ----
-    const navButtons = document.querySelectorAll(".nav-btn");
     const pages = document.querySelectorAll(".page");
+    const workbenchMenu = document.getElementById("workbench-menu");
+    const workbenchToggle = document.getElementById("workbench-toggle");
+    const workbenchCurrent = document.getElementById("workbench-current");
+    const workbenchLinks = workbenchMenu
+        ? Array.from(workbenchMenu.querySelectorAll(".workbench-link"))
+        : [];
+    let workbenchHoverTimer = null;
+    let workbenchPinned = false;
+    const workbenchLabels = {
+        trend: "首页",
+        predict: "流行度预测",
+        "social-network": "社交网络分析"
+    };
+
+    function closeWorkbenchMenu() {
+        if (!workbenchMenu || !workbenchToggle) {
+            return;
+        }
+        workbenchPinned = false;
+        workbenchMenu.classList.remove("is-open");
+        workbenchMenu.classList.remove("is-hovering");
+        workbenchToggle.setAttribute("aria-expanded", "false");
+    }
+
+    function updateBrand(name) {
+        const title = document.getElementById("brand-title");
+        const subtitle = document.getElementById("brand-sub");
+        const socialNetwork = name === "social-network";
+        if (title) {
+            title.textContent = "社交媒体分析平台";
+        }
+        if (subtitle) {
+            subtitle.textContent = socialNetwork
+                ? "REAL DATA · SOCIAL NETWORK STUDY"
+                : name === "trend"
+                    ? "REAL DATA · RESEARCH WORKSPACE"
+                    : "REAL DATA · POPULARITY STUDY";
+        }
+        document.title = socialNetwork
+            ? "社交媒体分析平台 · 社交网络分析"
+            : name === "trend"
+                ? "社交媒体分析平台"
+                : "社交媒体分析平台 · 流行度预测";
+    }
 
     function showPage(name) {
-        navButtons.forEach(function (btn) {
-            btn.classList.toggle("active", btn.dataset.page === name);
+        updateBrand(name);
+        const navShell = document.getElementById("nav-shell");
+        if (navShell) {
+            navShell.classList.toggle("hidden", name === "trend");
+        }
+        workbenchLinks.forEach(function (link) {
+            link.classList.toggle("is-active", link.dataset.route === name);
         });
+        if (workbenchCurrent) {
+            workbenchCurrent.textContent = workbenchLabels[name] || "工作台";
+        }
         document.body.classList.toggle("home-route", name === "trend");
         pages.forEach(function (page) {
             page.classList.toggle("active", page.id === "page-" + name);
@@ -17,8 +68,76 @@
         if (typeof window.onPageShown === "function") {
             window.onPageShown(name);
         }
+        if (typeof window.onSocialNetworkPageShown === "function") {
+            window.onSocialNetworkPageShown(name);
+        }
     }
     window.showPage = showPage;
+
+    const homeSceneCards = Array.from(document.querySelectorAll(".home-scene-card"));
+    function toggleHomeScene(card) {
+        const expanded = card.classList.toggle("is-expanded");
+        card.setAttribute("aria-expanded", String(expanded));
+        if (expanded) {
+            homeSceneCards.forEach(function (otherCard) {
+                if (otherCard !== card) {
+                    otherCard.classList.remove("is-expanded");
+                    otherCard.setAttribute("aria-expanded", "false");
+                }
+            });
+        }
+    }
+    homeSceneCards.forEach(function (card) {
+        card.addEventListener("click", function (event) {
+            if (event.target.closest("a")) {
+                return;
+            }
+            toggleHomeScene(card);
+        });
+        card.addEventListener("keydown", function (event) {
+            if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                toggleHomeScene(card);
+            }
+        });
+    });
+
+    if (workbenchMenu && workbenchToggle) {
+        workbenchMenu.addEventListener("mouseenter", function () {
+            clearTimeout(workbenchHoverTimer);
+            workbenchMenu.classList.add("is-hovering");
+        });
+        workbenchMenu.addEventListener("mouseleave", function () {
+            if (workbenchPinned) {
+                return;
+            }
+            workbenchHoverTimer = setTimeout(function () {
+                workbenchMenu.classList.remove("is-hovering");
+            }, 140);
+        });
+        workbenchToggle.addEventListener("click", function () {
+            workbenchPinned = !workbenchPinned;
+            workbenchMenu.classList.toggle("is-open", workbenchPinned);
+            workbenchMenu.classList.remove("is-hovering");
+            workbenchToggle.setAttribute("aria-expanded", String(workbenchPinned));
+        });
+        workbenchLinks.forEach(function (link) {
+            link.addEventListener("click", function () {
+                clearTimeout(workbenchHoverTimer);
+                closeWorkbenchMenu();
+            });
+        });
+        document.addEventListener("click", function (event) {
+            if (!workbenchMenu.contains(event.target)) {
+                closeWorkbenchMenu();
+            }
+        });
+        document.addEventListener("keydown", function (event) {
+            if (event.key === "Escape") {
+                closeWorkbenchMenu();
+            }
+        });
+    }
 
     // ---- toast ----
     const toast = document.getElementById("toast");

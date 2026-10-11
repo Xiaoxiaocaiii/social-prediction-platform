@@ -4,9 +4,7 @@
     var ROUTES = {
         "/": "trend",
         "/predict": "predict",
-        "/ranking": "ranking",
-        "/insights": "insights",
-        "/compare": "compare"
+        "/social-network": "social-network"
     };
 
     function currentPath() {
@@ -23,5 +21,10 @@
     }
 
     window.addEventListener("hashchange", showRoute);
-    showRoute();
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", showRoute, { once: true });
+    } else {
+        showRoute();
+    }
+    window.addEventListener("load", showRoute, { once: true });
 })();

@@ -41,6 +41,25 @@ public class VideoRepository {
         return rows.stream().findFirst();
     }
 
+    public Map<String, Video> findByIds(List<String> videoIds) {
+        if (videoIds == null || videoIds.isEmpty()) {
+            return Map.of();
+        }
+        String placeholders = String.join(", ", java.util.Collections.nCopies(videoIds.size(), "?"));
+        List<Video> rows = jdbc.query(
+                "SELECT video_id, title, category, tags, description, user_id, user_image, video_url, "
+                        + "day01, day02, day03, day04, day05, day06, day07, day08, day09, day10, "
+                        + "day11, day12, day13, day14, day15, day16, day17, day18, day19, day20, "
+                        + "day21, day22, day23, day24, day25, day26, day27, day28, day29, day30 "
+                        + "FROM videos WHERE video_id IN (" + placeholders + ")",
+                videoRowMapper(), videoIds.toArray());
+        Map<String, Video> videosById = new LinkedHashMap<>();
+        for (Video video : rows) {
+            videosById.put(video.videoId(), video);
+        }
+        return videosById;
+    }
+
     /**
      * Paged browsing with optional category filter, search term and sort.
      * Search: FTS5 trigram for terms with at least 3 chars, LIKE fallback otherwise.
@@ -178,17 +197,20 @@ public class VideoRepository {
 
     /** Top-K videos ranked by text relevance (BM25), LIKE fallback for short terms. */
     public List<ReferenceHit> searchRelevant(String q, int topK) {
-        int limit = Math.min(Math.max(1, topK), 20);
+        int limit = Math.min(Math.max(1, topK), 30);
         if (q == null || q.isBlank()) {
             return List.of();
         }
         if (q.length() >= 3) {
             try {
                 return jdbc.query(
-                        "SELECT v.video_id, v.title, v.user_id, v.day30, f.score FROM videos v JOIN ("
+                        "WITH matches AS ("
                                 + "SELECT video_id, bm25(videos_fts) AS score FROM videos_fts "
                                 + "WHERE videos_fts MATCH ? ORDER BY score ASC LIMIT ?"
-                                + ") f ON v.video_id = f.video_id ORDER BY f.score ASC",
+                                + ") SELECT v.video_id, v.title, v.user_id, v.day30, "
+                                + "(SELECT score FROM matches WHERE matches.video_id = v.video_id) AS score "
+                                + "FROM videos v WHERE v.video_id IN (SELECT video_id FROM matches) "
+                                + "ORDER BY score ASC",
                         (rs, i) -> new ReferenceHit(
                                 rs.getString("video_id"),
                                 rs.getString("title"),
