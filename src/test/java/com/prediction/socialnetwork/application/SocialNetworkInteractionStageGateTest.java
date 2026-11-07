@@ -53,9 +53,13 @@ class SocialNetworkInteractionStageGateTest {
         String script = Files.readString(Path.of(
                 "src/main/resources/static/js/social-network.js"));
 
-        assertTrue(html.contains("social-network-interaction-analysis"));
-        assertTrue(html.contains("social-network-interaction-metric"));
-        assertTrue(script.contains("/interactions/"));
+        assertTrue(html.contains("id=\"page-social-network-task\""));
+        assertTrue(script.contains("function ensureInteractionTaskView(taskCard)"));
+        assertTrue(script.contains("data-interaction-metric="));
+        assertTrue(script.contains("data-interaction-category=\"tweets\""));
+        assertTrue(script.contains("data-interaction-category=\"users\""));
+        assertTrue(script.contains("data-interaction-category=\"timeseries\""));
+        assertTrue(script.contains("buildDatasetUrl(\"interactions/\" + resource"));
         assertTrue(script.contains("\"summary\""));
         assertTrue(script.contains("\"tweets\""));
         assertTrue(script.contains("\"users\""));

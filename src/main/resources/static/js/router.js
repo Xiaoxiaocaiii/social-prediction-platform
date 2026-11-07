@@ -4,19 +4,30 @@
     var ROUTES = {
         "/": "trend",
         "/predict": "predict",
-        "/social-network": "social-network"
+        "/social-network": "social-network",
+        "/social-network/network": "social-network-graph"
     };
 
     function currentPath() {
         var hash = location.hash || "#/";
-        var path = hash.replace(/^#/, "") || "/";
-        return ROUTES[path] ? path : "/";
+        return hash.replace(/^#/, "") || "/";
     }
 
     function showRoute() {
-        var page = ROUTES[currentPath()];
+        var path = currentPath();
+        var socialRoute = window.socialNetworkRouteTable
+            ? window.socialNetworkRouteTable.resolve(path)
+            : null;
         if (typeof window.showPage === "function") {
-            window.showPage(page);
+            if (socialRoute) {
+                window.showPage(socialRoute.page, socialRoute.task);
+                return;
+            }
+            if (path.indexOf("/social-network") === 0) {
+                window.showPage("social-network-task", "unknown");
+                return;
+            }
+            window.showPage(ROUTES[path] || ROUTES["/"]);
         }
     }
 
@@ -26,5 +37,4 @@
     } else {
         showRoute();
     }
-    window.addEventListener("load", showRoute, { once: true });
 })();

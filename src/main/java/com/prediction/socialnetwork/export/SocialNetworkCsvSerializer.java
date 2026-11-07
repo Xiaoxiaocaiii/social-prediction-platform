@@ -34,9 +34,24 @@ public final class SocialNetworkCsvSerializer {
     private static String row(List<?> values) {
         StringJoiner joiner = new StringJoiner(",");
         for (Object value : values) {
-            joiner.add(escape(value == null ? "" : String.valueOf(value)));
+            joiner.add(escape(csvSafe(value)));
         }
         return joiner + "\r\n";
+    }
+
+    private static String csvSafe(Object value) {
+        if (value == null) {
+            return "";
+        }
+        String text = String.valueOf(value);
+        if (!(value instanceof Number) && !(value instanceof Boolean)) {
+            String inspected = text.stripLeading();
+            if (!inspected.isEmpty()
+                    && "=+-@".indexOf(inspected.charAt(0)) >= 0) {
+                return "'" + text;
+            }
+        }
+        return text;
     }
 
     private static String escape(String value) {

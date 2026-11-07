@@ -11,9 +11,11 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.IntStream;
 
 public final class SocialNetworkTextAnalysis {
 
@@ -21,7 +23,9 @@ public final class SocialNetworkTextAnalysis {
     public static final String STOPWORDS_VERSION = "stopwords-v1.0";
     public static final String TOKENIZER_VERSION = "tokenizer-v1.0";
     public static final String TFIDF_VERSION = "tfidf-v1.0";
+    private static final int TFIDF_RESULT_LIMIT = 100;
 
+    private static final Pattern WHITESPACE = Pattern.compile("\\s+");
     private static final Pattern URL = Pattern.compile("https?://\\S+|www\\.\\S+",
             Pattern.CASE_INSENSITIVE);
     private static final Pattern MENTION = Pattern.compile("@[\\w.\\-]+");
@@ -36,7 +40,7 @@ public final class SocialNetworkTextAnalysis {
             "而", "被", "将", "这", "那", "一个", "我们", "你们", "他们");
 
     public Result analyze(List<NormalizedTweet> tweets) {
-        List<Document> documents = tweets.stream()
+        List<Document> documents = tweets.parallelStream()
                 .filter(NormalizedTweet::analysisIncluded)
                 .map(this::document)
                 .toList();
@@ -44,7 +48,7 @@ public final class SocialNetworkTextAnalysis {
                 .filter(document -> !document.tokens().isEmpty())
                 .toList();
         Map<String, Keyword> keywords = keywordStats(valid);
-        List<Tfidf> tfidf = tfidf(valid);
+        List<Tfidf> tfidf = tfidf(valid, keywords);
         Map<String, Integer> languageCounts = new LinkedHashMap<>();
         for (String language : List.of("zh", "en", "mixed", "other", "unknown")) {
             languageCounts.put(language, (int) documents.stream()
@@ -68,11 +72,12 @@ public final class SocialNetworkTextAnalysis {
 
     private Document document(NormalizedTweet tweet) {
         String original = tweet.fields().getOrDefault("text", "");
-        String normalized = Normalizer.normalize(original, Normalizer.Form.NFKC)
-                .replaceAll("\\s+", " ")
+        String normalized = WHITESPACE.matcher(
+                        Normalizer.normalize(original, Normalizer.Form.NFKC))
+                .replaceAll(" ")
                 .trim();
-        String analysisText = URL.matcher(normalized).replaceAll(" ")
-                .replaceAll(MENTION.pattern(), " ");
+        String analysisText = MENTION.matcher(URL.matcher(normalized).replaceAll(" "))
+                .replaceAll(" ");
         String language = language(analysisText);
         List<String> tokens = tokens(analysisText);
         String status = normalized.isBlank() ? "text_empty"
@@ -128,54 +133,132 @@ public final class SocialNetworkTextAnalysis {
                 }
             }
         }
-        return new ArrayList<>(result);
+        return result;
     }
 
     private static Map<String, Keyword> keywordStats(List<Document> documents) {
-        Map<String, MutableKeyword> values = new HashMap<>();
-        for (Document document : documents) {
-            Set<String> seen = new HashSet<>();
-            for (String token : document.tokens()) {
-                MutableKeyword keyword = values.computeIfAbsent(token,
-                        ignored -> new MutableKeyword(token, languageOf(token)));
-                keyword.termFrequency++;
-                if (seen.add(token)) {
-                    keyword.documentFrequency++;
-                    if (document.authorUserId() != null) {
-                        keyword.userIds.add(document.authorUserId());
-                    }
-                }
-            }
-        }
-        Map<String, Keyword> result = new HashMap<>();
+        int chunkCount = processingChunkCount(documents.size());
+        Map<String, MutableKeyword> values = IntStream.range(0, chunkCount)
+                .parallel()
+                .mapToObj(chunk -> keywordStatsChunk(documents, chunk, chunkCount))
+                .collect(HashMap::new, SocialNetworkTextAnalysis::mergeKeywordStats,
+                        SocialNetworkTextAnalysis::mergeKeywordStats);
+        Map<String, Keyword> result = new HashMap<>(values.size());
         values.forEach((term, value) -> result.put(term, value.toRecord()));
         return result;
     }
 
-    private static List<Tfidf> tfidf(List<Document> documents) {
-        int totalDocuments = documents.size();
-        Map<String, Integer> documentFrequency = new HashMap<>();
-        for (Document document : documents) {
-            document.tokens().stream().distinct()
-                    .forEach(token -> documentFrequency.merge(token, 1, Integer::sum));
+    private static Map<String, MutableKeyword> keywordStatsChunk(
+            List<Document> documents, int chunk, int chunkCount) {
+        int start = documents.size() * chunk / chunkCount;
+        int end = documents.size() * (chunk + 1) / chunkCount;
+        Map<String, MutableKeyword> values = new HashMap<>();
+        for (int documentIndex = start; documentIndex < end; documentIndex++) {
+            Document document = documents.get(documentIndex);
+            for (String token : document.tokens()) {
+                MutableKeyword keyword = values.computeIfAbsent(token,
+                        ignored -> new MutableKeyword(token, languageOf(token)));
+                keyword.termFrequency++;
+                if (keyword.lastDocumentIndex != documentIndex) {
+                    keyword.lastDocumentIndex = documentIndex;
+                    keyword.documentFrequency++;
+                    keyword.addUser(document.authorUserId());
+                }
+            }
         }
-        List<Tfidf> result = new ArrayList<>();
-        for (Document document : documents) {
+        return values;
+    }
+
+    private static void mergeKeywordStats(
+            Map<String, MutableKeyword> target, Map<String, MutableKeyword> source) {
+        source.forEach((term, value) -> target.merge(term, value, (current, added) -> {
+            current.merge(added);
+            return current;
+        }));
+    }
+
+    private static List<Tfidf> tfidf(
+            List<Document> documents, Map<String, Keyword> keywords) {
+        int totalDocuments = documents.size();
+        Map<String, Double> inverseDocumentFrequency = new HashMap<>();
+        keywords.forEach((term, keyword) -> inverseDocumentFrequency.put(
+                term,
+                Math.log((totalDocuments + 1.0)
+                        / (keyword.documentFrequency() + 1.0)) + 1.0));
+        Comparator<Tfidf> bestFirst = tfidfComparator();
+        int chunkCount = processingChunkCount(documents.size());
+        List<PriorityQueue<Tfidf>> chunkResults = IntStream.range(0, chunkCount)
+                .parallel()
+                .mapToObj(chunk -> tfidfChunk(
+                        documents, chunk, chunkCount, inverseDocumentFrequency,
+                        keywords, bestFirst))
+                .toList();
+        PriorityQueue<Tfidf> best = new PriorityQueue<>(
+                TFIDF_RESULT_LIMIT, bestFirst.reversed());
+        for (PriorityQueue<Tfidf> chunkResult : chunkResults) {
+            for (Tfidf candidate : chunkResult) {
+                addTfidfCandidate(best, candidate, bestFirst);
+            }
+        }
+        return best.stream().sorted(bestFirst).toList();
+    }
+
+    private static PriorityQueue<Tfidf> tfidfChunk(
+            List<Document> documents,
+            int chunk,
+            int chunkCount,
+            Map<String, Double> inverseDocumentFrequency,
+            Map<String, Keyword> keywords,
+            Comparator<Tfidf> bestFirst) {
+        int start = documents.size() * chunk / chunkCount;
+        int end = documents.size() * (chunk + 1) / chunkCount;
+        PriorityQueue<Tfidf> best = new PriorityQueue<>(
+                TFIDF_RESULT_LIMIT, bestFirst.reversed());
+        for (int documentIndex = start; documentIndex < end; documentIndex++) {
+            Document document = documents.get(documentIndex);
             Map<String, Integer> frequencies = new HashMap<>();
-            document.tokens().forEach(token -> frequencies.merge(token, 1, Integer::sum));
+            for (String term : document.tokens()) {
+                frequencies.merge(term, 1, Integer::sum);
+            }
             frequencies.forEach((term, frequency) -> {
-                double tf = 1.0 + Math.log(frequency);
-                double idf = Math.log((totalDocuments + 1.0)
-                        / (documentFrequency.get(term) + 1.0)) + 1.0;
-                result.add(new Tfidf(document.tweetId(), term, languageOf(term),
-                        tf * idf, frequency, documentFrequency.get(term)));
+                double tf = frequency == 1 ? 1.0 : 1.0 + Math.log(frequency);
+                Tfidf candidate = new Tfidf(
+                        document.tweetId(),
+                        term,
+                        languageOf(term),
+                        tf * inverseDocumentFrequency.get(term),
+                        frequency,
+                        keywords.get(term).documentFrequency());
+                addTfidfCandidate(best, candidate, bestFirst);
             });
         }
-        result.sort(Comparator.comparingDouble(Tfidf::score).reversed()
+        return best;
+    }
+
+    private static void addTfidfCandidate(
+            PriorityQueue<Tfidf> best,
+            Tfidf candidate,
+            Comparator<Tfidf> bestFirst) {
+        if (best.size() < TFIDF_RESULT_LIMIT) {
+            best.add(candidate);
+        } else if (bestFirst.compare(candidate, best.peek()) < 0) {
+            best.remove();
+            best.add(candidate);
+        }
+    }
+
+    private static int processingChunkCount(int itemCount) {
+        if (itemCount < 20_000) {
+            return 1;
+        }
+        return Math.min(itemCount, Runtime.getRuntime().availableProcessors());
+    }
+
+    private static Comparator<Tfidf> tfidfComparator() {
+        return Comparator.comparingDouble(Tfidf::score).reversed()
                 .thenComparing(Tfidf::documentFrequency, Comparator.reverseOrder())
                 .thenComparing(Tfidf::term)
-                .thenComparing(Tfidf::tweetId));
-        return result;
+                .thenComparing(Tfidf::tweetId);
     }
 
     private static Comparator<Keyword> keywordComparator() {
@@ -238,16 +321,46 @@ public final class SocialNetworkTextAnalysis {
         private final String language;
         private int termFrequency;
         private int documentFrequency;
-        private final Set<String> userIds = new HashSet<>();
+        private int lastDocumentIndex = -1;
+        private String firstUserId;
+        private Set<String> userIds;
 
         private MutableKeyword(String term, String language) {
             this.term = term;
             this.language = language;
         }
 
+        private void addUser(String userId) {
+            if (userId == null) {
+                return;
+            }
+            if (firstUserId == null) {
+                firstUserId = userId;
+            } else if (!firstUserId.equals(userId)) {
+                if (userIds == null) {
+                    userIds = new HashSet<>();
+                    userIds.add(firstUserId);
+                }
+                userIds.add(userId);
+            }
+        }
+
+        private void merge(MutableKeyword other) {
+            termFrequency += other.termFrequency;
+            documentFrequency += other.documentFrequency;
+            addUser(other.firstUserId);
+            if (other.userIds != null) {
+                other.userIds.forEach(this::addUser);
+            }
+        }
+
         private Keyword toRecord() {
             return new Keyword(term, language, termFrequency, documentFrequency,
-                    userIds.size(), documentFrequency);
+                    userFrequency(), documentFrequency);
+        }
+
+        private int userFrequency() {
+            return firstUserId == null ? 0 : userIds == null ? 1 : userIds.size();
         }
     }
 }

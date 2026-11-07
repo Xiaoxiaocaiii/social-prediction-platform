@@ -41,7 +41,7 @@ public class SocialNetworkFileReader {
         try (InputStream input = Files.newInputStream(path)) {
             return read(input, descriptor, builtin);
         } catch (IOException exception) {
-            return failedResult(descriptor, "FILE_OPEN_FAILED", exception.getMessage());
+            return failedResult(descriptor, "FILE_OPEN_FAILED");
         }
     }
 
@@ -53,8 +53,12 @@ public class SocialNetworkFileReader {
                 case CSV -> readCsv(encodedInput, descriptor, builtin);
                 case JSONL -> readJsonl(encodedInput, descriptor, builtin);
             };
+        } catch (CharacterCodingException exception) {
+            return failedResult(descriptor, "UNSUPPORTED_ENCODING");
         } catch (IOException exception) {
-            return failedResult(descriptor, "FILE_READ_FAILED", exception.getMessage());
+            return failedResult(descriptor, "FILE_READ_FAILED");
+        } catch (RuntimeException exception) {
+            return failedResult(descriptor, "FILE_READ_FAILED");
         }
     }
 
@@ -140,11 +144,16 @@ public class SocialNetworkFileReader {
             }
         } catch (CsvParseException exception) {
             errorCount++;
-            issues.add(new FileReadIssue(exception.lineNumber, "CSV_PARSE_FAILED", exception.getMessage()));
+            headerStatus = HeaderStatus.INVALID;
+            records.clear();
+            okCount = 0;
+            issues.add(new FileReadIssue(
+                    exception.lineNumber, "CSV_PARSE_FAILED", "CSV 内容格式无效，无法继续读取该文件"));
         } catch (CharacterCodingException exception) {
             errorCount++;
+            headerStatus = HeaderStatus.INVALID;
             issues.add(new FileReadIssue(0, "UNSUPPORTED_ENCODING",
-                    "Only UTF-8 and UTF-8 BOM files are supported"));
+                    "文件编码无效，请使用 UTF-8 或 UTF-8 BOM"));
         }
         return result(records, descriptor, decoded.encoding(), headerStatus, rowCount,
                 okCount, warningCount, errorCount, skippedCount, issues);
@@ -189,13 +198,15 @@ public class SocialNetworkFileReader {
                     okCount++;
                 } catch (Exception exception) {
                     errorCount++;
-                    issues.add(new FileReadIssue(lineNumber, "JSONL_PARSE_FAILED", exception.getMessage()));
+                    issues.add(new FileReadIssue(
+                            lineNumber, "JSONL_PARSE_FAILED", "该行不是有效的 JSONL 对象"));
                 }
             }
         } catch (CharacterCodingException exception) {
             errorCount++;
+            headerStatus = HeaderStatus.INVALID;
             issues.add(new FileReadIssue(0, "UNSUPPORTED_ENCODING",
-                    "Only UTF-8 and UTF-8 BOM files are supported"));
+                    "文件编码无效，请使用 UTF-8 或 UTF-8 BOM"));
         }
         return result(records, descriptor, decoded.encoding(), headerStatus, rowCount,
                 okCount, warningCount, errorCount, skippedCount, issues);
@@ -314,9 +325,13 @@ public class SocialNetworkFileReader {
         return new DecodedInput(reader, utf8Bom ? UTF8_BOM : UTF8);
     }
 
-    private static FileReadResult failedResult(
-            DatasetFileDescriptor descriptor, String code, String message) {
-        FileReadIssue issue = new FileReadIssue(0, code, message == null ? code : message);
+    private static FileReadResult failedResult(DatasetFileDescriptor descriptor, String code) {
+        String message = switch (code) {
+            case "FILE_OPEN_FAILED" -> "文件无法读取，请检查文件是否可访问";
+            case "UNSUPPORTED_ENCODING" -> "文件编码无效，请使用 UTF-8 或 UTF-8 BOM";
+            default -> "文件读取失败，请检查文件内容后重试";
+        };
+        FileReadIssue issue = new FileReadIssue(0, code, message);
         return result(List.of(), descriptor, "unknown", HeaderStatus.INVALID,
                 0, 0, 0, 1, 0, List.of(issue));
     }
@@ -379,6 +394,7 @@ public class SocialNetworkFileReader {
             List<String> values = new ArrayList<>();
             StringBuilder value = new StringBuilder();
             boolean quoted = false;
+            boolean afterQuote = false;
             boolean started = false;
             int startLine = lineNumber;
             while (true) {
@@ -396,6 +412,29 @@ public class SocialNetworkFileReader {
                 }
                 char current = (char) codePoint;
                 started = true;
+                if (afterQuote) {
+                    if (current == ',') {
+                        values.add(value.toString());
+                        value.setLength(0);
+                        afterQuote = false;
+                        continue;
+                    }
+                    if (current == '\n') {
+                        values.add(value.toString());
+                        lineNumber++;
+                        return new CsvRow(values, startLine);
+                    }
+                    if (current == '\r') {
+                        int next = readCharacter();
+                        if (next == '\n') {
+                            values.add(value.toString());
+                            lineNumber++;
+                            return new CsvRow(values, startLine);
+                        }
+                    }
+                    throw new CsvParseException(startLine,
+                            "Unexpected content after a quoted CSV field");
+                }
                 if (quoted) {
                     if (current == '"') {
                         int next = readCharacter();
@@ -403,6 +442,7 @@ public class SocialNetworkFileReader {
                             value.append('"');
                         } else {
                             quoted = false;
+                            afterQuote = true;
                             if (next != -1) {
                                 pending = next;
                             }
@@ -417,6 +457,8 @@ public class SocialNetworkFileReader {
                 }
                 if (current == '"' && value.isEmpty()) {
                     quoted = true;
+                } else if (current == '"') {
+                    throw new CsvParseException(startLine, "Unexpected quote in an unquoted CSV field");
                 } else if (current == ',') {
                     values.add(value.toString());
                     value.setLength(0);

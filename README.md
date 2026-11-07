@@ -1,4 +1,4 @@
-# 多模态社交媒体流行度预测与社交网络分析平台
+# 多模态社交媒体流行度预测与社交网络分析平台 / Multimodal Social Media Popularity Prediction and Social Network Analysis Platform
 
 本项目提供两个相互隔离的分析工作台：
 
@@ -27,17 +27,40 @@ The platform uses real data rather than mock data. Social-network metrics descri
 - 曲线对比：`#/compare`
 - 基于 BM25/FTS5 的历史案例检索和 30 天真实曲线平均基线
 
+### Popularity Prediction
+
+- Home and trend discovery: `#/`
+- Prediction upload: `#/predict`
+- Popularity ranking: `#/ranking`
+- Data insights: `#/insights`
+- Curve comparison: `#/compare`
+- BM25/FTS5 case retrieval and a 30-day baseline averaged from real historical curves
+
 ### 社交网络分析 Social Network
 
-- 工作台入口：`#/social-network`
-- B01 数据集入口与质量摘要
-- B02 网络总览、密度、孤立节点和 PageRank
-- B03 用户搜索、深度、Top-K、外部节点和局部关注网络
-- B04 入度、出度、PageRank 与原始账户字段排行
-- B05 用户详情右侧抽屉
-- B06 点赞、评论、转发独立统计、推文排行、用户排行和时间序列
-- B07 关键词、TF-IDF、精确文本搜索和主题关系联动
-- JSON、CSV、打印摘要导出
+- 九个任务页路由（共用任务工作台）：概览 `#/social-network`、当前数据 `#/social-network/data`、上传 `#/social-network/data/upload`、质量 `#/social-network/data/quality`、网络结构 `#/social-network/relations`、节点排行 `#/social-network/relations/ranking`、用户关系 `#/social-network/relations/user`、互动 `#/social-network/content`、主题 `#/social-network/content/topic`
+- B01 数据集入口、质量摘要和当前会话数据上传：`#/social-network/data`、`#/social-network/data/quality`、`#/social-network/data/upload`
+- B02 网络总览、结构指标、密度、孤立节点和 PageRank：`#/social-network/relations`
+- B03 用户搜索、深度、Top-K、外部节点和局部关注网络：`#/social-network/relations/user`
+- B04 入度、出度、PageRank、k-core 和介数中心性排行：`#/social-network/relations/ranking`
+- B05 用户详情右侧抽屉：从排行及用户关系结果中的用户入口打开
+- B06 点赞、评论、转发独立统计，以及推文排行、用户排行和按发布时间字段分组的时间分布：`#/social-network/content`
+- B07 精确主题查询、相关推文/用户/关注关系联动：`#/social-network/content/topic`；关键词与 TF-IDF 接口已存在，但当前没有独立词表 UI
+- 全局关系图与社群展示代码及入口已存在，目前暂停、待负责人复核，不作为已验收能力
+- 数据集入口集中导出；网络总览、重要节点、互动、主题和质量模块提供独立导出
+
+### Social Network Analysis
+
+- Nine task-page routes share the task workspace: overview `#/social-network`, current data `#/social-network/data`, upload `#/social-network/data/upload`, quality `#/social-network/data/quality`, network structure `#/social-network/relations`, node rankings `#/social-network/relations/ranking`, user relations `#/social-network/relations/user`, interactions `#/social-network/content`, and topics `#/social-network/content/topic`
+- B01 dataset entry, quality summary, and temporary-session uploads: `#/social-network/data`, `#/social-network/data/quality`, and `#/social-network/data/upload`
+- B02 network overview, structural metrics, density, isolates, and PageRank: `#/social-network/relations`
+- B03 user search, depth and Top-K controls, external nodes, and local following networks: `#/social-network/relations/user`
+- B04 indegree, outdegree, PageRank, k-core, and betweenness rankings: `#/social-network/relations/ranking`
+- B05 user details in a shared side drawer, opened from ranking and user-relation results
+- B06 separate like, reply, and repost statistics, plus tweet rankings, user rankings, and time distributions grouped by the available publish-time field: `#/social-network/content`
+- B07 exact topic search with related tweets, users, and following relationships: `#/social-network/content/topic`; keyword and TF-IDF APIs exist, but there is no standalone vocabulary UI
+- The global graph and community view have code and routes, but remain paused pending owner review and are not accepted capabilities
+- Dataset-level export remains available; network overview, important nodes, interactions, topics, and data quality also have module-level export actions
 
 ## 快速开始 Quick Start
 
@@ -48,6 +71,13 @@ The platform uses real data rather than mock data. Social-network metrics descri
 - Microsoft Edge 桌面端
 - 推荐分辨率：`1920×1080`、`2560×1440`、`3840×2160`
 
+### Environment Requirements
+
+- JDK 17
+- Maven 3.9 or later
+- Desktop Microsoft Edge
+- Recommended viewports: `1920×1080`, `2560×1440`, and `3840×2160`
+
 ### 启动 Run
 
 Windows:
@@ -56,13 +86,15 @@ Windows:
 start.bat
 ```
 
-或：
+或使用 Maven 启动 / Or start with Maven:
 
 ```bash
 mvn -s mvn-settings.xml spring-boot:run
 ```
 
 打开 <http://localhost:8080>。
+
+Open <http://localhost:8080> after startup.
 
 ### 测试 Test
 
@@ -72,23 +104,39 @@ node --check src/main/resources/static/js/social-network.js
 git diff --check
 ```
 
+Run the same Maven, JavaScript syntax, and whitespace checks from PowerShell or another supported shell.
+
 ## 数据说明 Dataset
 
 ### 预测数据 Prediction Data
 
 预测模块使用 SMTPD 视频数据，包括视频文本、封面和 30 天热度序列。原始数据与索引文件属于本地数据资产，不随代码仓库提交。
 
+The prediction workspace uses SMTPD video data, including video text, covers, and 30-day popularity sequences. Raw data and indexes are local assets and are not included in the source repository.
+
 ### 社交网络内置数据 Built-in Social Dataset
 
 当前内置数据集 ID 为 `think-tank-social-network`，版本为 `v1`：
 
+The built-in social-network dataset is `think-tank-social-network`, version `v1`:
+
 | 项目 | 数量 |
 | --- | ---: |
-| 用户 | 626 |
-| 关系候选 | 12,963 |
-| 推文样本 | 237,840 |
+| 用户数 | 626 |
+| 关注关系数 | 12,963 |
+| 推文数 | 237,840 |
 
-内置适配文件：
+| Item | Count |
+| --- | ---: |
+| Users | 626 |
+| Following-relation records | 12,963 |
+| Tweet records | 237,840 |
+
+以上为数据集摘要中的规模口径：关注关系数对应候选关系记录，质量摘要还会单独报告规范化后的有效关注关系数；推文数对应原始推文记录数，不等于去重后纳入分析的推文数，也不代表账号完整历史推文数。
+
+These are dataset-summary counts. The relationship count is the number of candidate records; the quality summary separately reports valid normalized relationships. The tweet count is the number of raw records, not the deduplicated analysis sample or an account's complete posting history.
+
+内置适配文件 Built-in Adapter Files：
 
 | 文件 | 角色 |
 | --- | --- |
@@ -98,9 +146,25 @@ git diff --check
 
 内置数据的中文字段适配是项目内已确认的固定范围，不代表系统会自动识别任意字段名。
 
-## 上传模板 Upload Template
+The built-in adapter files are `all_user_info.csv` (user profiles), `all_following_list.csv` (aggregated following relations), and `all_tweets_raw.csv` (tweets and interactions). Their Chinese column mappings are explicit project adapters; the system does not infer arbitrary field names.
 
-社交网络上传首选三个独立的 UTF-8 CSV 或 JSONL 文件：
+## 当前会话上传格式 Current-Session Upload Formats
+
+上传是当前可用的临时分析能力，不是永久数据集保存。用户为每个文件明确选择 `users`、`relationships` 或 `tweets` 角色；最多 10 个文件，同一角色可以选择多个文件。允许部分角色缺省，实际可用模块由服务端预览中的能力状态决定。
+
+Uploads are available for temporary analysis sessions; they do not create permanently stored datasets. Assign each file an explicit `users`, `relationships`, or `tweets` role. A request accepts up to 10 files, including multiple files for the same role. Roles may be omitted; available analysis modules are determined by the server-side preview.
+
+支持 UTF-8 CSV（必须有表头）或 JSONL（每行一个 JSON 对象），允许 UTF-8 BOM；不支持 Excel、XML、GBK/GB18030、UTF-16 或整文件 JSON 数组。单文件上限为 `128 MiB`，单次请求上限为 `160 MiB`。用户先查看服务端质量预览，再明确激活上传数据集；数据仅存在于当前浏览器标签页关联的分析会话中，空闲 2 小时或最长 24 小时后过期。
+
+Supported inputs are UTF-8 CSV (with a header) and JSONL (one JSON object per line); UTF-8 BOM is accepted. Excel, XML, GBK/GB18030, UTF-16, and whole-file JSON arrays are not supported. The per-file limit is `128 MiB` and the per-request limit is `160 MiB`. The user reviews a server-generated quality preview and explicitly activates the dataset. Uploaded data belongs only to the current browser-tab session and expires after 2 hours of inactivity or 24 hours at most.
+
+上传前会展示来源与责任提示，但不会验证数据来源或授权。来源说明可留空；空值记录为“用户未提供”。上传原文件不会永久保存。永久保存、命名、版本和跨会话加载属于独立 P3/T39 规划，当前未实现，也未授权实施。
+
+Source and responsibility notices are displayed before upload, but the platform does not verify provenance or authorization. A source description is optional; an empty value is recorded as “not provided by the user.” Original uploads are not stored permanently. Permanent storage, naming, versions, and cross-session loading are separate P3/T39 plans; they are not implemented or authorized.
+
+以下是三种逻辑角色的字段示例：
+
+The following examples show the standard fields for each logical role:
 
 ### `users.csv`
 
@@ -118,11 +182,15 @@ source_user_id,target_user_id
 
 关系方向固定为：
 
+The relationship direction is fixed:
+
 ```text
 source_user_id → target_user_id
 ```
 
 含义是 source 用户关注 target 用户。
+
+This means that the source user follows the target user.
 
 ### `tweets.csv`
 
@@ -133,16 +201,22 @@ tweet_id,user_id,created_at,text,like_count,reply_count,repost_count,bookmark_co
 
 JSONL 文件每行必须是一个 JSON 对象。CSV 必须有表头并使用 UTF-8；允许 UTF-8 BOM，不支持无表头 CSV、Excel、XML、GBK/GB18030 或整文件 JSON 数组。
 
-用户 ID 和推文 ID 始终按字符串处理，不能转换为整数或 JavaScript `Number`。用户上传数据只属于当前分析会话，不作为永久数据集保存。
+JSONL requires one JSON object per line. CSV requires a header and UTF-8 encoding; UTF-8 BOM is accepted. Headerless CSV, Excel, XML, GBK/GB18030, and whole-file JSON arrays are not supported.
+
+用户 ID 和推文 ID 始终按字符串处理，不能转换为整数或 JavaScript `Number`。
+
+User and tweet IDs must remain strings; do not convert them to integers or JavaScript `Number` values.
 
 完整字段规则见 [社交网络数据字段契约](docs/social-network-analysis-data-field-contract.md)。
+
+See the [social-network data field contract](docs/social-network-analysis-data-field-contract.md) for the complete field rules.
 
 ## 指标口径 Metric Semantics
 
 | 指标 | 含义 |
 | --- | --- |
-| 入度 | 指向该节点的有效关系数量 |
-| 出度 | 该节点发出的有效关系数量 |
+| 数据内被关注数（入度） | 当前规范化关系数据中指向该节点的唯一有效关注关系数量 |
+| 数据内关注数（出度） | 当前规范化关系数据中该节点指向其他节点的唯一有效关注关系数量 |
 | 密度 | 当前规范化有向网络的结构密度 |
 | PageRank | 网络结构位置指标，不等于社会影响力 |
 | 点赞/评论/转发 | 三类互动分别统计，不合成综合分 |
@@ -151,6 +225,19 @@ JSONL 文件每行必须是一个 JSON 对象。CSV 必须有表头并使用 UTF
 | 主题网络 | 匹配用户之间的真实关注关系，不表示传播路径 |
 
 缺失值表示未采集或无法关联；明确采集到的 `0` 保留为有效零值。重复推文在原始层保留，分析层按规则去重并报告冲突。
+
+| Metric | Meaning |
+| --- | --- |
+| In-degree | Number of unique valid normalized relations directed to a node within the dataset |
+| Out-degree | Number of unique valid normalized relations originating from a node within the dataset |
+| Density | Structural density of the normalized directed network |
+| PageRank | A network-position metric, not a measure of social influence |
+| Likes / replies / reposts | Reported separately; never combined into a composite score |
+| Keywords | Frequency and document frequency after exact token matching |
+| TF-IDF | Text distinctiveness, not influence |
+| Topic network | Real following relations among matched users; not a diffusion path |
+
+Missing values mean “not collected” or “not linkable”; an observed `0` remains a valid zero. Duplicate tweets remain in the raw layer; the analysis layer deduplicates according to its rules and reports conflicts.
 
 ## API 概览 API
 
@@ -168,14 +255,47 @@ JSONL 文件每行必须是一个 JSON 对象。CSV 必须有表头并使用 UTF
 | `GET /.../{datasetId}` | 数据集摘要、质量和能力 |
 | `GET /.../{datasetId}/network/summary` | 网络总览 |
 | `GET /.../{datasetId}/network/local` | 局部网络 |
+| `GET /.../{datasetId}/network/graph` | 全局关系图数据及社群摘要；代码/API 已存在，但当前暂停、待负责人复核，不视为已验收能力 |
 | `GET /.../{datasetId}/rankings` | 指标排行 |
 | `GET /.../{datasetId}/users/search` | 用户搜索 |
 | `GET /.../{datasetId}/users/{userId}` | 用户详情 |
 | `GET /.../{datasetId}/interactions/*` | 互动分析 |
 | `GET /.../{datasetId}/text/*` | 文本与主题分析 |
 | `POST /.../{datasetId}/exports` | JSON/CSV/打印摘要导出 |
+| `POST /api/social-network/datasets/upload` | 接收上传文件并创建异步预览任务 |
+| `GET /api/social-network/datasets/upload-tasks/{uploadTaskId}` | 查询上传任务和质量预览状态 |
+| `DELETE /api/social-network/datasets/upload-tasks/{uploadTaskId}` | 取消尚未完成的上传任务 |
+| `DELETE /api/social-network/datasets/{datasetId}/sessions/{sessionId}` | 结束临时上传分析会话 |
+
+| Endpoint | Description |
+| --- | --- |
+| `GET /api/health` | Health check |
+| `GET /.../{datasetId}` | Dataset summary, quality, and capabilities |
+| `GET /.../{datasetId}/network/summary` | Network overview |
+| `GET /.../{datasetId}/network/local` | Local following network |
+| `GET /.../{datasetId}/network/graph` | Global-graph data and community summary; implemented but paused pending owner review |
+| `GET /.../{datasetId}/rankings` | Metric rankings |
+| `GET /.../{datasetId}/users/search` | User search |
+| `GET /.../{datasetId}/users/{userId}` | User details |
+| `GET /.../{datasetId}/interactions/*` | Interaction analysis |
+| `GET /.../{datasetId}/text/*` | Text and topic analysis |
+| `POST /.../{datasetId}/exports` | Synchronous JSON, CSV, or print-summary export |
+| `POST /api/social-network/datasets/upload` | Accept upload files and create an asynchronous preview task |
+| `GET /api/social-network/datasets/upload-tasks/{uploadTaskId}` | Read upload-task and preview status |
+| `DELETE /api/social-network/datasets/upload-tasks/{uploadTaskId}` | Cancel a pending upload task |
+| `DELETE /api/social-network/datasets/{datasetId}/sessions/{sessionId}` | Close a temporary analysis session |
 
 响应统一包含 `success`、`code`、`message`、`requestId`、`data`、`warnings` 和 `meta`。错误响应不暴露本地路径、堆栈或内部配置。
+
+The main API prefix is `/api/social-network/datasets/{datasetId}`. Responses use the shared `success`, `code`, `message`, `requestId`, `data`, `warnings`, and `meta` envelope. Errors do not expose local paths, stack traces, or internal configuration.
+
+全局关系图接口默认最多返回 100 个节点和 500 条关系，可通过 `maxNodes`、`maxEdges` 及 `includeExternalNodes` 调整展示范围；单次请求上限为 1,000 个节点和 15,000 条关系，并通过 `truncated` 标识截断。节点、关系和社群摘要按本次返回范围统计；图与社群仍待负责人复核。
+
+The global-graph API defaults to at most 100 nodes and 500 relations. `maxNodes`, `maxEdges`, and `includeExternalNodes` can adjust the display range, up to 1,000 nodes and 15,000 relations per request. Responses mark truncation with `truncated`; node, relation, and community summaries describe the returned range. The graph and community view remain paused pending owner review.
+
+数据集入口保留集中式导出；网络总览、重要节点、互动、主题和数据质量模块也可导出当前结果。导出 API 同步返回内容，前端使用浏览器 Blob 生成文件，不创建服务端临时下载文件。单次导出上限为 `2 MiB`，超限整体拒绝；主题导出必须带当前查询词。
+
+Dataset-level export remains available. Network overview, important nodes, interactions, topics, and data-quality modules can also export their current results. The API returns export content synchronously; the browser creates a local Blob download, and the server does not create a temporary download file. Each export is limited to `2 MiB` and is rejected as a whole when oversized. Topic exports require the current query term.
 
 ## 状态与限制 States and Limitations
 
@@ -194,19 +314,44 @@ idle / loading / available / empty / limited / failed / disabled / unavailable
 - 当前真实数据工作集约 2.2GB，继续扩大数据规模时需要分区索引、按需导出或异步大结果处理。
 - 项目仅支持桌面 Microsoft Edge，不扩展移动端、平板端或触摸设备适配。
 
+- `limited` means the graph, sample, or author-linkage coverage is capped.
+- `empty` means there is no result to display; the UI does not invent chart values or empty table headers.
+- Interaction sections degrade independently; one failed metric does not disable the entire module.
+- External nodes may participate in network calculations but are excluded from user-profile rankings by default.
+- Exports are synchronous responses; the server does not keep permanent files or download links.
+- Snapshot caches are scoped to a dataset version; a version change requires recalculation.
+- The current real-data working set is about 2.2 GB. Larger datasets may require partitioned indexes, on-demand exports, or asynchronous large-result handling.
+- Desktop Microsoft Edge is the only supported browser target; mobile, tablet, and touch layouts are out of scope.
+
 ## 验收步骤 Acceptance
 
 1. 启动应用并打开 `http://localhost:8080/#/social-network`。
-2. 确认数据集显示 626 用户、12,963 关系和 237,840 推文。
+2. 确认数据集显示用户数 626、关注关系数 12,963 和推文数 237,840，并区分候选关系、规范化有效关系及原始/去重推文口径。
 3. 检查网络总览、PageRank、用户搜索、局部网络和用户详情抽屉。
-4. 切换点赞、评论、转发，检查互动排行和时间序列。
-5. 输入真实关键词，检查主题推文、相关用户和真实关系边。
-6. 分别生成 JSON、CSV 和打印摘要导出。
-7. 检查加载、空、部分可用和失败提示。
-8. 在三个目标桌面分辨率检查表格、长文本、图表和关系方向。
-9. 切换 `#/predict`，确认预测页面无回归。
+4. 检查当前会话上传：选择文件角色、查看服务端质量预览、显式激活，再切回内置数据并关闭会话。
+5. 切换点赞、评论、转发，检查互动排行和时间序列。
+6. 输入真实关键词，检查主题推文、相关用户和真实关系边。
+7. 分别使用集中式入口及五个模块入口生成 JSON、CSV 和打印摘要；检查查询条件、截断信息和超限提示。
+8. 检查加载、空、部分可用和失败提示。
+9. 在三个目标桌面分辨率检查表格、长文本、导出对话框、图表和关系方向。
+10. 切换 `#/predict`，确认预测页面无回归。
+
+### English Checklist
+
+1. Start the application and open `http://localhost:8080/#/social-network`.
+2. Confirm the dataset summary shows 626 users, 12,963 relation records, and 237,840 raw tweet records; distinguish candidate relations from valid normalized relations and raw tweets from deduplicated samples.
+3. Check the network overview, PageRank, user search, local network, and user-details drawer.
+4. Test a current-session upload: assign file roles, inspect the server-generated quality preview, explicitly activate the dataset, then switch back to the built-in dataset and close the session.
+5. Switch between likes, replies, and reposts; check rankings and the time series.
+6. Search for a real topic term and check matched tweets, related users, and real following relations.
+7. Generate JSON, CSV, and print-summary exports from both the dataset entry and all five module actions; verify query metadata, truncation information, and oversized-result handling.
+8. Check loading, empty, partial, and failed states.
+9. At all three target desktop viewports, inspect tables, long text, export dialogs, charts, and relation direction.
+10. Open `#/predict` and confirm the prediction workspace has not regressed.
 
 性能实测见 [T34 性能验收报告](docs/social-network-analysis-performance-acceptance.md)。
+
+See the [T34 performance acceptance report](docs/social-network-analysis-performance-acceptance.md) for measured performance.
 
 ## 项目结构 Project Structure
 
@@ -219,8 +364,14 @@ docs/                                   # 契约、规划、验收和使用文�
 data/                                   # 本地预测数据资产，不提交到 Git
 ```
 
+`src/main/java/com/prediction/` contains the Spring Boot backend; `src/main/resources/static/` contains the HTML, CSS, and JavaScript frontend; `scripts/` contains prediction-data utilities; `docs/` contains contracts, plans, and acceptance records. Local prediction assets under `data/` are not committed.
+
 ## 数据来源与声明 Data Notice
 
 预测数据来源为 SMTPD：<https://github.com/zhuwei321/SMTPD>。
 
 社交网络数据集由项目开发者整理并提供，具体采集来源、时间范围、处理方式和授权边界以项目数据说明为准。使用者应自行确认数据集授权与隐私合规要求。
+
+The prediction dataset is sourced from SMTPD: <https://github.com/zhuwei321/SMTPD>.
+
+The social-network dataset is curated and provided by the project developer. Consult the project data notice for its collection sources, time range, processing, and authorization boundaries. Users are responsible for confirming that their use complies with applicable data licenses and privacy requirements.

@@ -105,7 +105,9 @@ class SocialNetworkFullBusinessClosureGateTest {
                 export.path("metadata").path("datasetId").asText());
         assertEquals("v1", export.path("metadata").path("datasetVersion").asText());
         assertTrue(export.path("metadata").path("metricVersion").isTextual());
-        assertTrue(export.path("result").path("nodes").isArray());
+        assertEquals(626, export.path("result").path("nodeCount").asInt());
+        assertEquals(12_963, export.path("result").path("edgeCount").asInt());
+        assertTrue(export.path("result").path("metricVersion").isTextual());
     }
 
     private JsonNode fetchGet(String path) throws Exception {

@@ -10,6 +10,8 @@ public record SocialNetworkGraphResult(
         NetworkMetrics metrics,
         PageRankResult pageRank,
         List<NetworkRankingEntry> pageRankRanking,
+        CommunityDetectionResult communityDetection,
+        StructuralRoleAnalysis structuralRoles,
         Instant calculatedAt) {
 
     public SocialNetworkGraphResult {

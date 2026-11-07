@@ -36,6 +36,16 @@ class SocialNetworkCsvSerializerTest {
     }
 
     @Test
+    void neutralizesFormulaLikeTextWithoutChangingNumericValues() {
+        String csv = new SocialNetworkCsvSerializer().serialize(
+                List.of("text", "count"),
+                List.of(Map.of("text", "  =HYPERLINK(\"x\")", "count", -12)));
+
+        assertEquals("\uFEFFtext,count\r\n"
+                + "\"'  =HYPERLINK(\"\"x\"\")\",-12\r\n", csv);
+    }
+
+    @Test
     void rejectsEmptyColumnDefinitions() {
         assertThrows(IllegalArgumentException.class,
                 () -> new SocialNetworkCsvSerializer().serialize(List.of(), List.of()));

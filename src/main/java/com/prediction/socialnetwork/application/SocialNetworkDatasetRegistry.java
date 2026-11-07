@@ -75,46 +75,69 @@ public class SocialNetworkDatasetRegistry {
                 BUILTIN_FILES,
                 null,
                 "normalization-v1",
-                "network-metrics-v1",
+                "network-metrics-v2.0",
                 "text-processing-v1",
                 "explanation-v1");
         datasets.put(dataset.datasetId(), dataset);
         return dataset;
     }
 
-    public SocialNetworkDataset createUploadSession(List<DatasetFileDescriptor> files) {
+    public SocialNetworkDataset prepareUploadDataset(
+            List<DatasetFileDescriptor> files, String sourceDescription) {
         Objects.requireNonNull(files, "files");
-        Instant now = clock.instant();
+        if (files.isEmpty()) {
+            throw new IllegalArgumentException("files must not be empty");
+        }
         String sessionId = UUID.randomUUID().toString();
         String datasetId = "upload-" + sessionId;
-        UploadSession session = new UploadSession(
-                sessionId,
-                datasetId,
-                now,
-                now,
-                now.plus(IDLE_TTL),
-                now.plus(HARD_TTL),
-                UploadSession.SessionStatus.ACTIVE);
-        SocialNetworkDataset dataset = new SocialNetworkDataset(
+        String normalizedSourceDescription = sourceDescription == null
+                || sourceDescription.isBlank()
+                ? "用户未提供"
+                : sourceDescription.trim();
+        return new SocialNetworkDataset(
                 datasetId,
                 "当前分析会话上传数据",
                 DatasetType.UPLOAD_SESSION,
                 "session-" + sessionId,
                 DatasetStatus.PARTIAL,
                 "用户上传的社交网络分析数据",
-                "数据来源：用户上传。请确认该文件的采集来源、时间范围、处理方式和授权边界。",
+                normalizedSourceDescription,
                 null,
                 null,
                 files,
                 sessionId,
                 "normalization-v1",
-                "network-metrics-v1",
+                "network-metrics-v2.0",
                 "text-processing-v1",
                 "explanation-v1");
-        sessions.put(sessionId, session);
-        datasets.put(dataset.datasetId(), dataset);
-        currentDatasetId = dataset.datasetId();
+    }
+
+    public SocialNetworkDataset registerUploadSession(SocialNetworkDataset dataset) {
+        Objects.requireNonNull(dataset, "dataset");
+        if (!dataset.isUploadSession()) {
+            throw new IllegalArgumentException("dataset must be an upload session");
+        }
+        Instant now = clock.instant();
+        UploadSession session = new UploadSession(
+                dataset.sessionId(),
+                dataset.datasetId(),
+                now,
+                now,
+                now.plus(IDLE_TTL),
+                now.plus(HARD_TTL),
+                UploadSession.SessionStatus.ACTIVE);
+        if (sessions.putIfAbsent(session.sessionId(), session) != null) {
+            throw new IllegalStateException("upload session already exists");
+        }
+        if (datasets.putIfAbsent(dataset.datasetId(), dataset) != null) {
+            sessions.remove(session.sessionId(), session);
+            throw new IllegalStateException("upload dataset already exists");
+        }
         return dataset;
+    }
+
+    public SocialNetworkDataset createUploadSession(List<DatasetFileDescriptor> files) {
+        return registerUploadSession(prepareUploadDataset(files, "用户未提供"));
     }
 
     public SocialNetworkDataset currentDataset() {
@@ -125,18 +148,74 @@ public class SocialNetworkDatasetRegistry {
         return requireDataset(datasetId);
     }
 
+    public SocialNetworkDataset resolveDatasetContext(
+            String datasetId, String datasetVersion, String sessionId) {
+        if (sessionId != null) {
+            UploadSession knownSession = sessions.get(sessionId);
+            if (knownSession != null) {
+                if (!knownSession.datasetId().equals(datasetId)) {
+                    throw new SocialNetworkDatasetContextException();
+                }
+                if (knownSession.isExpiredAt(clock.instant())) {
+                    throw new SocialNetworkDatasetSessionExpiredException();
+                }
+            }
+        }
+        SocialNetworkDataset dataset = requireDataset(datasetId);
+        if (!Objects.equals(dataset.datasetVersion(), datasetVersion)) {
+            throw new SocialNetworkDatasetContextException();
+        }
+        if (!dataset.isUploadSession()) {
+            if (sessionId != null) {
+                throw new SocialNetworkDatasetContextException();
+            }
+            return dataset;
+        }
+        if (!Objects.equals(dataset.sessionId(), sessionId)) {
+            throw new SocialNetworkDatasetContextException();
+        }
+        UploadSession session = session(dataset.sessionId());
+        Instant now = clock.instant();
+        if (session.isExpiredAt(now)) {
+            throw new SocialNetworkDatasetSessionExpiredException();
+        }
+        touch(session.sessionId());
+        return dataset;
+    }
+
+    public Instant sessionExpiresAt(String sessionId) {
+        UploadSession session = session(sessionId);
+        return session.idleExpiresAt().isBefore(session.hardExpiresAt())
+                ? session.idleExpiresAt()
+                : session.hardExpiresAt();
+    }
+
     public SocialNetworkDataset selectDataset(String datasetId) {
         SocialNetworkDataset dataset = requireDataset(datasetId);
         if (dataset.isUploadSession() && session(dataset.sessionId()).isExpiredAt(clock.instant())) {
-            throw new IllegalStateException("dataset session has expired");
+            throw new SocialNetworkDatasetSessionExpiredException();
         }
         currentDatasetId = dataset.datasetId();
         touch(dataset.sessionId());
         return dataset;
     }
 
+    public void closeUploadSession(
+            String datasetId, String datasetVersion, String sessionId) {
+        UploadSession session = session(sessionId);
+        String expectedVersion = "session-" + sessionId;
+        if (!session.datasetId().equals(datasetId)
+                || !expectedVersion.equals(datasetVersion)) {
+            throw new SocialNetworkDatasetContextException();
+        }
+        closeUploadSession(sessionId);
+    }
+
     public void closeUploadSession(String sessionId) {
         UploadSession session = session(sessionId);
+        if (session.status() == UploadSession.SessionStatus.CLOSED) {
+            return;
+        }
         sessions.put(sessionId, new UploadSession(
                 session.sessionId(),
                 session.datasetId(),

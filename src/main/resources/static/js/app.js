@@ -9,12 +9,28 @@
     const workbenchLinks = workbenchMenu
         ? Array.from(workbenchMenu.querySelectorAll(".workbench-link"))
         : [];
+    const socialSidebar = document.getElementById("social-network-sidebar");
+    const socialSidebarToggle = document.getElementById(
+        "social-network-sidebar-toggle"
+    );
+    const socialShellLayout = document.getElementById(
+        "social-network-shell-layout"
+    );
+    const socialShellMain = document.getElementById("social-network-shell-main");
+    const socialSidebarLinks = socialSidebar
+        ? Array.from(socialSidebar.querySelectorAll(
+            "[data-social-network-group]"
+        ))
+        : [];
     let workbenchHoverTimer = null;
     let workbenchPinned = false;
+    let activeSocialTaskKey = "";
     const workbenchLabels = {
         trend: "首页",
         predict: "流行度预测",
-        "social-network": "社交网络分析"
+        "social-network": "社交网络分析",
+        "social-network-task": "社交网络分析",
+        "social-network-graph": "社交网络关系图"
     };
 
     function closeWorkbenchMenu() {
@@ -30,7 +46,7 @@
     function updateBrand(name) {
         const title = document.getElementById("brand-title");
         const subtitle = document.getElementById("brand-sub");
-        const socialNetwork = name === "social-network";
+        const socialNetwork = name.indexOf("social-network") === 0;
         if (title) {
             title.textContent = "社交媒体分析平台";
         }
@@ -48,14 +64,51 @@
                 : "社交媒体分析平台 · 流行度预测";
     }
 
-    function showPage(name) {
+    function showPage(name, task) {
         updateBrand(name);
+        const isSocialTaskPage = name === "social-network-task";
+        document.body.classList.toggle(
+            "social-network-shell-active",
+            isSocialTaskPage
+        );
         const navShell = document.getElementById("nav-shell");
         if (navShell) {
             navShell.classList.toggle("hidden", name === "trend");
         }
+        const taskDetails = isSocialTaskPage &&
+            window.socialNetworkRouteTable
+            ? window.socialNetworkRouteTable.getTask(task)
+            : null;
+        const taskGroups = {
+            overview: "overview",
+            data: "data",
+            upload: "data",
+            quality: "data",
+            relations: "relations",
+            ranking: "relations",
+            "user-relations": "relations",
+            groups: "relations",
+            interaction: "content",
+            topic: "content"
+        };
+        const activeSocialGroup = taskDetails
+            ? taskGroups[task] || "overview"
+            : "overview";
+        socialSidebarLinks.forEach(function (link) {
+            const isActive = isSocialTaskPage &&
+                link.dataset.socialNetworkGroup === activeSocialGroup;
+            link.classList.toggle("is-active", isActive);
+            if (isActive) {
+                link.setAttribute("aria-current", "page");
+            } else {
+                link.removeAttribute("aria-current");
+            }
+        });
+        const activeRoute = name.indexOf("social-network") === 0
+            ? "social-network"
+            : name;
         workbenchLinks.forEach(function (link) {
-            link.classList.toggle("is-active", link.dataset.route === name);
+            link.classList.toggle("is-active", link.dataset.route === activeRoute);
         });
         if (workbenchCurrent) {
             workbenchCurrent.textContent = workbenchLabels[name] || "工作台";
@@ -64,12 +117,25 @@
         pages.forEach(function (page) {
             page.classList.toggle("active", page.id === "page-" + name);
         });
+        const socialTaskKey = isSocialTaskPage ? String(task || "unknown") : "";
+        if (socialTaskKey && socialTaskKey !== activeSocialTaskKey &&
+                socialShellMain) {
+            socialShellMain.scrollTop = 0;
+        }
+        activeSocialTaskKey = socialTaskKey;
         window.scrollTo({ top: 0 });
         if (typeof window.onPageShown === "function") {
             window.onPageShown(name);
         }
         if (typeof window.onSocialNetworkPageShown === "function") {
             window.onSocialNetworkPageShown(name);
+        }
+        if (name === "social-network-task" &&
+                typeof window.onSocialNetworkTaskPageShown === "function") {
+            window.onSocialNetworkTaskPageShown(task);
+        }
+        if (typeof window.onSocialNetworkGraphPageShown === "function") {
+            window.onSocialNetworkGraphPageShown(name);
         }
     }
     window.showPage = showPage;
@@ -101,6 +167,20 @@
             }
         });
     });
+
+    if (socialSidebarToggle && socialSidebar && socialShellLayout) {
+        socialSidebarToggle.addEventListener("click", function () {
+            const isCollapsed = socialSidebar.classList.toggle("is-collapsed");
+            socialShellLayout.classList.toggle("is-collapsed", isCollapsed);
+            socialSidebarToggle.setAttribute(
+                "aria-expanded",
+                String(!isCollapsed)
+            );
+            const label = isCollapsed ? "展开导航" : "收起导航";
+            socialSidebarToggle.setAttribute("aria-label", label);
+            socialSidebarToggle.title = label;
+        });
+    }
 
     if (workbenchMenu && workbenchToggle) {
         workbenchMenu.addEventListener("mouseenter", function () {

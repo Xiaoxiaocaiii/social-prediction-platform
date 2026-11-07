@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light">
     <title>社交媒体分析平台</title>
     <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="css/style.css?v=20261007-predict-title-scale-1">
+<link rel="stylesheet" href="css/style.css?v=20261107-overview-heading-gap-1">
 </head>
 <body>
 <header class="topbar">
@@ -176,7 +176,7 @@
                                 <span class="home-demo-panel-heading">用户详情</span>
                                 <strong>World Economic Forum</strong>
                                 <span class="home-demo-user-meta">节点状态 · available</span>
-                                <div class="home-demo-user-stat"><span>入度</span><b>239</b></div>
+                                <div class="home-demo-user-stat"><span>数据内被关注数</span><b>239</b></div>
                                 <div class="home-demo-user-stat"><span>互动推文</span><b>1,284</b></div>
                                 <span class="home-demo-drawer-line"></span>
                                 <span class="home-demo-drawer-line short"></span>
@@ -194,39 +194,67 @@
                  aria-labelledby="home-quickstart-title">
             <div class="home-section-heading">
                 <span class="home-section-kicker">GET STARTED · 快速上手</span>
-                <h2 id="home-quickstart-title">三步进入研究工作台</h2>
-                <p>从选择研究方向开始，逐步完成输入、分析和结果查看。</p>
+                <h2 id="home-quickstart-title">两条分析路径，各自清晰</h2>
+                <p>流行度推演从研究主题出发，社交网络分析从数据质量检查开始。</p>
             </div>
-            <div class="home-quickstart-track">
-                <article class="home-quick-card">
-                    <span class="home-quick-number">01</span>
-                    <div class="home-quick-visual quick-select" aria-hidden="true">
-                        <span>选择工作台</span>
-                        <i></i>
-                        <b></b>
+            <div class="home-quickstart-grid">
+                <article class="home-workflow-card home-workflow-predict">
+                    <div class="home-workflow-head">
+                        <div>
+                            <span class="home-workflow-index">01 / POPULARITY PROJECTION</span>
+                            <h3>流行度推演</h3>
+                            <p>从研究主题出发，查看相似历史案例的热度变化。</p>
+                        </div>
+                        <a class="home-workflow-link" href="#/predict">
+                            进入推演 <span aria-hidden="true">↗</span>
+                        </a>
                     </div>
-                    <h3>选择研究方向</h3>
-                    <p>进入流行度预测或社交网络分析。</p>
+                    <ol class="home-workflow-steps" aria-label="流行度推演流程">
+                        <li>
+                            <span class="home-workflow-step-index">01</span>
+                            <div><strong>输入研究主题</strong><small>标题、主题或文案</small></div>
+                        </li>
+                        <li>
+                            <span class="home-workflow-step-index">02</span>
+                            <div><strong>匹配历史案例</strong><small>检索真实历史内容</small></div>
+                        </li>
+                        <li>
+                            <span class="home-workflow-step-index">03</span>
+                            <div><strong>查看参考趋势</strong><small>30 天热度变化</small></div>
+                        </li>
+                    </ol>
+                    <p class="home-workflow-note">
+                        未找到可用相似案例时，将显示全站平均热度参考曲线；趋势不代表未来热度。
+                    </p>
                 </article>
-                <span class="home-quick-connector" aria-hidden="true">→</span>
-                <article class="home-quick-card">
-                    <span class="home-quick-number">02</span>
-                    <div class="home-quick-visual quick-input" aria-hidden="true">
-                        <span>研究对象</span>
-                        <b>城市夜跑装备分享</b>
-                        <i></i>
+                <article class="home-workflow-card home-workflow-social">
+                    <div class="home-workflow-head">
+                        <div>
+                            <span class="home-workflow-index">02 / SOCIAL NETWORK ANALYSIS</span>
+                            <h3>社交网络分析</h3>
+                            <p>先确认数据质量，再查看当前数据支持的关系结构。</p>
+                        </div>
+                        <a class="home-workflow-link" href="#/social-network">
+                            进入分析 <span aria-hidden="true">↗</span>
+                        </a>
                     </div>
-                    <h3>输入研究对象</h3>
-                    <p>输入主题，或查看当前可用数据集。</p>
-                </article>
-                <span class="home-quick-connector" aria-hidden="true">→</span>
-                <article class="home-quick-card">
-                    <span class="home-quick-number">03</span>
-                    <div class="home-quick-visual quick-result" aria-hidden="true">
-                        <i></i><i></i><i></i><b>分析结果</b>
-                    </div>
-                    <h3>查看分析结果</h3>
-                    <p>查看趋势、关系网络和可追溯的分析依据。</p>
+                    <ol class="home-workflow-steps" aria-label="社交网络分析流程">
+                        <li>
+                            <span class="home-workflow-step-index">01</span>
+                            <div><strong>选择数据集</strong><small>智库社交网络数据集</small></div>
+                        </li>
+                        <li>
+                            <span class="home-workflow-step-index">02</span>
+                            <div><strong>检查数据质量</strong><small>查看可用范围与限制</small></div>
+                        </li>
+                        <li>
+                            <span class="home-workflow-step-index">03</span>
+                            <div><strong>查看网络结构</strong><small>局部关系网络与节点排行</small></div>
+                        </li>
+                    </ol>
+                    <p class="home-workflow-note">
+                        当前提供内置数据集分析；全局关系图与社群展示已有代码，当前暂停并待负责人复核，不作为已验收能力宣传。结果不代表传播路径或因果关系。
+                    </p>
                 </article>
             </div>
         </section>
@@ -530,305 +558,542 @@
         </div>
     </section>
 
-    <section id="page-social-network" class="page social-network-page">
-        <div class="page-head social-network-head">
-            <div class="page-overline">REAL DATA · SOCIAL NETWORK STUDY</div>
-            <h1>社交网络分析</h1>
-            <p>基于真实用户关系、推文样本和质量报告，查看当前数据集与分析能力边界。</p>
-        </div>
-        <div id="social-network-status" class="social-network-status card-panel" aria-live="polite">
-            正在检查社交网络数据集…
-        </div>
-        <section id="social-network-dataset" class="social-network-dataset">
-            <div class="social-network-dataset-head">
-                <div>
-                    <div class="page-overline">01 / DATASET ENTRY</div>
-                    <h2>数据集入口</h2>
-                </div>
-                <span id="social-network-dataset-scope" class="social-network-version">当前数据集</span>
-            </div>
-            <div id="social-network-summary" class="social-network-summary">
-            <div class="social-network-summary-card card-panel">
-                <span class="social-network-label">数据集状态</span>
-                <strong id="social-network-dataset-status">-</strong>
-                <small id="social-network-dataset-version">版本检查中</small>
-            </div>
-            <div class="social-network-summary-card card-panel">
-                <span class="social-network-label">用户记录</span>
-                <strong id="social-network-user-count">-</strong>
-                <small>规范化用户样本</small>
-            </div>
-            <div class="social-network-summary-card card-panel">
-                <span class="social-network-label">关系候选</span>
-                <strong id="social-network-relationship-count">-</strong>
-                <small>关注关系候选数</small>
-            </div>
-            <div class="social-network-summary-card card-panel">
-                <span class="social-network-label">推文样本</span>
-                <strong id="social-network-tweet-count">-</strong>
-                <small>当前采集样本</small>
-            </div>
-            </div>
-            <section class="social-network-export card-panel">
-                <div class="social-network-export-heading">
-                    <div>
-                        <span class="social-network-tool-label">数据工具</span>
-                        <h2>导出结果</h2>
+    <section id="page-social-network-task" class="page social-network-workspace-page"
+             aria-label="社交网络分析工作台">
+        <div id="social-network-shell-layout" class="social-network-shell-layout">
+            <aside id="social-network-sidebar" class="social-network-sidebar"
+                   aria-label="社交网络分析导航">
+                <div class="social-network-sidebar-head">
+                    <div class="social-network-sidebar-heading">
+                        <span>ANALYSIS WORKSPACE</span>
+                        <strong>分析任务</strong>
                     </div>
-                    <span id="social-network-export-status" class="social-network-version">待选择</span>
-                </div>
-                <div class="social-network-export-controls">
-                    <label>结果范围
-                        <select id="social-network-export-type">
-                            <option value="network">网络总览</option>
-                            <option value="users">用户排行</option>
-                            <option value="tweets">推文样本</option>
-                            <option value="interactions">互动分析</option>
-                            <option value="topic">主题分析</option>
-                            <option value="quality">质量报告</option>
-                        </select>
-                    </label>
-                    <label>格式
-                        <select id="social-network-export-format">
-                            <option value="json">JSON</option>
-                            <option value="csv">CSV</option>
-                            <option value="print">打印摘要</option>
-                        </select>
-                    </label>
-                    <button id="social-network-export-button" class="button button-primary" type="button">
-                        生成导出
+                    <button id="social-network-sidebar-toggle"
+                            class="social-network-sidebar-toggle" type="button"
+                            aria-label="收起导航" aria-expanded="true"
+                            aria-controls="social-network-sidebar">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="m14 5-7 7 7 7"></path>
+                            <path d="M7 12h13"></path>
+                        </svg>
                     </button>
                 </div>
-                <pre id="social-network-export-result" class="social-network-export-result" aria-live="polite">选择范围和格式后生成结果。</pre>
+                <nav class="social-network-sidebar-nav" aria-label="分析模块">
+                    <a class="social-network-sidebar-link"
+                       data-social-network-group="overview" data-label="分析概览"
+                       href="#/social-network" title="分析概览" aria-label="分析概览">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <rect x="4" y="4" width="6" height="6" rx="1"></rect>
+                            <rect x="14" y="4" width="6" height="6" rx="1"></rect>
+                            <rect x="4" y="14" width="6" height="6" rx="1"></rect>
+                            <rect x="14" y="14" width="6" height="6" rx="1"></rect>
+                        </svg>
+                        <span class="social-network-sidebar-label">分析概览</span>
+                    </a>
+                    <a class="social-network-sidebar-link"
+                       data-social-network-group="data" data-label="数据与质量"
+                       href="#/social-network/data" title="数据与质量" aria-label="数据与质量">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M5 6.5C5 5.1 8.1 4 12 4s7 1.1 7 2.5S15.9 9 12 9 5 7.9 5 6.5Z"></path>
+                            <path d="M5 6.5v11C5 18.9 8.1 20 12 20s7-1.1 7-2.5v-11"></path>
+                            <path d="M5 12c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5"></path>
+                        </svg>
+                        <span class="social-network-sidebar-label">数据与质量</span>
+                    </a>
+                    <a class="social-network-sidebar-link"
+                       data-social-network-group="relations" data-label="关系与节点"
+                       href="#/social-network/relations" title="关系与节点" aria-label="关系与节点">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <circle cx="6" cy="7" r="2.5"></circle>
+                            <circle cx="18" cy="6" r="2.5"></circle>
+                            <circle cx="13" cy="18" r="2.5"></circle>
+                            <path d="m8.4 6.8 7.1-.6M7.4 9.2l4.2 6.5m4-7.2-1.7 7"></path>
+                        </svg>
+                        <span class="social-network-sidebar-label">关系与节点</span>
+                    </a>
+                    <a class="social-network-sidebar-link"
+                       data-social-network-group="content" data-label="内容与互动"
+                       href="#/social-network/content" title="内容与互动" aria-label="内容与互动">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M5 5.5h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-7l-5 3v-3H5a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2Z"></path>
+                            <path d="M7 10h10M7 13.5h7"></path>
+                        </svg>
+                        <span class="social-network-sidebar-label">内容与互动</span>
+                    </a>
+                </nav>
+            </aside>
+            <div id="social-network-shell-main" class="social-network-shell-main"
+                 tabindex="-1">
+                <div class="social-network-task-content">
+                    <header class="social-network-task-heading">
+                        <div class="social-network-task-heading-copy">
+                            <p id="social-network-task-eyebrow">ANALYSIS OVERVIEW</p>
+                            <h1 id="social-network-task-title">社交网络分析</h1>
+                        </div>
+                        <div class="social-network-task-heading-actions">
+                            <button id="social-network-quality-report-export"
+                                    class="button button-secondary" type="button"
+                                    data-social-network-quality-export hidden>
+                                导出质量报告
+                            </button>
+                            <button id="social-network-overview-retry"
+                                    class="button button-secondary" type="button"
+                                    hidden>
+                                刷新概览
+                            </button>
+                        </div>
+                        <nav id="social-network-relations-tabs"
+                             class="social-network-relations-tabs"
+                             aria-label="关系与节点分析" hidden>
+                            <a href="#/social-network/relations">网络结构</a>
+                            <a href="#/social-network/relations/ranking">节点排行</a>
+                            <a href="#/social-network/relations/user">用户关系</a>
+                            <a href="#/social-network/relations/groups">团体与社群</a>
+                        </nav>
+                        <nav id="social-network-content-tabs"
+                             class="social-network-content-task-nav"
+                             aria-label="内容分析页面" hidden>
+                            <a href="#/social-network/content">互动分析</a>
+                            <a href="#/social-network/content/topic">主题分析</a>
+                        </nav>
+                    </header>
+                    <section id="social-network-overview-home" class="social-network-overview-home"
+                             aria-labelledby="social-network-task-title" hidden>
+                        <section class="social-network-overview-tasks"
+                                 aria-label="分析任务">
+                            <div class="social-network-overview-task-grid">
+                                <a class="social-network-overview-task"
+                                   href="#/social-network/data">
+                                    <span class="social-network-overview-task-eyebrow">
+                                        DATA &amp; QUALITY
+                                    </span>
+                                    <span class="social-network-overview-task-kicker">数据与质量</span>
+                                    <span class="social-network-overview-task-description">
+                                        选择数据，检查哪些记录可以参与分析。
+                                    </span>
+                                    <span class="social-network-overview-task-scope">
+                                        当前数据 · 上传检查 · 质量报告
+                                    </span>
+                                    <span class="social-network-overview-task-action">进入数据管理</span>
+                                </a>
+                                <a class="social-network-overview-task"
+                                   href="#/social-network/relations">
+                                    <span class="social-network-overview-task-eyebrow">
+                                        NETWORK &amp; NODES
+                                    </span>
+                                    <span class="social-network-overview-task-kicker">关系与节点</span>
+                                    <span class="social-network-overview-task-description">
+                                        查看网络结构，识别重要节点并查询用户关系。
+                                    </span>
+                                    <span class="social-network-overview-task-scope">
+                                        网络结构 · 节点排行 · 用户关系
+                                    </span>
+                                    <span class="social-network-overview-task-action">进入关系分析</span>
+                                </a>
+                                <a class="social-network-overview-task"
+                                   href="#/social-network/content">
+                                    <span class="social-network-overview-task-eyebrow">
+                                        CONTENT &amp; INTERACTION
+                                    </span>
+                                    <span class="social-network-overview-task-kicker">内容与互动</span>
+                                    <span class="social-network-overview-task-description">
+                                        比较互动表现，查询主题相关的内容与用户。
+                                    </span>
+                                    <span class="social-network-overview-task-scope">
+                                        互动统计 · 主题查询
+                                    </span>
+                                    <span class="social-network-overview-task-action">进入内容分析</span>
+                                </a>
+                            </div>
+                        </section>
+                        <section class="social-network-overview-summary"
+                                 aria-label="当前数据分析摘要">
+                            <article class="social-network-overview-summary-card">
+                                <header class="social-network-overview-section-head">
+                                    <div>
+                                        <p class="social-network-data-eyebrow">NETWORK STRUCTURE</p>
+                                        <h2>网络结构摘要</h2>
+                                    </div>
+                                    <a href="#/social-network/relations">完整分析</a>
+                                </header>
+                                <p id="social-network-overview-network-scope"
+                                   class="social-network-overview-summary-scope"
+                                   role="status" aria-live="polite">
+                                    正在读取完整规范化网络摘要…
+                                </p>
+                                <dl class="social-network-overview-network-metrics">
+                                    <div>
+                                        <dt>孤立节点</dt>
+                                        <dd id="social-network-overview-isolated-node-count">-</dd>
+                                    </div>
+                                    <div>
+                                        <dt>网络密度</dt>
+                                        <dd id="social-network-overview-density">-</dd>
+                                    </div>
+                                    <div>
+                                        <dt>弱连通分量</dt>
+                                        <dd id="social-network-overview-component-count">-</dd>
+                                    </div>
+                                    <div>
+                                        <dt>最大弱连通分量</dt>
+                                        <dd id="social-network-overview-largest-component">-</dd>
+                                    </div>
+                                </dl>
+                                <p class="social-network-overview-summary-note">
+                                    密度描述规范化有向关系位置占比，不代表关系亲密程度。
+                                </p>
+                            </article>
+                            <article class="social-network-overview-summary-card">
+                                <header class="social-network-overview-section-head">
+                                    <div>
+                                        <p class="social-network-data-eyebrow">INTERACTION SNAPSHOT</p>
+                                        <h2>互动表现摘要</h2>
+                                    </div>
+                                    <a href="#/social-network/content">完整分析</a>
+                                </header>
+                                <p id="social-network-overview-interaction-scope"
+                                   class="social-network-overview-summary-scope"
+                                   role="status" aria-live="polite">
+                                    正在读取纳入分析的互动样本…
+                                </p>
+                                <dl class="social-network-overview-interaction-metrics">
+                                    <div>
+                                        <dt>点赞总数</dt>
+                                        <dd id="social-network-overview-like-total">-</dd>
+                                    </div>
+                                    <div>
+                                        <dt>评论总数</dt>
+                                        <dd id="social-network-overview-reply-total">-</dd>
+                                    </div>
+                                    <div>
+                                        <dt>转发总数</dt>
+                                        <dd id="social-network-overview-repost-total">-</dd>
+                                    </div>
+                                </dl>
+                                <p class="social-network-overview-summary-note">
+                                    汇总纳入分析的去重推文样本；缺失统计不会按零展示。
+                                </p>
+                            </article>
+                        </section>
+                    </section>
+                    <section id="social-network-dataset-page" class="social-network-dataset-page"
+                             aria-labelledby="social-network-task-title" hidden>
+                        <div id="social-network-dataset-loading"
+                             class="social-network-dataset-loading" role="status"
+                             aria-live="polite">正在读取当前数据…</div>
+                        <div id="social-network-dataset-error"
+                             class="social-network-overview-error" role="alert" hidden>
+                            <p>暂时无法读取当前数据身份。现有分析上下文未作修改。</p>
+                            <button id="social-network-dataset-retry"
+                                    class="button button-secondary" type="button">重试</button>
+                        </div>
+                        <div id="social-network-dataset-content" hidden>
+                            <section class="social-network-dataset-identity"
+                                     aria-labelledby="social-network-dataset-name">
+                                <div class="social-network-dataset-identity-head">
+                                    <div>
+                                        <p class="social-network-data-eyebrow">
+                                            DATASET OVERVIEW
+                                        </p>
+                                        <h2 id="social-network-dataset-name">正在读取数据身份…</h2>
+                                    </div>
+                                    <div class="social-network-dataset-identity-actions">
+                                        <span id="social-network-dataset-status"
+                                              class="social-network-quality-report-status"
+                                              role="status" aria-live="polite">状态读取中</span>
+                                        <a class="button button-primary"
+                                           href="#/social-network/data/upload">上传数据</a>
+                                    </div>
+                                </div>
+                                <div id="social-network-dataset-notice"
+                                     class="social-network-overview-notice" role="status" hidden></div>
+                                <div class="social-network-dataset-source">
+                                    <div>
+                                        <span class="social-network-data-eyebrow">数据来源</span>
+                                        <p id="social-network-dataset-source-summary">未提供</p>
+                                    </div>
+                                    <button id="social-network-dataset-source-open"
+                                            class="button button-secondary" type="button">
+                                        查看来源详情
+                                    </button>
+                                </div>
+                            </section>
+                            <section id="social-network-dataset-quality"
+                                     class="social-network-dataset-quality"
+                                     aria-label="数据质量报告">
+                                <div id="social-network-quality-report"
+                                     class="social-network-quality-report"
+                                     aria-live="polite"></div>
+                            </section>
+                            <section class="social-network-dataset-switch"
+                                     aria-labelledby="social-network-dataset-switch-heading">
+                                <div class="social-network-dataset-section-head">
+                                    <div>
+                                        <p class="social-network-data-eyebrow">DATA CONTEXT</p>
+                                        <h2 id="social-network-dataset-switch-heading">切换数据</h2>
+                                    </div>
+                                    <a class="social-network-inline-link"
+                                       href="#/social-network/data/upload">上传并检查新数据</a>
+                                </div>
+                                <article class="social-network-dataset-switch-row">
+                                    <div>
+                                        <strong id="social-network-builtin-dataset-name">
+                                            智库社交网络数据集
+                                        </strong>
+                                        <p id="social-network-dataset-switch-description">
+                                            使用项目内置数据进行分析。
+                                        </p>
+                                    </div>
+                                    <span id="social-network-builtin-current"
+                                          class="social-network-dataset-current" hidden>
+                                        正在使用
+                                    </span>
+                                    <button id="social-network-dataset-switch-builtin"
+                                            class="button button-secondary" type="button" hidden>
+                                        使用内置数据
+                                    </button>
+                                </article>
+                                <div id="social-network-dataset-upload-state"
+                                     class="social-network-dataset-upload-state" hidden>
+                                    <p id="social-network-dataset-upload-message"></p>
+                                    <a id="social-network-dataset-upload-link"
+                                       class="button button-secondary"
+                                       href="#/social-network/data/upload">继续检查</a>
+                                </div>
+                                <p id="social-network-dataset-switch-blocked"
+                                   class="social-network-dataset-switch-blocked" role="status" hidden>
+                                    上传检查正在进行；请先完成或取消检查，再切换数据。
+                                </p>
+                                <p id="social-network-dataset-switch-status"
+                                   class="social-network-data-status" role="status"
+                                   aria-live="polite"></p>
+                            </section>
+                        </div>
+                    </section>
+                    <section id="social-network-group-page"
+                             class="social-network-group-page"
+                             aria-label="团体与社群分析" hidden>
+                        <div class="social-network-group-toolbar">
+                            <div class="social-network-group-tabs" role="tablist"
+                                 aria-label="选择团体分析">
+                                <button type="button" role="tab" aria-selected="true"
+                                        data-group-analysis="clique"
+                                        aria-describedby="social-network-group-clique-method">
+                                    紧密关注组合 Clique
+                                    <span class="social-network-scope-term social-network-group-tab-help">
+                                        <span class="social-network-scope-term-trigger"
+                                              aria-hidden="true">i</span>
+                                        <span class="social-network-scope-term-tooltip"
+                                              id="social-network-group-clique-method"
+                                              role="tooltip"><strong>Clique 计算口径</strong>：将任一方向有关注的账号视为相连，寻找至少 3 个账号组成且不能再加入其他账号的极大团；团之间可以重叠，重叠团分别计数。</span>
+                                    </span>
+                                </button>
+                                <button type="button" role="tab" aria-selected="false"
+                                        data-group-analysis="louvain"
+                                        aria-describedby="social-network-group-louvain-method">
+                                    关注网络分组 Louvain
+                                    <span class="social-network-scope-term social-network-group-tab-help">
+                                        <span class="social-network-scope-term-trigger"
+                                              aria-hidden="true">i</span>
+                                        <span class="social-network-scope-term-tooltip"
+                                              id="social-network-group-louvain-method"
+                                              role="tooltip"><strong>Louvain 计算口径</strong>：按连接模式划分算法社群，不代表现实组织。计算将关注关系转为无向简单网络（合并重复关系、忽略自环），resolution 固定为 1.0。</span>
+                                    </span>
+                                </button>
+                            </div>
+                            <div class="social-network-group-actions">
+                                <span data-group-status class="social-network-group-status"
+                                      role="status" aria-live="polite">等待读取</span>
+                                <button type="button" class="button button-secondary"
+                                        data-group-export disabled>导出当前结果</button>
+                                <button type="button" class="button button-secondary"
+                                        data-group-refresh>刷新状态</button>
+                                <button type="button" class="button button-primary"
+                                        data-group-start>开始计算</button>
+                            </div>
+                        </div>
+                        <p data-group-notice class="social-network-group-notice"
+                           role="status" aria-live="polite" hidden></p>
+                        <section class="social-network-group-findings"
+                                 aria-label="分析发现" data-group-findings
+                                 aria-live="polite"></section>
+                        <details class="social-network-group-technical">
+                            <summary>查看计算指标与规模分布</summary>
+                        <section class="social-network-group-summary"
+                                 aria-label="分析摘要" data-group-summary></section>
+                        <section class="social-network-group-distribution"
+                                 aria-label="规模分布">
+                            <header>
+                                <div>
+                                    <h2 data-group-distribution-title>团规模分布</h2>
+                                    <p data-group-distribution-note></p>
+                                </div>
+                            </header>
+                            <div data-group-distribution></div>
+                        </section>
+                        </details>
+                        <div class="social-network-group-results">
+                            <section class="social-network-group-list-panel"
+                                     aria-labelledby="social-network-group-list-heading">
+                                <header class="social-network-group-panel-head">
+                                    <div>
+                                        <h2 id="social-network-group-list-heading"
+                                            data-group-list-title>极大团列表</h2>
+                                        <p data-group-list-count>等待分析状态</p>
+                                    </div>
+                                    <nav class="social-network-group-pagination"
+                                         aria-label="团体结果分页">
+                                        <button type="button" data-group-list-prev
+                                                aria-label="上一页">上一页</button>
+                                        <span data-group-list-page>—</span>
+                                        <button type="button" data-group-list-next
+                                                aria-label="下一页">下一页</button>
+                                    </nav>
+                                </header>
+                                <div data-group-list class="social-network-group-list"
+                                     aria-live="polite"></div>
+                            </section>
+                            <section class="social-network-group-evidence-panel"
+                                     aria-labelledby="social-network-group-evidence-heading">
+                                <header class="social-network-group-panel-head">
+                                    <div>
+                                        <h2 id="social-network-group-evidence-heading"
+                                            data-group-evidence-title>成员与来源证据</h2>
+                                        <p data-group-evidence-subtitle>
+                                            选择一个团或社群后按需读取来源行。
+                                        </p>
+                                    </div>
+                                </header>
+                                <div class="social-network-group-evidence-tabs"
+                                     role="tablist" aria-label="证据类型">
+                                    <button type="button" role="tab" aria-selected="true"
+                                            data-group-evidence-section="members">
+                                        成员
+                                    </button>
+                                    <button type="button" role="tab" aria-selected="false"
+                                            data-group-evidence-section="ties">
+                                        关系来源
+                                    </button>
+                                </div>
+                                <p data-group-evidence-status class="social-network-group-evidence-status"
+                                   role="status" aria-live="polite">
+                                    证据按需加载；每页最多 20 项。
+                                </p>
+                                <div data-group-evidence-list
+                                     class="social-network-group-evidence-list"></div>
+                                <nav class="social-network-group-pagination"
+                                     aria-label="来源证据分页">
+                                    <button type="button" data-group-evidence-prev
+                                            aria-label="上一页">上一页</button>
+                                    <span data-group-evidence-page>—</span>
+                                    <button type="button" data-group-evidence-next
+                                            aria-label="下一页">下一页</button>
+                                </nav>
+                            </section>
+                        </div>
+                    </section>
+                    <section class="social-network-task-card" aria-live="polite">
+                        <h2 id="social-network-task-status">正在打开任务</h2>
+                        <p id="social-network-task-message">
+                            任务视图正在加载，请稍候。
+                        </p>
+                        <a id="social-network-task-return" class="button button-secondary"
+                           href="#/social-network">返回分析概览</a>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="page-social-network-graph" class="page social-network-graph-page">
+        <div class="social-network-graph-heading">
+            <a class="social-network-graph-back" href="#/social-network">返回社交网络分析</a>
+            <div class="page-overline">GLOBAL RELATIONSHIP MAP</div>
+            <h1>关系网络图</h1>
+            <p>查看当前数据集中的用户节点与真实关注关系。滚轮缩放画布，拖动画布平移，拖动节点可调整当前视图布局。</p>
+        </div>
+        <div class="social-network-graph-context card-panel">
+            <div><span>数据集</span><strong id="social-network-graph-dataset">智库社交网络数据集</strong></div>
+            <div><span>数据版本</span><strong id="social-network-graph-version">加载中</strong></div>
+            <div><span>本次展示节点 / 完整范围</span><strong id="social-network-graph-node-count">-</strong></div>
+            <div><span>本次展示关系 / 完整范围</span><strong id="social-network-graph-edge-count">-</strong></div>
+            <span id="social-network-graph-status" class="social-network-graph-status" role="status">
+                正在加载全量关系网络…
+            </span>
+        </div>
+        <div class="social-network-graph-workspace">
+            <section class="social-network-graph-main card-panel" aria-label="关系网络画布">
+                <div class="social-network-graph-toolbar">
+                    <form id="social-network-graph-search-form" class="social-network-graph-search">
+                        <label for="social-network-graph-search">搜索用户</label>
+                        <input id="social-network-graph-search" type="search"
+                               autocomplete="off" placeholder="用户 ID、用户名或显示名称">
+                        <button class="button button-primary" type="submit">定位</button>
+                    </form>
+                    <div class="social-network-graph-view-controls" aria-label="画布控制">
+                        <button id="social-network-graph-zoom-in" class="button button-secondary"
+                                type="button" aria-label="放大画布">+</button>
+                        <button id="social-network-graph-zoom-out" class="button button-secondary"
+                                type="button" aria-label="缩小画布">−</button>
+                        <button id="social-network-graph-fit" class="button button-secondary"
+                                type="button">适应画布</button>
+                        <button id="social-network-graph-reset" class="button button-secondary"
+                                type="button">重置布局</button>
+                        <label class="social-network-graph-community-toggle">
+                            <input id="social-network-graph-community-toggle" type="checkbox"
+                                   checked disabled>
+                            显示社群圈（分析未运行）
+                        </label>
+                    </div>
+                </div>
+                <div id="social-network-graph-search-results" class="social-network-graph-search-results"
+                     role="listbox" aria-label="用户搜索结果"></div>
+                <div id="social-network-graph-canvas-shell" class="social-network-graph-canvas-shell">
+                    <canvas id="social-network-graph-canvas" tabindex="0"
+                            aria-label="可缩放和平移的全量用户关注关系网络"></canvas>
+                    <div id="social-network-graph-tooltip" class="social-network-graph-tooltip hidden"
+                         role="status"></div>
+                    <div id="social-network-graph-loading" class="social-network-graph-loading">
+                        正在读取并布局关系网络…
+                    </div>
+                </div>
             </section>
-        </section>
-        <section id="social-network-overview" class="social-network-overview card-panel">
-            <div class="social-network-panel-head">
-                <div>
-                    <div class="page-overline">02 / NETWORK OVERVIEW</div>
-                    <h2>网络总览</h2>
-                </div>
-                <span id="social-network-scope" class="social-network-version">范围检查中</span>
-            </div>
-            <div class="social-network-overview-grid">
-                <div class="social-network-overview-block">
-                    <h3>网络结构</h3>
-                    <div class="social-network-metric-list">
-                        <div><span>网络密度</span><strong id="social-network-density">-</strong></div>
-                        <div><span>孤立节点</span><strong id="social-network-isolated-count">-</strong></div>
-                        <div><span>外部节点</span><strong id="social-network-external-count">-</strong></div>
-                        <div><span>PageRank</span><strong id="social-network-pagerank-state">-</strong></div>
+            <aside class="social-network-graph-sidebar">
+                <section class="social-network-graph-side-card card-panel">
+                    <div class="page-overline">LEGEND</div>
+                    <h2>图例与范围</h2>
+                    <div class="social-network-graph-legend">
+                        <span><i class="is-profile"></i>用户节点（社群未计算）</span>
+                        <span><i class="is-external"></i>外部节点（资料未采集）</span>
+                        <span><i class="is-selected"></i>当前选中</span>
                     </div>
-                    <p class="social-network-note">
-                        密度描述当前规范化有向关系结构，不表示关系亲密程度或社会影响力。
+                    <p>关系方向：来源用户 → 被关注用户。缩放后可查看方向箭头；选中节点时会突出显示相邻关系。</p>
+                </section>
+                <section class="social-network-graph-side-card card-panel">
+                    <div class="page-overline">COMMUNITY STRUCTURE</div>
+                    <h2>社群划分</h2>
+                    <div id="social-network-graph-community-summary"
+                         class="social-network-graph-community-summary">社群分析尚未运行。</div>
+                    <div id="social-network-graph-community-list"
+                         class="social-network-graph-community-list"></div>
+                    <p id="social-network-graph-community-method">
+                        当前快照未运行 Louvain；社群统计不可用，不代表网络没有社群。
                     </p>
-                </div>
-                <div class="social-network-overview-block">
-                    <h3>互动规模</h3>
-                    <div id="social-network-interactions" class="social-network-interactions">
-                        <div class="social-network-empty">互动摘要加载中…</div>
+                </section>
+                <section class="social-network-graph-side-card card-panel">
+                    <div class="page-overline">SELECTED NODE</div>
+                    <h2>选中节点</h2>
+                    <div id="social-network-graph-selected" class="social-network-graph-selected">
+                        点击画布中的节点查看资料和网络位置。
                     </div>
-                    <p class="social-network-note">
-                        点赞、评论、转发分别统计；推文数量表示当前采集样本。
-                    </p>
-                </div>
-            </div>
-        </section>
-        <section id="social-network-local" class="social-network-local card-panel">
-            <div class="social-network-panel-head">
-                <div>
-                    <div class="page-overline">03 / LOCAL NETWORK</div>
-                    <h2>用户关注网络</h2>
-                </div>
-                <span id="social-network-local-status" class="social-network-version">等待查询</span>
-            </div>
-            <div class="social-network-local-controls">
-                <label>
-                    <span>搜索用户</span>
-                    <input id="social-network-user-query" type="search"
-                           placeholder="输入用户 ID、用户名或显示名称">
-                </label>
-                <label>
-                    <span>展开深度</span>
-                    <select id="social-network-depth">
-                        <option value="1">一阶邻居</option>
-                        <option value="2">二阶邻居</option>
-                    </select>
-                </label>
-                <label>
-                    <span>Top-K</span>
-                    <select id="social-network-top-k">
-                        <option value="20">20</option>
-                        <option value="30" selected>30</option>
-                        <option value="50">50</option>
-                    </select>
-                </label>
-                <label class="social-network-checkbox">
-                    <input id="social-network-include-external" type="checkbox" checked>
-                    <span>显示外部节点</span>
-                </label>
-                <button id="social-network-search-button" class="button button-primary" type="button">
-                    查询
-                </button>
-            </div>
-            <div id="social-network-user-results" class="social-network-user-results">
-                <div class="social-network-empty">输入关键词后定位中心用户。</div>
-            </div>
-            <div id="social-network-local-view" class="social-network-local-view">
-                <div class="social-network-empty">选择用户后加载局部关系网络。</div>
-            </div>
-        </section>
-        <section id="social-network-ranking" class="social-network-ranking card-panel">
-            <div class="social-network-panel-head">
-                <div>
-                    <div class="page-overline">04 / IMPORTANT NODES</div>
-                    <h2>重要节点分析</h2>
-                </div>
-                <span id="social-network-ranking-status" class="social-network-version">加载中</span>
-            </div>
-            <div class="social-network-ranking-controls">
-                <label>
-                    <span>指标分组</span>
-                    <select id="social-network-ranking-metric">
-                        <option value="indegree">入度（网络结构）</option>
-                        <option value="outdegree">出度（网络结构）</option>
-                        <option value="pagerank">PageRank（网络结构）</option>
-                        <option value="followers_count">粉丝数（原始账户字段）</option>
-                        <option value="following_count">关注数（原始账户字段）</option>
-                        <option value="tweet_count">推文总数（原始账户字段）</option>
-                    </select>
-                </label>
-                <button id="social-network-ranking-button" class="button button-secondary" type="button">
-                    刷新排行
-                </button>
-            </div>
-            <p id="social-network-ranking-note" class="social-network-note">
-                指标分开计算，不生成综合影响力分。
-            </p>
-            <div id="social-network-ranking-table" class="social-network-ranking-table">
-                <div class="social-network-empty">排行加载中…</div>
-            </div>
-        </section>
-        <section id="social-network-interaction-analysis" class="social-network-interaction-analysis card-panel">
-            <div class="social-network-panel-head">
-                <div>
-                    <div class="page-overline">05 / TWEET &amp; INTERACTION</div>
-                    <h2>推文与互动分析</h2>
-                </div>
-                <span id="social-network-interaction-status" class="social-network-version">加载中</span>
-            </div>
-            <div class="social-network-interaction-controls">
-                <label>
-                    <span>互动指标</span>
-                    <select id="social-network-interaction-metric">
-                        <option value="like_count">点赞</option>
-                        <option value="reply_count">评论</option>
-                        <option value="repost_count">转发</option>
-                    </select>
-                </label>
-                <button id="social-network-interaction-button" class="button button-primary" type="button">
-                    刷新分析
-                </button>
-            </div>
-            <div id="social-network-interaction-summary" class="social-network-interaction-summary">
-                <div class="social-network-empty">互动摘要加载中…</div>
-            </div>
-            <div class="social-network-interaction-grid">
-                <div class="social-network-interaction-block">
-                    <h3>推文排行</h3>
-                    <div id="social-network-interaction-tweets" class="social-network-interaction-table">
-                        <div class="social-network-empty">推文排行加载中…</div>
-                    </div>
-                </div>
-                <div class="social-network-interaction-block">
-                    <h3>用户聚合排行</h3>
-                    <div id="social-network-interaction-users" class="social-network-interaction-table">
-                        <div class="social-network-empty">用户排行加载中…</div>
-                    </div>
-                </div>
-            </div>
-            <div class="social-network-interaction-block social-network-timeseries-block">
-                <h3>时间分布</h3>
-                <div id="social-network-interaction-timeseries" class="social-network-timeseries">
-                    <div class="social-network-empty">时间分布加载中…</div>
-                </div>
-            </div>
-            <p id="social-network-interaction-note" class="social-network-note">
-                点赞、评论、转发分别统计；当前结果基于去重且纳入分析的推文样本。
-            </p>
-        </section>
-        <section id="social-network-topic-analysis" class="social-network-topic-analysis card-panel">
-            <div class="social-network-panel-head">
-                <div>
-                    <div class="page-overline">06 / TOPIC &amp; NETWORK LINKAGE</div>
-                    <h2>主题与网络联动</h2>
-                </div>
-                <span id="social-network-topic-status" class="social-network-version">等待查询</span>
-            </div>
-            <div class="social-network-topic-controls">
-                <label>
-                    <span>关键词或简短主题</span>
-                    <input id="social-network-topic-query" type="search"
-                        placeholder="例如：人工智能 / climate / public health">
-                </label>
-                <button id="social-network-topic-button" class="button button-primary" type="button" disabled>
-                    开始分析
-                </button>
-            </div>
-            <p class="social-network-note">
-                首版使用精确词元匹配；结果表示文本样本匹配关系，不代表立场、传播路径或因果影响。
-            </p>
-            <div id="social-network-topic-summary" class="social-network-topic-summary">
-                <div class="social-network-empty">输入关键词后查看主题样本。</div>
-            </div>
-            <div class="social-network-topic-grid">
-                <div class="social-network-interaction-block">
-                    <h3>相关推文</h3>
-                    <div id="social-network-topic-tweets" class="social-network-interaction-table">
-                        <div class="social-network-empty">等待查询</div>
-                    </div>
-                </div>
-                <div class="social-network-interaction-block">
-                    <h3>相关用户</h3>
-                    <div id="social-network-topic-users" class="social-network-interaction-table">
-                        <div class="social-network-empty">等待查询</div>
-                    </div>
-                </div>
-            </div>
-            <div class="social-network-interaction-block social-network-topic-network">
-                <h3>真实关注关系子图</h3>
-                <div id="social-network-topic-network" class="social-network-empty">
-                    主题用户子图将在查询后显示。
-                </div>
-            </div>
-        </section>
-        <section id="social-network-capability-panel" class="social-network-panel card-panel">
-            <div class="social-network-panel-head">
-                <div>
-                    <div class="page-overline">07 / CAPABILITY MATRIX</div>
-                    <h2>分析能力状态</h2>
-                </div>
-                <span id="social-network-capability-version" class="social-network-version">-</span>
-            </div>
-            <div id="social-network-capabilities" class="social-network-capabilities">
-                <div class="social-network-empty">能力矩阵加载中…</div>
-            </div>
-        </section>
-        <section class="social-network-quality card-panel">
-            <div class="social-network-panel-head">
-                <div>
-                    <div class="page-overline">DATA QUALITY</div>
-                    <h2>数据质量与覆盖提示</h2>
-                </div>
-                <span id="social-network-quality-status" class="social-network-version">-</span>
-            </div>
-            <div id="social-network-quality-items" class="social-network-quality-items">
-                <div class="social-network-empty">质量摘要加载中…</div>
-            </div>
-        </section>
-        <p class="social-network-boundary">
-            当前页面展示数据集、网络结构、用户关系、节点排行、用户详情、推文互动和主题网络联动；所有结果均保留数据范围与质量边界。
-        </p>
+                    <button id="social-network-graph-user-detail" class="button button-primary"
+                            type="button" disabled>打开用户详情</button>
+                </section>
+                <p class="social-network-graph-boundary">
+                    当前图只表示本数据集记录的静态关注关系。节点位置仅用于布局，不代表地理位置或真实社会影响力；无有效关系的孤立节点不归入社群。
+                </p>
+            </aside>
+        </div>
     </section>
 </main>
 
@@ -854,6 +1119,10 @@
             <div>
                 <div class="page-overline">USER EVIDENCE</div>
                 <h2 id="social-network-user-drawer-title">用户详情</h2>
+                <p id="social-network-user-drawer-identity"
+                   class="social-network-user-drawer-identity">选择用户后查看证据</p>
+                <p id="social-network-user-drawer-context"
+                   class="social-network-user-drawer-context"></p>
             </div>
             <button class="social-network-user-drawer-close" type="button"
                     aria-label="关闭用户详情" data-close-social-user-drawer>×</button>
@@ -861,11 +1130,239 @@
         <div id="social-network-user-drawer-status" class="social-network-version">
             正在加载用户详情…
         </div>
+        <div class="social-network-user-drawer-tabs" role="tablist"
+             aria-label="用户详情证据类别">
+            <button id="social-network-user-tab-profile" type="button" role="tab"
+                    aria-selected="true" aria-controls="social-network-user-panel-profile"
+                    tabindex="0" data-user-detail-tab="profile">资料与网络</button>
+            <button id="social-network-user-tab-tweets" type="button" role="tab"
+                    aria-selected="false" aria-controls="social-network-user-panel-tweets"
+                    tabindex="-1" data-user-detail-tab="tweets">推文与互动</button>
+            <button id="social-network-user-tab-neighbors" type="button" role="tab"
+                    aria-selected="false" aria-controls="social-network-user-panel-neighbors"
+                    tabindex="-1" data-user-detail-tab="neighbors">关注邻居</button>
+        </div>
         <div id="social-network-user-drawer-body" class="social-network-detail-body">
-            <div class="social-network-empty">选择用户后查看证据。</div>
+            <section id="social-network-user-panel-profile" role="tabpanel"
+                     aria-labelledby="social-network-user-tab-profile"
+                     data-user-detail-panel="profile">
+                <div class="social-network-empty">选择用户后查看资料与网络证据。</div>
+            </section>
+            <section id="social-network-user-panel-tweets" role="tabpanel"
+                     aria-labelledby="social-network-user-tab-tweets"
+                     data-user-detail-panel="tweets" hidden>
+                <div class="social-network-empty">推文与互动证据尚未加载。</div>
+            </section>
+            <section id="social-network-user-panel-neighbors" role="tabpanel"
+                     aria-labelledby="social-network-user-tab-neighbors"
+                     data-user-detail-panel="neighbors" hidden>
+                <div class="social-network-empty">关注邻居证据尚未加载。</div>
+            </section>
         </div>
     </div>
 </aside>
+
+<dialog id="social-network-dataset-source-dialog"
+        class="social-network-data-dialog"
+        aria-labelledby="social-network-dataset-source-title">
+    <div class="social-network-data-dialog-head">
+        <div>
+            <p class="social-network-data-eyebrow">DATA PROVENANCE</p>
+            <h2 id="social-network-dataset-source-title">来源与文件详情</h2>
+        </div>
+        <button id="social-network-dataset-source-close"
+                class="social-network-data-dialog-close" type="button"
+                aria-label="关闭来源详情">×</button>
+    </div>
+    <p id="social-network-source-dialog-description"
+       class="social-network-data-dialog-description">未提供</p>
+    <dl class="social-network-data-detail-list">
+        <div>
+            <dt>数据集 ID</dt>
+            <dd id="social-network-source-dialog-dataset-id">未提供</dd>
+        </div>
+        <div id="social-network-source-dialog-session-row" hidden>
+            <dt>临时会话 ID</dt>
+            <dd id="social-network-source-dialog-session-id">未提供</dd>
+        </div>
+        <div>
+            <dt>采集时间范围</dt>
+            <dd id="social-network-source-dialog-time-range">未提供</dd>
+        </div>
+        <div>
+            <dt>数据文件</dt>
+            <dd id="social-network-source-dialog-file-count">未提供</dd>
+        </div>
+    </dl>
+    <ul id="social-network-source-dialog-files" class="social-network-data-file-list"></ul>
+    <div class="social-network-data-dialog-actions">
+        <button id="social-network-dataset-source-done"
+                class="button button-secondary" type="button">完成</button>
+    </div>
+</dialog>
+
+<dialog id="social-network-dataset-switch-dialog"
+        class="social-network-data-dialog"
+        aria-labelledby="social-network-dataset-switch-title">
+    <div class="social-network-data-dialog-head">
+        <div>
+            <p class="social-network-data-eyebrow">CHANGE ANALYSIS DATA</p>
+            <h2 id="social-network-dataset-switch-title">切换到内置数据？</h2>
+        </div>
+        <button id="social-network-dataset-switch-close"
+                class="social-network-data-dialog-close" type="button"
+                aria-label="关闭切换确认">×</button>
+    </div>
+    <p id="social-network-dataset-switch-confirmation"
+       class="social-network-data-dialog-description"></p>
+    <p id="social-network-dataset-switch-dialog-status"
+       class="social-network-data-status" role="status" aria-live="polite"></p>
+    <div class="social-network-data-dialog-actions">
+        <button id="social-network-dataset-switch-cancel"
+                class="button button-secondary" type="button">保留当前数据</button>
+        <button id="social-network-dataset-switch-confirm"
+                class="button button-primary" type="button">确认切换</button>
+    </div>
+</dialog>
+
+<dialog id="social-network-group-export-dialog"
+        class="social-network-module-export-dialog"
+        aria-labelledby="social-network-group-export-title">
+    <div class="social-network-module-export-dialog-head">
+        <div>
+            <div class="page-overline">CLIQUE / LOUVAIN EXPORT</div>
+            <h2 id="social-network-group-export-title">导出当前分析结果</h2>
+        </div>
+        <button id="social-network-group-export-close"
+                class="social-network-user-drawer-close" type="button"
+                aria-label="关闭导出对话框">×</button>
+    </div>
+    <p id="social-network-group-export-note" class="social-network-note">
+        导出当前结果页及已选择的证据页；总数、参数和完整性状态随文件保留。单次文件上限为 2 MiB，超限整体拒绝。
+    </p>
+    <p id="social-network-group-export-dataset"
+       class="social-network-version social-network-module-export-dataset">
+        数据集：尚未读取
+    </p>
+    <label class="social-network-module-export-format">
+        导出格式
+        <select id="social-network-group-export-format">
+            <option value="json">JSON 数据</option>
+            <option value="csv">CSV 表格</option>
+            <option value="print">可打印摘要</option>
+        </select>
+    </label>
+    <p id="social-network-group-export-status" class="social-network-version"
+       role="status" aria-live="polite">导出不触发重新计算。</p>
+    <div class="social-network-module-export-dialog-actions">
+        <button id="social-network-group-export-cancel"
+                class="button button-secondary" type="button">取消</button>
+        <button id="social-network-group-export-submit"
+                class="button button-primary" type="button">生成并下载</button>
+    </div>
+</dialog>
+
+<dialog id="social-network-module-export-dialog" class="social-network-module-export-dialog"
+        aria-labelledby="social-network-module-export-title">
+    <div class="social-network-module-export-dialog-head">
+        <div>
+            <div class="page-overline">MODULE EXPORT</div>
+            <h2 id="social-network-module-export-title">导出当前模块</h2>
+        </div>
+        <button id="social-network-module-export-close" class="social-network-user-drawer-close"
+                type="button" aria-label="关闭导出对话框">×</button>
+    </div>
+    <p id="social-network-module-export-note" class="social-network-note">
+        将按当前数据集和模块状态生成结果。
+    </p>
+    <p id="social-network-module-export-dataset"
+       class="social-network-version social-network-module-export-dataset">
+        数据集：尚未选择
+    </p>
+    <label id="social-network-module-export-users-metric-field"
+           class="social-network-module-export-users-metric" hidden>
+        导出包中的普通排行指标
+        <select id="social-network-module-export-users-metric">
+            <option value="indegree">入度</option>
+            <option value="outdegree">出度</option>
+            <option value="pagerank">PageRank</option>
+        </select>
+    </label>
+    <label class="social-network-module-export-format">
+        导出格式
+        <select id="social-network-module-export-format">
+            <option value="csv">CSV 表格</option>
+            <option value="json">JSON 数据</option>
+            <option value="print">可打印摘要</option>
+        </select>
+    </label>
+    <p id="social-network-module-export-status" class="social-network-version"
+       role="status" aria-live="polite">准备就绪</p>
+    <div class="social-network-module-export-dialog-actions">
+        <button id="social-network-module-export-cancel" class="button button-secondary"
+                type="button">取消</button>
+        <button id="social-network-module-export-submit" class="button button-primary"
+                type="button">生成并下载</button>
+    </div>
+</dialog>
+
+<dialog id="social-network-topic-detail-dialog"
+        class="social-network-topic-dialog"
+        aria-labelledby="social-network-topic-detail-title">
+    <header class="social-network-topic-dialog-head">
+        <div>
+            <p class="page-overline">TOPIC MATCH · ORIGINAL TEXT</p>
+            <h2 id="social-network-topic-detail-title">推文原文</h2>
+        </div>
+        <button id="social-network-topic-detail-close"
+                class="social-network-user-drawer-close" type="button"
+                aria-label="关闭原文">×</button>
+    </header>
+    <div class="social-network-topic-detail-meta">
+        <p id="social-network-topic-detail-query"></p>
+        <p id="social-network-topic-detail-dataset"></p>
+        <p><span>推文 ID：</span><strong id="social-network-topic-detail-id"></strong></p>
+        <p><span>作者状态：</span><strong
+            id="social-network-topic-detail-author-state"></strong></p>
+        <p><span>发布时间：</span><strong
+            id="social-network-topic-detail-time"></strong></p>
+        <button id="social-network-topic-detail-author"
+                class="button button-secondary" type="button" hidden>
+            查看已关联作者
+        </button>
+    </div>
+    <pre id="social-network-topic-detail-original"
+         class="social-network-topic-detail-original"></pre>
+    <div class="social-network-topic-detail-stats">
+        <p>点赞 <strong id="social-network-topic-detail-likes"></strong></p>
+        <p>评论 <strong id="social-network-topic-detail-replies"></strong></p>
+        <p>转发 <strong id="social-network-topic-detail-reposts"></strong></p>
+    </div>
+    <p class="social-network-topic-detail-caveat">
+        以上为接口统计值；缺失或无法解析的互动值可能按 0 计入，无法逐项区分。
+        原文仅作为文本展示，不推导命中位置或原平台链接。
+    </p>
+</dialog>
+
+<dialog id="social-network-topic-rules-dialog"
+        class="social-network-topic-dialog social-network-topic-rules-dialog"
+        aria-labelledby="social-network-topic-rules-title">
+    <header class="social-network-topic-dialog-head">
+        <div>
+            <p class="page-overline">QUERY RULES</p>
+            <h2 id="social-network-topic-rules-title">主题匹配规则</h2>
+        </div>
+        <button id="social-network-topic-rules-close"
+                class="social-network-user-drawer-close" type="button"
+                aria-label="关闭匹配规则">×</button>
+    </header>
+    <div class="social-network-topic-rules-body">
+        <p>查询按精确词元匹配，不是语义搜索，也不按 TF-IDF 或相关度排序。英文大小写不敏感。</p>
+        <p>文档分析文本会经过 Unicode 与空白规范化，并排除 URL、提及等非普通词元；查询输入端只去除首尾空白并转为小写。因此不保证全角字符、带 # 的查询或多词短语与文档词元一致。</p>
+        <p>当前中文处理按连续中文片段每两个汉字切分，不使用词典最大匹配；不会自动拆分、改写或推荐相近词。无结果时可调整词元后重新提交。</p>
+        <p>匹配推文最多显示 30 条，按接口点赞统计值降序、推文 ID 字符串升序排列；这不是相关度排名。</p>
+    </div>
+</dialog>
 
 <div id="toast" class="toast"></div>
 
@@ -873,10 +1370,22 @@
 <script src="js/theme.js?v=20260917"></script>
 <script src="js/effects.js?v=20260818"></script>
 <script src="js/api.js?v=20260818"></script>
-<script src="js/app.js?v=20261007-home-structure-1"></script>
-  <script src="js/social-network.js?v=20261005-social-nav-2"></script>
-  <script src="js/router.js?v=20261005-route-init-3"></script>
-  <script src="js/predict.js?v=20261004-quick-nav-toggle-1"></script>
+<script src="js/app.js?v=20261102-cl15-1"></script>
+<script src="js/social-network-routes.js?v=20261106-data-quality-merge-3"></script>
+<script src="js/social-network-state.js?v=20261021-ui01-1"></script>
+<script src="js/social-network-overview-model.js?v=20261025-social-overview-1"></script>
+<script src="js/social-network-dataset-model.js?v=20261021-ui06-1"></script>
+<script src="js/social-network-export-model.js?v=20261021-ui07-1"></script>
+<script src="js/social-network-upload-preview-model.js?v=20261021-ui10-1"></script>
+<script src="js/social-network-quality-model.js?v=20261022-ui11-1"></script>
+<script src="js/social-network-network-structure-model.js?v=20261106-network-structure-4"></script>
+<script src="js/social-network-ranking-model.js?v=20261107-ranking-readable-1"></script>
+<script src="js/social-network-groups-model.js?v=20261102-cl15-1"></script>
+<script src="js/social-network.js?v=20261107-overview-heading-gap-1"></script>
+<script src="js/social-network-groups.js?v=20261105-cl16-2"></script>
+<script src="js/social-network-graph.js?v=20261031-cl04-1"></script>
+<script src="js/router.js?v=20261021-ui02-1"></script>
+<script src="js/predict.js?v=20261004-quick-nav-toggle-1"></script>
 <script src="js/home-demo.js?v=20261007-home-demo-timeline-1"></script>
 </body>
 </html>

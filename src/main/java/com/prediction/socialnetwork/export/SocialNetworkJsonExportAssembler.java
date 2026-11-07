@@ -1,6 +1,8 @@
 package com.prediction.socialnetwork.export;
 
 import com.prediction.socialnetwork.application.SocialNetworkWorkspaceSnapshot;
+import com.prediction.socialnetwork.application.SocialNetworkEvidenceFactSummaryService;
+import com.prediction.socialnetwork.domain.DatasetType;
 import com.prediction.socialnetwork.normalization.NormalizedTweet;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -35,13 +37,31 @@ public final class SocialNetworkJsonExportAssembler {
             default -> throw new IllegalArgumentException("unsupported export type: " + exportType);
         };
         int sampleCount = sampleCount(normalizedType, data);
-        if (sampleCount == 0) {
+        return assemblePrepared(
+                snapshot, normalizedType, normalizedQuery, normalizedScope, data, sampleCount);
+    }
+
+    public Map<String, Object> assemblePrepared(
+            SocialNetworkWorkspaceSnapshot snapshot,
+            String exportType,
+            Map<String, Object> query,
+            Map<String, Object> scope,
+            Object data,
+            int resultCount) {
+        if (snapshot == null) {
+            throw new IllegalArgumentException("snapshot must not be null");
+        }
+        String normalizedType = requireText(exportType, "exportType").toLowerCase();
+        Map<String, Object> normalizedQuery = query == null ? Map.of() : Map.copyOf(query);
+        Map<String, Object> normalizedScope = scope == null ? Map.of() : Map.copyOf(scope);
+        if (resultCount <= 0) {
             throw new IllegalStateException("SN_EXPORT_EMPTY_RESULT");
         }
 
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("exportType", normalizedType);
-        result.put("metadata", metadata(snapshot, normalizedQuery, normalizedScope, sampleCount));
+        result.put("metadata", metadata(
+                snapshot, normalizedType, normalizedQuery, normalizedScope, resultCount));
         result.put("data", data);
         return result;
     }
@@ -119,12 +139,28 @@ public final class SocialNetworkJsonExportAssembler {
 
     private static SocialNetworkExportMetadata metadata(
             SocialNetworkWorkspaceSnapshot snapshot,
+            String exportType,
             Map<String, Object> query,
             Map<String, Object> scope,
             int sampleCount) {
         var dataset = snapshot.dataset();
+        Map<String, Object> algorithmVersions = new LinkedHashMap<>();
+        algorithmVersions.put("normalization", dataset.normalizationVersion());
+        algorithmVersions.put("networkMetrics", snapshot.network().metrics().metricVersion());
+        algorithmVersions.put("pageRank", snapshot.network().metrics().pagerankVersion());
+        algorithmVersions.put(
+                "structuralRoles",
+                snapshot.network().structuralRoles().algorithmVersion());
+        algorithmVersions.put("textProcessing", dataset.textProcessingVersion());
+        algorithmVersions.put("explanations", dataset.explanationVersion());
+        if ("network".equals(exportType) && dataset.type() == DatasetType.BUILTIN) {
+            algorithmVersions.put(
+                    "evidenceSummary",
+                    SocialNetworkEvidenceFactSummaryService.SUMMARY_ALGORITHM_VERSION);
+        }
         Map<String, Object> sampleCounts = new LinkedHashMap<>();
         sampleCounts.put("resultCount", sampleCount);
+        sampleCounts.put("returnedCount", sampleCount);
         sampleCounts.put("userCount", snapshot.users().size());
         sampleCounts.put("tweetCount", snapshot.tweets().size());
         sampleCounts.put("edgeCount", snapshot.network().edges().size());
@@ -139,6 +175,7 @@ public final class SocialNetworkJsonExportAssembler {
                 dataset.metricVersion(),
                 dataset.textProcessingVersion(),
                 dataset.explanationVersion(),
+                algorithmVersions,
                 query,
                 scope,
                 sampleCounts,

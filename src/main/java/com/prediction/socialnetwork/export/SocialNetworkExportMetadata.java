@@ -15,12 +15,42 @@ public record SocialNetworkExportMetadata(
         String metricVersion,
         String textProcessingVersion,
         String explanationVersion,
+        Map<String, Object> algorithmVersions,
         Map<String, Object> query,
         Map<String, Object> scope,
         Map<String, Object> sampleCounts,
         String sourceDescription,
         Instant exportedAt,
         List<String> boundaryNotes) {
+
+    public SocialNetworkExportMetadata(
+            String datasetId,
+            String datasetVersion,
+            String normalizationVersion,
+            String metricVersion,
+            String textProcessingVersion,
+            String explanationVersion,
+            Map<String, Object> query,
+            Map<String, Object> scope,
+            Map<String, Object> sampleCounts,
+            String sourceDescription,
+            Instant exportedAt,
+            List<String> boundaryNotes) {
+        this(
+                datasetId,
+                datasetVersion,
+                normalizationVersion,
+                metricVersion,
+                textProcessingVersion,
+                explanationVersion,
+                Map.of(),
+                query,
+                scope,
+                sampleCounts,
+                sourceDescription,
+                exportedAt,
+                boundaryNotes);
+    }
 
     public SocialNetworkExportMetadata {
         datasetId = requireText(datasetId, "datasetId");
@@ -31,6 +61,7 @@ public record SocialNetworkExportMetadata(
         explanationVersion = requireText(explanationVersion, "explanationVersion");
         sourceDescription = requireText(sourceDescription, "sourceDescription");
         exportedAt = Objects.requireNonNull(exportedAt, "exportedAt");
+        algorithmVersions = immutableMap(algorithmVersions, "algorithmVersions");
         query = immutableMap(query, "query");
         scope = immutableMap(scope, "scope");
         sampleCounts = immutableMap(sampleCounts, "sampleCounts");

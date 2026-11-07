@@ -24,10 +24,67 @@ public class SocialNetworkCalculator {
     public static final int MAX_ITERATIONS = 100;
     public static final int MAX_GRAPH_NODES = 100;
     public static final int MAX_GRAPH_EDGES = 500;
+    private final LouvainCommunityDetector communityDetector = new LouvainCommunityDetector();
+    private final StructuralRoleCalculator structuralRoleCalculator =
+            new StructuralRoleCalculator();
 
     public SocialNetworkGraphResult calculate(
             List<NormalizedUser> users,
             List<NormalizedRelationship> relationships) {
+        return calculateWithoutCommunities(users, relationships);
+    }
+
+    public SocialNetworkGraphResult calculateWithoutCommunities(
+            List<NormalizedUser> users,
+            List<NormalizedRelationship> relationships) {
+        return calculateGraph(users, relationships, false);
+    }
+
+    public SocialNetworkGraphResult calculateAnalysisInput(
+            List<NormalizedUser> users,
+            List<NormalizedRelationship> relationships) {
+        Map<String, NetworkNodeType> nodeTypes = collectNodes(users, relationships);
+        List<NetworkEdge> edges = collectEdges(relationships, nodeTypes);
+        Map<String, Integer> inDegrees = new HashMap<>();
+        Map<String, Integer> outDegrees = new HashMap<>();
+        for (String nodeId : nodeTypes.keySet()) {
+            inDegrees.put(nodeId, 0);
+            outDegrees.put(nodeId, 0);
+        }
+        for (NetworkEdge edge : edges) {
+            outDegrees.compute(edge.source(), (key, value) -> value + 1);
+            inDegrees.compute(edge.target(), (key, value) -> value + 1);
+        }
+        List<NetworkNode> nodes = nodeTypes.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .map(entry -> {
+                    int in = inDegrees.getOrDefault(entry.getKey(), 0);
+                    int out = outDegrees.getOrDefault(entry.getKey(), 0);
+                    return new NetworkNode(
+                            entry.getKey(), entry.getValue(), in, out, 0.0, in + out == 0);
+                })
+                .toList();
+        return new SocialNetworkGraphResult(
+                nodes,
+                edges,
+                null,
+                null,
+                List.of(),
+                CommunityDetectionResult.notRequested(),
+                null,
+                Instant.now());
+    }
+
+    SocialNetworkGraphResult calculateWithCommunities(
+            List<NormalizedUser> users,
+            List<NormalizedRelationship> relationships) {
+        return calculateGraph(users, relationships, true);
+    }
+
+    private SocialNetworkGraphResult calculateGraph(
+            List<NormalizedUser> users,
+            List<NormalizedRelationship> relationships,
+            boolean includeCommunities) {
         Map<String, NetworkNodeType> nodeTypes = collectNodes(users, relationships);
         List<NetworkEdge> edges = collectEdges(relationships, nodeTypes);
         Map<String, Integer> inDegrees = new HashMap<>();
@@ -60,20 +117,32 @@ public class SocialNetworkCalculator {
         Double density = nodeCount > 1
                 ? edges.size() * 1.0 / (nodeCount * (nodeCount - 1))
                 : null;
+        StructureMetrics structure = structureMetrics(nodeTypes.keySet(), edges);
         NetworkMetrics metrics = new NetworkMetrics(
                 nodeCount,
                 edges.size(),
                 (int) nodes.stream().filter(node -> node.nodeType() == NetworkNodeType.PROFILE).count(),
                 (int) nodes.stream().filter(node -> node.nodeType() == NetworkNodeType.EXTERNAL).count(),
                 (int) nodes.stream().filter(NetworkNode::isolated).count(),
+                structure.weaklyConnectedComponentCount(),
+                structure.largestWeaklyConnectedComponentNodeCount(),
+                structure.largestWeaklyConnectedComponentRatio(),
+                structure.averageClusteringCoefficient(),
+                structure.reciprocityRate(),
+                structure.largestWeaklyConnectedComponentAveragePathLength(),
                 density,
                 NetworkMetrics.METRIC_VERSION,
                 NetworkMetrics.PAGERANK_VERSION,
                 true,
                 true);
         List<NetworkRankingEntry> ranking = ranking(pageRank.values(), nodeTypes);
+        CommunityDetectionResult communityDetection = includeCommunities
+                ? communityDetector.detect(nodes, edges)
+                : CommunityDetectionResult.notRequested();
+        StructuralRoleAnalysis structuralRoles = structuralRoleCalculator.calculate(nodes, edges);
         return new SocialNetworkGraphResult(
-                nodes, edges, metrics, pageRank, ranking, Instant.now());
+                nodes, edges, metrics, pageRank, ranking, communityDetection,
+                structuralRoles, Instant.now());
     }
 
     public NetworkGraphView localView(
@@ -212,6 +281,151 @@ public class SocialNetworkCalculator {
                 .toList();
     }
 
+    private static StructureMetrics structureMetrics(
+            Set<String> nodeIds, List<NetworkEdge> edges) {
+        Map<String, Set<String>> neighborsByNode = new HashMap<>();
+        Map<String, Set<String>> outgoingByNode = new HashMap<>();
+        for (String nodeId : nodeIds) {
+            neighborsByNode.put(nodeId, new HashSet<>());
+            outgoingByNode.put(nodeId, new HashSet<>());
+        }
+        for (NetworkEdge edge : edges) {
+            neighborsByNode.get(edge.source()).add(edge.target());
+            neighborsByNode.get(edge.target()).add(edge.source());
+            outgoingByNode.get(edge.source()).add(edge.target());
+        }
+
+        List<Set<String>> components = new ArrayList<>();
+        Set<String> visited = new HashSet<>();
+        for (String start : nodeIds.stream().sorted().toList()) {
+            if (!visited.add(start)) {
+                continue;
+            }
+            Set<String> component = new LinkedHashSet<>();
+            Queue<String> queue = new ArrayDeque<>();
+            queue.add(start);
+            while (!queue.isEmpty()) {
+                String current = queue.remove();
+                component.add(current);
+                for (String neighbor : neighborsByNode.get(current)) {
+                    if (visited.add(neighbor)) {
+                        queue.add(neighbor);
+                    }
+                }
+            }
+            components.add(component);
+        }
+
+        int largestComponentSize = components.stream()
+                .mapToInt(Set::size)
+                .max()
+                .orElse(0);
+        Double largestComponentRatio = nodeIds.isEmpty()
+                ? null
+                : largestComponentSize / (double) nodeIds.size();
+        Double averageClusteringCoefficient = nodeIds.isEmpty()
+                ? null
+                : averageClusteringCoefficient(nodeIds, neighborsByNode);
+        Double reciprocityRate = edges.isEmpty()
+                ? null
+                : reciprocityRate(edges, outgoingByNode);
+        Double averagePathLength = averagePathLength(
+                components, largestComponentSize, neighborsByNode);
+
+        return new StructureMetrics(
+                components.size(),
+                largestComponentSize,
+                largestComponentRatio,
+                averageClusteringCoefficient,
+                reciprocityRate,
+                averagePathLength);
+    }
+
+    private static double averageClusteringCoefficient(
+            Set<String> nodeIds, Map<String, Set<String>> neighborsByNode) {
+        double coefficientTotal = 0.0;
+        for (String nodeId : nodeIds) {
+            List<String> neighbors = neighborsByNode.get(nodeId).stream().sorted().toList();
+            int degree = neighbors.size();
+            if (degree < 2) {
+                continue;
+            }
+            long neighborEdges = 0;
+            for (int left = 0; left < degree; left++) {
+                for (int right = left + 1; right < degree; right++) {
+                    if (neighborsByNode.get(neighbors.get(left)).contains(neighbors.get(right))) {
+                        neighborEdges++;
+                    }
+                }
+            }
+            coefficientTotal += 2.0 * neighborEdges / (degree * (degree - 1));
+        }
+        return coefficientTotal / nodeIds.size();
+    }
+
+    private static double reciprocityRate(
+            List<NetworkEdge> edges, Map<String, Set<String>> outgoingByNode) {
+        long reciprocalEdgeCount = edges.stream()
+                .filter(edge -> outgoingByNode.get(edge.target()).contains(edge.source()))
+                .count();
+        return reciprocalEdgeCount / (double) edges.size();
+    }
+
+    private static Double averagePathLength(
+            List<Set<String>> components,
+            int largestComponentSize,
+            Map<String, Set<String>> neighborsByNode) {
+        if (largestComponentSize < 2) {
+            return null;
+        }
+        long distanceTotal = 0;
+        long nodePairCount = 0;
+        for (Set<String> component : components) {
+            if (component.size() != largestComponentSize) {
+                continue;
+            }
+            List<String> orderedNodes = component.stream().sorted().toList();
+            for (int sourceIndex = 0; sourceIndex < orderedNodes.size(); sourceIndex++) {
+                String source = orderedNodes.get(sourceIndex);
+                Map<String, Integer> distances = shortestDistances(
+                        source, component, neighborsByNode);
+                for (int targetIndex = sourceIndex + 1;
+                        targetIndex < orderedNodes.size();
+                        targetIndex++) {
+                    Integer distance = distances.get(orderedNodes.get(targetIndex));
+                    if (distance != null) {
+                        distanceTotal += distance;
+                        nodePairCount++;
+                    }
+                }
+            }
+        }
+        return nodePairCount == 0
+                ? null
+                : distanceTotal / (double) nodePairCount;
+    }
+
+    private static Map<String, Integer> shortestDistances(
+            String source,
+            Set<String> component,
+            Map<String, Set<String>> neighborsByNode) {
+        Map<String, Integer> distances = new HashMap<>();
+        Queue<String> queue = new ArrayDeque<>();
+        distances.put(source, 0);
+        queue.add(source);
+        while (!queue.isEmpty()) {
+            String current = queue.remove();
+            int nextDistance = distances.get(current) + 1;
+            for (String neighbor : neighborsByNode.get(current)) {
+                if (component.contains(neighbor) && !distances.containsKey(neighbor)) {
+                    distances.put(neighbor, nextDistance);
+                    queue.add(neighbor);
+                }
+            }
+        }
+        return distances;
+    }
+
     private static PageRankResult pageRank(
             Set<String> nodeIds,
             List<NetworkEdge> edges,
@@ -289,5 +503,14 @@ public class SocialNetworkCalculator {
 
     private static boolean validId(String id) {
         return id != null && !id.isBlank();
+    }
+
+    private record StructureMetrics(
+            int weaklyConnectedComponentCount,
+            int largestWeaklyConnectedComponentNodeCount,
+            Double largestWeaklyConnectedComponentRatio,
+            Double averageClusteringCoefficient,
+            Double reciprocityRate,
+            Double largestWeaklyConnectedComponentAveragePathLength) {
     }
 }
