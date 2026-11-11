@@ -1,6 +1,6 @@
 # 社交网络上传模板
 
-本模板用于社交网络分析会话。首版建议上传三个独立文件：`users.csv`、`relationships.csv`、`tweets.csv`。所有文件使用 UTF-8 编码并保留表头。
+本模板用于社交网络分析会话。建议按需上传 `users.csv`、`relationships.csv`、`tweets.csv`；三个角色可以分别提供多个文件，也可以只提供可用子集。所有 CSV 使用 UTF-8 编码并保留表头。
 
 ## `users.csv`
 

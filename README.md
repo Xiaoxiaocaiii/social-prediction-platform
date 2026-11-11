@@ -7,7 +7,7 @@
 
 页面、接口和图表均使用真实数据计算，不使用 mock 数据。社交网络分析不生成综合影响力分，不推断社会影响力、传播路径或因果关系。
 
-当前交付范围与验收记录见[项目验收与演示说明](docs/验收与演示说明.md)。全局关系图、Louvain 社群、Clique 团体、跨社群连接候选及上传会话分析已纳入当前交付范围；阶段验收记录见[实施计划与验收记录](全局关系图与社群桥接分析实施计划.md)。其中验收日期和测试结果是计划文档记载，不代表每次检出代码后都重新运行过测试或完成了新的浏览器验收。
+当前交付范围与运行方式见[项目验收与演示说明](docs/验收与演示说明.md)。社交网络分析的当前功能、数据边界和实现约定见[社交网络分析当前实现](docs/social-network-analysis-current-implementation.md)。
 
 ## English Overview
 
@@ -173,9 +173,9 @@ Uploads are available for temporary analysis sessions; they do not create perman
 
 Supported inputs are UTF-8 CSV (with a header) and JSONL (one JSON object per line); UTF-8 BOM is accepted. Excel, XML, GBK/GB18030, UTF-16, and whole-file JSON arrays are not supported. The per-file limit is `128 MiB` and the per-request limit is `160 MiB`. The user reviews a server-generated quality preview and explicitly activates the dataset. Uploaded data belongs only to the current browser-tab session and expires after 2 hours of inactivity or 24 hours at most.
 
-上传前会展示来源与责任提示，但不会验证数据来源或授权。来源说明可留空；空值记录为“用户未提供”。上传原文件不会永久保存。永久保存、命名、版本和跨会话加载属于独立 P3/T39 规划，当前未实现，也未授权实施。
+上传前会展示来源与责任提示，但不会验证数据来源或授权。来源说明可留空；空值记录为“用户未提供”。上传原文件、规范化快照和分析结果只在当前会话中使用，不作为永久数据集保存；内置数据分析结果的本机缓存属于独立存储边界。
 
-Source and responsibility notices are displayed before upload, but the platform does not verify provenance or authorization. A source description is optional; an empty value is recorded as “not provided by the user.” Original uploads are not stored permanently. Permanent storage, naming, versions, and cross-session loading are separate P3/T39 plans; they are not implemented or authorized.
+Source and responsibility notices are displayed before upload, but the platform does not verify provenance or authorization. A source description is optional; an empty value is recorded as “not provided by the user.” Uploaded files, normalized snapshots, and analysis results are scoped to the current session and are not registered as permanent datasets. Built-in analysis artifacts use a separate local storage boundary.
 
 以下是三种逻辑角色的字段示例：
 
@@ -332,7 +332,7 @@ idle / loading / available / empty / limited / failed / disabled / unavailable
 - 外部节点可以参与网络计算，但默认不进入用户资料排行。
 - 当前导出是同步响应承载，不生成永久文件或下载链接。
 - 内置快照缓存复用同一数据集版本；版本变化必须重新计算。
-- 性能报告记录了 2026-10-05 本机数据集的内存测量和接口耗时；这是特定环境下的历史观测，不是最低可用内存要求或分析准入门槛。项目不因可用内存低于 2 GiB 而拒绝分析。
+- Clique/Louvain 使用受限的独立 Worker；禁止按整机可用内存设置分析准入门槛，具体约束见[Worker 资源契约](docs/social-network-worker-resource-contract.md)。
 - 项目仅支持桌面 Microsoft Edge，不扩展移动端、平板端或触摸设备适配。
 
 - `limited` means the graph, sample, or author-linkage coverage is capped.
@@ -341,12 +341,12 @@ idle / loading / available / empty / limited / failed / disabled / unavailable
 - External nodes may participate in network calculations but are excluded from user-profile rankings by default.
 - Exports are synchronous responses; the server does not keep permanent files or download links.
 - Snapshot caches are scoped to a dataset version; a version change requires recalculation.
-- The performance report records memory and request-time measurements from one local run on 2026-10-05. These are historical, environment-specific observations, not a minimum-memory requirement or analysis gate. The application does not reject analysis because available memory is below 2 GiB.
+- Clique/Louvain run in bounded Worker processes. Whole-machine available memory is not an analysis gate; see the [Worker resource contract](docs/social-network-worker-resource-contract.md).
 - Desktop Microsoft Edge is the only supported browser target; mobile, tablet, and touch layouts are out of scope.
 
 ## 验收与演示检查 Acceptance and Demo Checks
 
-以下是需在目标机器上实际执行的检查清单，不是已经在每次运行环境中完成的证明。已记录的历史验收见[项目验收与演示说明](docs/验收与演示说明.md)。
+以下是目标机器的演示前检查步骤，用于验证当前运行环境，不代表检查已自动完成。
 
 1. 启动应用并打开 `http://localhost:8080/#/social-network`。
 2. 确认数据集显示用户数 626、关注关系数 12,963 和推文数 237,840，并区分候选关系、规范化有效关系及原始/去重推文口径。
@@ -364,7 +364,7 @@ idle / loading / available / empty / limited / failed / disabled / unavailable
 
 ### English Checklist
 
-These checks must be executed on the target machine; their presence here is not evidence that the current runtime passed. See the [acceptance and demo guide](docs/验收与演示说明.md) for dated historical evidence.
+These checks must be executed on the target machine; their presence here is not evidence that the current runtime passed. See the [acceptance and demo guide](docs/验收与演示说明.md) for current run instructions.
 
 1. Start the application and open `http://localhost:8080/#/social-network`.
 2. Confirm the dataset summary shows 626 users, 12,963 relation records, and 237,840 raw tweet records; distinguish candidate relations from valid normalized relations and raw tweets from deduplicated samples.
@@ -380,9 +380,9 @@ These checks must be executed on the target machine; their presence here is not 
 12. Upload the three demo CSV files and check preview, activation, analysis, bridge evidence, and exports; confirm the old session expires after closure or restart.
 13. Open `#/predict` and confirm the prediction workspace has not regressed.
 
-历史性能测量见 [T34 性能验收报告](docs/social-network-analysis-performance-acceptance.md)。项目的阶段范围、验收记录和可复现演示步骤见[项目验收与演示说明](docs/验收与演示说明.md)。
+社交网络分析当前功能与实现边界见[当前实现说明](docs/social-network-analysis-current-implementation.md)；本机运行及演示步骤见[项目验收与演示说明](docs/验收与演示说明.md)。
 
-See the [T34 performance report](docs/social-network-analysis-performance-acceptance.md) for historical measurements. See the [acceptance and demo guide](docs/验收与演示说明.md) for delivery scope, recorded acceptance, and local run instructions.
+See the [current social-network implementation](docs/social-network-analysis-current-implementation.md) for supported behavior and boundaries. See the [acceptance and demo guide](docs/验收与演示说明.md) for local setup and verification steps.
 
 ## 项目结构 Project Structure
 
@@ -391,18 +391,18 @@ src/main/java/com/prediction/           # Spring Boot 后端
 src/main/resources/static/              # HTML/CSS/JavaScript 前端
 src/main/java/com/prediction/socialnetwork/ # 社交网络领域、分析和导出
 scripts/                                # 预测数据处理脚本
-docs/                                   # 契约、规划、验收和使用文档
+docs/                                   # 当前实现契约、演示和使用文档
 data/                                   # 本地预测数据资产，不提交到 Git
 ```
 
-`src/main/java/com/prediction/` contains the Spring Boot backend; `src/main/resources/static/` contains the HTML, CSS, and JavaScript frontend; `scripts/` contains prediction-data utilities; `docs/` contains contracts, plans, and acceptance records. Local prediction assets under `data/` are not committed.
+`src/main/java/com/prediction/` contains the Spring Boot backend; `src/main/resources/static/` contains the HTML, CSS, and JavaScript frontend; `scripts/` contains prediction-data utilities; `docs/` contains current contracts and operating guides. Local prediction assets under `data/` are not committed.
 
 ## 数据来源与声明 Data Notice
 
 预测数据来源为 SMTPD：<https://github.com/zhuwei321/SMTPD>。
 
-社交网络数据集由项目开发者整理并提供，具体采集来源、时间范围、处理方式和授权边界以项目数据说明为准。使用者应自行确认数据集授权与隐私合规要求。
+社交网络数据集由项目开发者整理并提供；当前仓库未附带完整的采集来源与授权证明材料，因此不能据此声称来源或授权已核验。使用者应自行确认数据集的使用权限与隐私合规要求。
 
 The prediction dataset is sourced from SMTPD: <https://github.com/zhuwei321/SMTPD>.
 
-The social-network dataset is curated and provided by the project developer. Consult the project data notice for its collection sources, time range, processing, and authorization boundaries. Users are responsible for confirming that their use complies with applicable data licenses and privacy requirements.
+The social-network dataset is curated and provided by the project developer. This repository does not include complete collection-provenance or authorization evidence, so it does not claim those details have been verified. Users are responsible for confirming applicable permissions and privacy requirements.
