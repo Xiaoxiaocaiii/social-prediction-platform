@@ -258,6 +258,12 @@
         return workspace.datasetUrl(resource, query, currentContext());
     }
 
+    function isGroupExportSupported(context, analysisType) {
+        return model.isBuiltinContext(context) ||
+            (model.isUploadContext(context) &&
+                (analysisType === "louvain" || analysisType === "clique"));
+    }
+
     function requestOptions(method) {
         return {
             method: method || "GET",
@@ -290,7 +296,8 @@
     function openGroupExportDialog(invoker) {
         var dialog = document.getElementById("social-network-group-export-dialog");
         var analysis = activeAnalysis();
-        var supported = model.isSupportedContext(currentContext());
+        var context = currentContext();
+        var supported = isGroupExportSupported(context, state.analysisType);
         var ready = supported && analysis &&
             analysis.state !== "NOT_REQUESTED" &&
             analysis.state !== "RUNNING" && analysis.state !== "BUSY" &&
@@ -299,10 +306,15 @@
         if (ready && state.analysisType === "clique") {
             var start = Number(analysis.offset) || 0;
             var count = (analysis.cliques || []).length;
+            var total = Number(analysis.retainedCliqueCount) || 0;
             scope = "Clique 当前列表页：" +
                 (count ? (formatNumber(start + 1) + "–" +
-                    formatNumber(start + count)) : "0") +
-                " / " + formatNumber(analysis.retainedCliqueCount) + " 个已保留团。";
+                    formatNumber(start + count)) :
+                    total ? "当前页无成员明细" : "没有团条目") +
+                " / " + formatNumber(total) + " 个已保留团。";
+            if (analysis.membershipListComplete === false) {
+                scope += " 成员明细未全部保留，文件会注明此限制。";
+            }
         } else if (ready) {
             scope = "Louvain 当前完整分区：" +
                 formatNumber((analysis.communities || []).length) +
@@ -315,11 +327,14 @@
         } else if (ready) {
             scope += " 尚未选择证据目标，本次不包含来源证据。";
         }
+        if (ready && analysis.complete === false) {
+            scope += " 分析未完整完成，导出会保留实际状态，不代表完整网络结果。";
+        }
         document.getElementById("social-network-group-export-note")
             .textContent = scope +
                 " 文件超过 2 MiB 时整体拒绝，不会截断。";
         document.getElementById("social-network-group-export-dataset")
-            .textContent = "数据集：" + (currentContext().datasetId || "尚未读取");
+            .textContent = "数据集：" + (context.datasetId || "尚未读取");
         document.getElementById("social-network-group-export-status")
             .textContent = ready
                 ? "导出只读取现有分析结果，不会启动或重跑算法。"
@@ -341,7 +356,7 @@
         if (!dialog.open || !analysis) {
             return;
         }
-        if (!model.isSupportedContext(currentContext()) ||
+        if (!isGroupExportSupported(currentContext(), state.analysisType) ||
                 analysis.state === "NOT_REQUESTED" ||
                 analysis.state === "RUNNING" ||
                 analysis.state === "BUSY" ||
@@ -1013,10 +1028,19 @@
     function render(loading) {
         var context = currentContext();
         var analysis = activeAnalysis();
-        var supported = model.isSupportedContext(context);
+        var supported = model.isAnalysisSupportedContext(
+            context, state.analysisType);
+        var exportSupported = isGroupExportSupported(context, state.analysisType);
         root.querySelectorAll("[data-group-analysis]").forEach(function (button) {
             var active = button.dataset.groupAnalysis === state.analysisType;
             button.setAttribute("aria-selected", String(active));
+            var analysisSupported = model.isAnalysisSupportedContext(
+                context, button.dataset.groupAnalysis);
+            button.disabled = !analysisSupported;
+            button.setAttribute("aria-disabled", String(!analysisSupported));
+            button.title = !analysisSupported
+                ? "当前数据上下文不支持此分析"
+                : "";
         });
         var running = model.isRunning(analysis && analysis.state);
         var waiting = analysis && analysis.state === "BUSY";
@@ -1025,9 +1049,10 @@
         var exportButton = root.querySelector("[data-group-export]");
         start.disabled = !supported || running || waiting || Boolean(loading);
         refresh.disabled = !supported || Boolean(loading);
-        exportButton.disabled = !supported || !analysis ||
+        exportButton.disabled = !exportSupported || !analysis ||
             analysis.state === "NOT_REQUESTED" || running || waiting ||
             !analysis.dataFingerprint;
+        exportButton.title = !exportSupported ? "当前数据上下文不支持导出。" : "";
         start.textContent = running
             ? "正在计算…"
             : waiting
@@ -1042,7 +1067,7 @@
         status.dataset.state = analysis ? analysis.state || "" : "loading";
         if (!supported) {
             setNotice(
-                "当前上下文是上传数据或非内置数据集。Clique/Louvain 本阶段只支持内置 think-tank-social-network/v1；未发送状态、计算或证据请求。",
+                "当前数据集不受社群分析支持；未发送状态、计算或证据请求。",
                 "warning");
         } else {
             setNotice("", "");
@@ -1068,7 +1093,9 @@
     async function loadInsights() {
         var context = currentContext();
         var analysis = activeAnalysis();
-        if (!state.active || !analysis || !analysis.complete ||
+        if (!state.active ||
+                !model.isAnalysisSupportedContext(context, state.analysisType) ||
+                !analysis || !analysis.complete ||
                 (state.analysisType === "clique" && !analysis.membershipListComplete) ||
                 (state.analysisType === "louvain" && !analysis.converged)) {
             return;
@@ -1150,7 +1177,7 @@
     async function loadStatus(options) {
         var settings = options || {};
         var context = currentContext();
-        if (!model.isSupportedContext(context)) {
+        if (!model.isAnalysisSupportedContext(context, state.analysisType)) {
             render(false);
             return;
         }
@@ -1233,7 +1260,8 @@
     }
 
     function restoreControls() {
-        var supported = model.isSupportedContext(currentContext());
+        var supported = model.isAnalysisSupportedContext(
+            currentContext(), state.analysisType);
         var analysis = activeAnalysis();
         var running = model.isRunning(analysis && analysis.state);
         var waiting = analysis && analysis.state === "BUSY";
@@ -1244,7 +1272,8 @@
 
     async function loadEvidence() {
         if (!state.active || !state.selectedTarget ||
-                !model.isSupportedContext(currentContext())) {
+                !model.isAnalysisSupportedContext(
+                    currentContext(), state.analysisType)) {
             return;
         }
         var context = currentContext();
@@ -1298,7 +1327,7 @@
 
     async function startAnalysis() {
         var context = currentContext();
-        if (!model.isSupportedContext(context) ||
+        if (!model.isAnalysisSupportedContext(context, state.analysisType) ||
                 model.isRunning(activeAnalysis() && activeAnalysis().state)) {
             return;
         }
@@ -1394,6 +1423,9 @@
         }
         var analysisTab = event.target.closest("[data-group-analysis]");
         if (analysisTab) {
+            if (analysisTab.disabled) {
+                return;
+            }
             var nextType = analysisTab.dataset.groupAnalysis;
             if (nextType !== state.analysisType) {
                 state.analysisType = nextType;
@@ -1521,6 +1553,9 @@
             ? "[data-group-analysis]"
             : "[data-group-evidence-section]";
         var tabs = Array.from(root.querySelectorAll(selector));
+        tabs = tabs.filter(function (candidate) {
+            return !candidate.disabled;
+        });
         var currentIndex = tabs.indexOf(tab);
         if (currentIndex < 0 || tabs.length < 2) {
             return;
@@ -1547,6 +1582,9 @@
 
     function onShown() {
         state.active = true;
+        if (model.isUploadContext(currentContext())) {
+            state.analysisType = "louvain";
+        }
         state.contextKey = contextKey(currentContext());
         loadStatus();
     }
@@ -1592,6 +1630,9 @@
         state.insightOffset = 0;
         state.insightLoading = false;
         state.cliqueOffset = 0;
+        if (model.isUploadContext(currentContext())) {
+            state.analysisType = "louvain";
+        }
         state.contextKey = contextKey(currentContext());
         var exportDialog = document.getElementById(
             "social-network-group-export-dialog");

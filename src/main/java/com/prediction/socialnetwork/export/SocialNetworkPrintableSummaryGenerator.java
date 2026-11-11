@@ -31,6 +31,9 @@ public final class SocialNetworkPrintableSummaryGenerator {
         if ("network".equals(exportType) && result instanceof Map<?, ?> network) {
             return generateNetworkReport(metadata, network);
         }
+        if ("bridge-candidates".equals(exportType)) {
+            return generateBridgeCandidatesReport(metadata, asMap(result));
+        }
         if ("users".equals(exportType)) {
             return generateUsersReport(metadata, asMap(result));
         }
@@ -44,6 +47,242 @@ public final class SocialNetworkPrintableSummaryGenerator {
             return generateTweetsReport(metadata, asList(result));
         }
         return generateMetadataReport(metadata, exportType);
+    }
+
+    private static String generateBridgeCandidatesReport(
+            SocialNetworkExportMetadata metadata,
+            Map<?, ?> result) {
+        Map<?, ?> scope = asMap(result.get("scope"));
+        Map<?, ?> candidatePage = asMap(result.get("candidatePage"));
+        Map<?, ?> identity = asMap(result.get("analysisIdentity"));
+        List<?> candidates = asList(result.get("candidates"));
+        Map<?, ?> evidencePage = asMap(result.get("evidencePage"));
+        List<?> evidenceItems = asList(evidencePage.get("items"));
+        StringBuilder report = reportHeader(metadata, "跨社群连接候选核对报告");
+
+        line(report, "一、问题");
+        line(report, stringValue(result.get("question"),
+                "哪些资料账号与其他已归属社群存在有效直接关系？"));
+        line(report, "");
+        line(report, "二、结论");
+        line(report, stringValue(result.get("conclusion"), "未提供候选结论。"));
+
+        line(report, "");
+        line(report, "三、口径与范围");
+        Map<?, ?> methodology = asMap(result.get("methodology"));
+        line(report, "- 候选条件：" + stringValue(
+                methodology.get("candidateDefinition"), "未提供。"));
+        line(report, "- 关系计数：" + stringValue(
+                methodology.get("relationshipCounting"), "未提供。"));
+        line(report, "- 排除范围：" + String.join("；",
+                asList(methodology.get("excludedRelationships")).stream()
+                        .map(String::valueOf).toList()));
+        line(report, "- 解释边界：" + stringValue(
+                methodology.get("interpretationLimit"), "未提供。"));
+        line(report, "- 计算范围：" + stringValue(
+                scope.get("calculationScope"), "未提供。"));
+        line(report,
+                "- 数量解释：连接社群数表示候选连接到的其他社群数量；关联账号数按不同账号计数。");
+        line(report,
+                "- 关系方向：主动关系是候选关注其他社群账号；指向该账号是其他社群账号关注候选。");
+        int candidateOffset = candidatePage.get("offset") instanceof Number offset
+                ? offset.intValue() : 0;
+        int candidateReturnedCount = candidatePage.get("returnedCount") instanceof Number count
+                ? count.intValue() : candidates.size();
+        int candidateTotalCount = candidatePage.get("totalCount") instanceof Number count
+                ? count.intValue() : candidates.size();
+        if (candidateTotalCount == 0) {
+            line(report, "- 候选范围：完整网络中没有符合条件的候选。");
+        } else if (candidateReturnedCount == 0) {
+            line(report, "- 候选范围：当前页未返回账号；完整候选共 "
+                    + display(candidateTotalCount) + " 个。");
+        } else {
+            line(report, "- 候选范围：第 "
+                    + display(candidateOffset + 1) + " 至 "
+                    + display(candidateOffset + candidateReturnedCount)
+                    + " 项；本页 " + display(candidateReturnedCount)
+                    + " 个，完整候选共 " + display(candidateTotalCount) + " 个。");
+        }
+        if (Boolean.TRUE.equals(candidatePage.get("truncated"))) {
+            line(report, "本文件只包含这一页候选，其他页面未包含。");
+        }
+        line(report, "- 画布筛选是否影响候选：" +
+                (Boolean.TRUE.equals(scope.get("canvasFiltersApplied")) ? "是" : "否"));
+
+        line(report, "");
+        line(report, "四、候选账号");
+        if (candidates.isEmpty()) {
+            if (candidatePage.get("totalCount") instanceof Number totalCount
+                    && totalCount.intValue() == 0) {
+                line(report, "完整候选总数为 0，这是有效零结果，不代表分析不可用。");
+            } else {
+                line(report, "当前候选页没有返回账号，但完整候选总数不为 0；请刷新候选页后重试。");
+            }
+        } else {
+            for (Object value : candidates) {
+                Map<?, ?> candidate = asMap(value);
+                report.append("- 第 ").append(display(candidate.get("rank")))
+                        .append(" 项：").append(bridgeAccountLabel(candidate))
+                        .append("；所属社群 ")
+                        .append(display(candidate.get("communityId")))
+                        .append("；连接社群 ")
+                        .append(display(candidate.get("connectedCommunityCount")))
+                        .append(" 个；关联账号 ")
+                        .append(display(candidate.get("distinctOtherAccountCount")))
+                        .append(" 个；主动关系 ")
+                        .append(display(candidate.get("outgoingRelationshipCount")))
+                        .append(" 条；指向该账号 ")
+                        .append(display(candidate.get("incomingRelationshipCount")))
+                        .append(" 条。\n");
+                List<?> communities = asList(candidate.get("communities"));
+                if (!communities.isEmpty()) {
+                    report.append("  逐社群：")
+                            .append(communities.stream()
+                                    .map(SocialNetworkPrintableSummaryGenerator::
+                                            bridgeCommunityLabel)
+                                    .collect(java.util.stream.Collectors.joining("；")))
+                            .append('\n');
+                }
+            }
+        }
+
+        line(report, "");
+        line(report, "五、关系证据");
+        if ("not_selected".equals(evidencePage.get("state"))) {
+            line(report, "本次未选择具体账号的关系证据页；候选统计不代替逐条关系来源。");
+        } else if (evidenceItems.isEmpty()) {
+            line(report, "所选账号、社群、方向和分页范围内没有可列出的关系证据。");
+        } else {
+            line(report, "账号 " + display(evidencePage.get("accountId"))
+                    + "；连接社群 "
+                    + display(evidencePage.get("communityId"))
+                    + "；方向 " + bridgeDirectionLabel(evidencePage.get("direction"))
+                    + "；本页 " + evidenceItems.size() + " 条；当前筛选条件下共 "
+                    + display(evidencePage.get("totalCount")) + " 条。");
+            if (Boolean.TRUE.equals(evidencePage.get("truncated"))) {
+                line(report,
+                        "本文件仅包含已选择的这一页证据；其他页未包含，不能视为完整关系证据。");
+            } else {
+                line(report,
+                        "本文件包含当前账号、社群和方向筛选条件下的全部证据；其他筛选范围未包含。");
+            }
+            for (Object value : evidenceItems) {
+                Map<?, ?> evidence = asMap(value);
+                report.append("- ")
+                        .append(display(evidence.get("sourceId")))
+                        .append(" → ").append(display(evidence.get("targetId")))
+                        .append("；")
+                        .append(display(evidence.get("sourceCommunityId")))
+                        .append(" → ").append(display(evidence.get("targetCommunityId")))
+                        .append("；")
+                        .append(bridgeDirectionLabel(evidence.get("direction")))
+                        .append('\n');
+                for (Object sourceValue : asList(evidence.get("sources"))) {
+                    Map<?, ?> source = asMap(sourceValue);
+                    report.append("  来源：")
+                            .append(display(source.get("sourceFileName")))
+                            .append(" 第 ").append(display(source.get("sourceRowNumber")))
+                            .append(" 行");
+                    Object arrayIndexValue = source.get("sourceArrayIndex");
+                    if (arrayIndexValue instanceof Number arrayIndex
+                            && arrayIndex.intValue() >= 0) {
+                        report.append("；关注列表索引 ").append(arrayIndex.intValue());
+                    }
+                    report.append("；关系记录：")
+                            .append(bridgeRelationshipStatus(source.get("relationStatus")))
+                            .append(Boolean.TRUE.equals(source.get("analysisIncluded"))
+                                    ? "，计入关系统计" : "，未计入关系统计")
+                            .append("；端点资料：")
+                            .append(bridgeAssociationStatus(source.get("sourceNodeStatus")))
+                            .append(" → ")
+                            .append(bridgeAssociationStatus(source.get("targetNodeStatus")))
+                            .append("；规范化：")
+                            .append(bridgeNormalizationStatus(
+                                    source.get("normalizationStatus")))
+                            .append('\n');
+                }
+            }
+        }
+
+        line(report, "");
+        line(report, "六、复核信息");
+        line(report, "生成时间：" + metadata.exportedAt());
+        line(report, "数据集版本：" + metadata.datasetVersion());
+        line(report, "分析结果身份：" + stringValue(
+                identity.get("analysisResultId"), "未提供"));
+        line(report, "数据指纹：" + stringValue(identity.get("dataFingerprint"), "未提供"));
+        line(report, "数据来源：" + metadata.sourceDescription());
+        if ("not_selected".equals(evidencePage.get("state"))) {
+            line(report,
+                    "复核建议：使用同一分析结果身份复查候选页；如需核对具体关系，请在平台打开目标账号的关系证据页后再导出。");
+        } else if (evidenceItems.isEmpty()) {
+            line(report,
+                    "复核建议：当前所选筛选范围内没有证据条目；可调整社群或方向后再打开证据页核对。");
+        } else {
+            line(report,
+                    "复核建议：使用同一分析结果身份复查候选页，并依据本报告所附来源文件和行号核对关系记录。");
+        }
+        for (String note : metadata.boundaryNotes()) {
+            line(report, "边界说明：" + note);
+        }
+        return report.toString();
+    }
+
+    private static String bridgeAccountLabel(Map<?, ?> candidate) {
+        String name = stringValue(candidate.get("displayName"), "");
+        if (name.isBlank()) {
+            name = stringValue(candidate.get("username"), "");
+        }
+        return (name.isBlank() ? "未命名账号" : name)
+                + "（ID " + display(candidate.get("accountId")) + "）";
+    }
+
+    private static String bridgeCommunityLabel(Object value) {
+        Map<?, ?> community = asMap(value);
+        return display(community.get("communityId")) + "：主动 "
+                + display(community.get("outgoingRelationshipCount"))
+                + " 条，指向该账号 "
+                + display(community.get("incomingRelationshipCount")) + " 条";
+    }
+
+    private static String bridgeDirectionLabel(Object direction) {
+        return switch (String.valueOf(direction)) {
+            case "outgoing" -> "候选账号关注其他社群";
+            case "incoming" -> "其他社群关注候选账号";
+            case "all" -> "全部方向";
+            default -> "方向未提供";
+        };
+    }
+
+    private static String bridgeRelationshipStatus(Object status) {
+        return switch (String.valueOf(status)) {
+            case "VALID" -> "有效关系";
+            case "DUPLICATE" -> "重复来源";
+            case "SELF_LOOP" -> "自环关系";
+            case "INVALID" -> "无效关系";
+            default -> "关系状态未提供";
+        };
+    }
+
+    private static String bridgeAssociationStatus(Object status) {
+        return switch (String.valueOf(status)) {
+            case "LINKED" -> "账号资料已采集";
+            case "EXTERNAL_NODE" -> "关系端点，资料未采集";
+            case "UNASSIGNED_SOURCE" -> "来源未归属";
+            case "UNLINKED_AUTHOR" -> "作者未关联";
+            case "NOT_APPLICABLE" -> "不适用";
+            default -> "资料关联状态未提供";
+        };
+    }
+
+    private static String bridgeNormalizationStatus(Object status) {
+        return switch (String.valueOf(status)) {
+            case "NORMALIZED" -> "规范化通过";
+            case "NORMALIZED_WITH_WARNINGS" -> "规范化完成但有提示";
+            case "REJECTED_REQUIRED_FIELD" -> "缺少必需字段";
+            case "REJECTED_INVALID_FORMAT" -> "格式无效";
+            default -> "规范化状态未提供";
+        };
     }
 
     private static String generateUsersReport(
@@ -107,16 +346,10 @@ public final class SocialNetworkPrintableSummaryGenerator {
         line(report, "五、复核信息");
         line(report, "生成时间：" + metadata.exportedAt());
         line(report, "数据集版本：" + metadata.datasetVersion());
-        line(report, "数据规范化版本：" + metadata.normalizationVersion());
-        line(report, "指标版本：" + metadata.metricVersion());
-        line(report, "文本处理版本：" + metadata.textProcessingVersion());
-        line(report, "解释版本：" + metadata.explanationVersion());
         line(report, "数据来源：" + metadata.sourceDescription());
         appendIfPresent(report, "导出范围", metadata.scope().get("range"));
         appendIfPresent(report, "本次导出记录数",
                 metadata.sampleCounts().get("resultCount"));
-        appendIfPresent(report, "网络位置估算算法版本",
-                metadata.algorithmVersions().get("pageRank"));
         if (Boolean.TRUE.equals(metadata.scope().get("truncated"))) {
             line(report, "结果状态：服务端标记为部分结果。");
         }
@@ -691,19 +924,12 @@ public final class SocialNetworkPrintableSummaryGenerator {
 
         line(report, "");
         line(report, "四、证据");
-        appendNetworkEvidence(report, network, pageRank, facts);
+        appendNetworkEvidence(report, network, facts);
 
         line(report, "");
         line(report, "五、复核信息");
         line(report, "生成时间：" + metadata.exportedAt());
         line(report, "数据集版本：" + metadata.datasetVersion());
-        line(report, "数据规范化版本：" + metadata.normalizationVersion());
-        line(report, "网络指标版本：" + metadata.metricVersion());
-        report.append("网络位置估算版本：")
-                .append(display(network.get("pagerankVersion"))).append('\n');
-        report.append("结构分析算法版本：")
-                .append(display(asMap(metadata.algorithmVersions())
-                        .get("structuralRoles"))).append('\n');
         line(report, "资料外账号：" +
                 (Boolean.TRUE.equals(network.get("includeExternalNodes"))
                         ? "纳入统计" : "未纳入或未提供"));
@@ -719,7 +945,6 @@ public final class SocialNetworkPrintableSummaryGenerator {
     private static void appendNetworkEvidence(
             StringBuilder report,
             Map<?, ?> network,
-            Map<?, ?> pageRank,
             List<?> facts) {
         appendEvidenceValue(report, "最大连接组占比",
                 network.get("largestWeaklyConnectedComponentRatio"), true);
@@ -727,12 +952,10 @@ public final class SocialNetworkPrintableSummaryGenerator {
                 network.get("averageClusteringCoefficient"), true);
         appendEvidenceValue(report, "最大连接组平均路径长度",
                 network.get("largestWeaklyConnectedComponentAveragePathLength"), false);
-        appendEvidenceValue(report, "网络位置估算计算轮数",
-                pageRank.get("iterations"), false);
 
         line(report, "可核验事实：");
         if (facts.isEmpty()) {
-            line(report, "- 当前导出未提供全网事实摘要。");
+            line(report, "- 本报告未附逐账号或逐关系的原始记录证据；以上数值是按当前数据集计算的网络汇总指标。");
             return;
         }
         int visibleCount = Math.min(facts.size(), 3);

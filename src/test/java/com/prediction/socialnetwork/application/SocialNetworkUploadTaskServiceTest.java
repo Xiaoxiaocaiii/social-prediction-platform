@@ -1,12 +1,18 @@
 package com.prediction.socialnetwork.application;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.prediction.socialnetwork.cache.CacheResultType;
+import com.prediction.socialnetwork.cache.SocialNetworkAnalysisResultCache;
+import com.prediction.socialnetwork.cache.SocialNetworkCacheKey;
+import com.prediction.socialnetwork.domain.DatasetFileDescriptor;
 import com.prediction.socialnetwork.domain.DatasetFileRole;
+import com.prediction.socialnetwork.domain.SourceFormat;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -79,6 +85,54 @@ class SocialNetworkUploadTaskServiceTest {
                 first.preview().datasetId(),
                 first.preview().datasetVersion(),
                 first.preview().sessionId());
+    }
+
+    @Test
+    void uploadSnapshotExposesNormalizedGraphInputAndFingerprintForMixedFiles()
+            throws IOException {
+        SocialNetworkDatasetRegistry registry = new SocialNetworkDatasetRegistry();
+        SocialNetworkWorkspaceService workspace = new SocialNetworkWorkspaceService(registry);
+        SocialNetworkUploadTaskService service =
+                new SocialNetworkUploadTaskService(
+                        registry, workspace, Runnable::run, tempDir.resolve("mixed-staging"));
+        Path firstUsers = writeUsersFile(
+                "mixed-users.csv", "user_id,username\nuser-1,first\n");
+        Path secondUsers = writeUsersFile(
+                "mixed-users.jsonl", "{\"user_id\":\"user-2\",\"username\":\"second\"}\n");
+        Path relationships = writeUsersFile(
+                "mixed-relationships.jsonl",
+                "{\"source_user_id\":\"user-1\",\"target_user_id\":\"user-2\"}\n");
+
+        SocialNetworkUploadTaskView task = service.submit(
+                List.of(
+                        input("users-csv", "users.csv", firstUsers),
+                        input("users-jsonl", "users.jsonl", secondUsers),
+                        new SocialNetworkUploadFileInput(
+                                "relationships",
+                                "relationships.jsonl",
+                                DatasetFileRole.RELATIONSHIPS,
+                                relationships)),
+                null);
+
+        assertEquals("ready", task.status());
+        SocialNetworkWorkspaceSnapshot snapshot = workspace.get(
+                task.preview().datasetId(),
+                task.preview().datasetVersion(),
+                task.preview().sessionId());
+        SocialNetworkWorkspaceSnapshot.GraphAnalysisInput graphInput =
+                snapshot.graphAnalysisInput();
+
+        assertNotNull(graphInput.inputFingerprint());
+        assertEquals(3, graphInput.inputFingerprint().files().size());
+        assertEquals(2, graphInput.users().size());
+        assertEquals(1, graphInput.relationships().stream()
+                .filter(relationship -> relationship.analysisIncluded())
+                .count());
+        assertEquals(2, graphInput.network().nodes().size());
+        service.closeSession(
+                task.preview().datasetId(),
+                task.preview().datasetVersion(),
+                task.preview().sessionId());
     }
 
     @Test
@@ -226,8 +280,19 @@ class SocialNetworkUploadTaskServiceTest {
         SocialNetworkDatasetRegistry registry = new SocialNetworkDatasetRegistry(clock);
         SocialNetworkWorkspaceService workspace = new SocialNetworkWorkspaceService(registry);
         Path stagingRoot = tempDir.resolve("expiring-staging");
+        SocialNetworkAnalysisResultCache analysisCache = new SocialNetworkAnalysisResultCache();
+        SocialNetworkUploadTemporaryFileCleanup cleanup =
+                new SocialNetworkUploadTemporaryFileCleanup(
+                        tempDir.resolve("expiring-http"), stagingRoot, Clock.systemUTC());
         SocialNetworkUploadTaskService service =
-                new SocialNetworkUploadTaskService(registry, workspace, Runnable::run, stagingRoot);
+                new SocialNetworkUploadTaskService(
+                        registry,
+                        workspace,
+                        Runnable::run,
+                        stagingRoot,
+                        cleanup,
+                        new SocialNetworkDataFingerprintService(),
+                        analysisCache);
         Path usersFile = writeUsersFile("expiring.csv", "user_id,username\nexpires-user,expires\n");
 
         SocialNetworkUploadTaskView ready = service.submit(
@@ -235,6 +300,13 @@ class SocialNetworkUploadTaskServiceTest {
 
         assertEquals("ready", ready.status());
         assertEquals(1, countDirectories(stagingRoot));
+        var cachedKey = new SocialNetworkCacheKey("expiring-key", "expiring-material");
+        analysisCache.put(
+                CacheResultType.LOUVAIN_ANALYSIS,
+                cachedKey,
+                ready.preview().sessionId(),
+                "session-result",
+                clock.instant());
         clock.advance(Duration.ofHours(2));
 
         SocialNetworkUploadTaskView expired = service.getTask(ready.uploadTaskId());
@@ -244,10 +316,54 @@ class SocialNetworkUploadTaskServiceTest {
         assertNull(expired.preview());
         assertEquals("think-tank-social-network", registry.currentDataset().datasetId());
         assertEquals(0, countDirectories(stagingRoot));
+        assertTrue(analysisCache.find(
+                CacheResultType.LOUVAIN_ANALYSIS,
+                cachedKey,
+                String.class).isEmpty());
         assertThrows(SocialNetworkDatasetSessionExpiredException.class, () -> workspace.get(
                 ready.preview().datasetId(),
                 ready.preview().datasetVersion(),
                 ready.preview().sessionId()));
+    }
+
+    @Test
+    void closingUploadSessionEvictsOnlyItsAnalysisCacheEntries() {
+        SocialNetworkDatasetRegistry registry = new SocialNetworkDatasetRegistry();
+        SocialNetworkWorkspaceService workspace = new SocialNetworkWorkspaceService(registry);
+        Path stagingRoot = tempDir.resolve("closing-session-staging");
+        SocialNetworkAnalysisResultCache analysisCache = new SocialNetworkAnalysisResultCache();
+        SocialNetworkUploadTemporaryFileCleanup cleanup =
+                new SocialNetworkUploadTemporaryFileCleanup(
+                        tempDir.resolve("closing-session-http"), stagingRoot, Clock.systemUTC());
+        SocialNetworkUploadTaskService service =
+                new SocialNetworkUploadTaskService(
+                        registry,
+                        workspace,
+                        Runnable::run,
+                        stagingRoot,
+                        cleanup,
+                        new SocialNetworkDataFingerprintService(),
+                        analysisCache);
+        var uploaded = registry.createUploadSession(List.of(new DatasetFileDescriptor(
+                "users.csv", DatasetFileRole.USERS, SourceFormat.CSV, "utf8")));
+        var cachedKey = new SocialNetworkCacheKey("closing-key", "closing-material");
+        analysisCache.put(
+                CacheResultType.LOUVAIN_ANALYSIS,
+                cachedKey,
+                uploaded.sessionId(),
+                "session-result",
+                Instant.now());
+
+        service.closeSession(
+                uploaded.datasetId(), uploaded.datasetVersion(), uploaded.sessionId());
+
+        assertFalse(analysisCache.find(
+                CacheResultType.LOUVAIN_ANALYSIS,
+                cachedKey,
+                String.class).isPresent());
+        assertEquals(
+                "think-tank-social-network",
+                registry.currentDataset().datasetId());
     }
 
     @Test

@@ -31,16 +31,11 @@ import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 
 class CliqueEnumeratorRealDataCrossCheckTest {
 
-    private static final long MINIMUM_AVAILABLE_MEMORY_BYTES =
-            2L * WindowsJobLimits.GIBIBYTE;
-    private static final long MINIMUM_PARENT_HEAP_BYTES =
-            768L * 1024L * 1024L;
     private static final Path JAVA_EXECUTABLE =
             Path.of(System.getProperty("java.home"), "bin", "javaw.exe");
     private static final String WORKER_CLASS_PATH = System.getProperty(
@@ -51,10 +46,6 @@ class CliqueEnumeratorRealDataCrossCheckTest {
     @EnabledIfSystemProperty(named = "clique.crosscheck.real", matches = "true")
     void bitSetWorkerMatchesTheProductionWorkerOnTheBuiltInDataset()
             throws NoSuchAlgorithmException {
-        Assumptions.assumeTrue(
-                Runtime.getRuntime().maxMemory() >= MINIMUM_PARENT_HEAP_BYTES,
-                "Run the opt-in test with a parent heap of at least 768 MiB");
-        assumeMemoryForAnotherWorker("before network input");
         var registry = new SocialNetworkDatasetRegistry();
         SocialNetworkDataset dataset =
                 registry.findDataset(SocialNetworkDatasetRegistry.BUILTIN_DATASET_ID);
@@ -83,7 +74,6 @@ class CliqueEnumeratorRealDataCrossCheckTest {
         SocialNetworkGraphResult network = new SocialNetworkCalculator()
                 .calculateWithoutCommunities(normalized.users(), normalized.relationships());
 
-        assumeMemoryForAnotherWorker("before production worker");
         WindowsCliqueEnumerationRunner productionRunner = new WindowsCliqueEnumerationRunner(
                 JAVA_EXECUTABLE, WORKER_CLASS_PATH, WindowsJobLimits.DEFAULT,
                 CliqueEnumerationWorkerMain.class.getName());
@@ -104,7 +94,6 @@ class CliqueEnumeratorRealDataCrossCheckTest {
         production = null;
 
         System.gc();
-        assumeMemoryForAnotherWorker("before independent BitSet worker");
         WindowsCliqueEnumerationRunner bitSetRunner = new WindowsCliqueEnumerationRunner(
                 JAVA_EXECUTABLE, WORKER_CLASS_PATH, WindowsJobLimits.DEFAULT,
                 BitSetCliqueCrossCheckWorkerMain.class.getName());
@@ -290,13 +279,6 @@ class CliqueEnumeratorRealDataCrossCheckTest {
             long tieCount,
             long supportingDirectionCount,
             long duplicateRecordCount) {
-    }
-
-    private static void assumeMemoryForAnotherWorker(String phase) {
-        Assumptions.assumeTrue(
-                WindowsResourcePreflight.currentAvailablePhysicalMemoryBytes()
-                        >= MINIMUM_AVAILABLE_MEMORY_BYTES,
-                "Skipped " + phase + " below the 2 GiB physical-memory preflight");
     }
 
     private static long elapsedMillis(long startedAt) {

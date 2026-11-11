@@ -39,7 +39,7 @@ class SocialNetworkGroupEvidenceControllerTest {
                 .andExpect(jsonPath("$.meta.dataFingerprint").value("fixture-fingerprint"));
         verify(service).clique(DATASET_ID, 2, "ties", 1, 5);
 
-        when(service.louvain(DATASET_ID, "C001", "members", 0, 20))
+        when(service.louvain(DATASET_ID, null, null, "C001", "members", 0, 20))
                 .thenReturn(view("louvain", "C001", "members", false));
         mockMvc.perform(get("/api/social-network/datasets/"
                         + DATASET_ID + "/network/louvain/communities/C001/evidence"))
@@ -48,16 +48,48 @@ class SocialNetworkGroupEvidenceControllerTest {
                 .andExpect(jsonPath("$.data.targetId").value("C001"))
                 .andExpect(jsonPath("$.data.section").value("members"))
                 .andExpect(jsonPath("$.data.evidenceAvailable").value(false));
-        verify(service).louvain(DATASET_ID, "C001", "members", 0, 20);
+        verify(service).louvain(DATASET_ID, null, null, "C001", "members", 0, 20);
 
-        when(service.betweenCommunities(DATASET_ID, "C001", "C002", 0, 20))
+        when(service.betweenCommunities(DATASET_ID, null, null,
+                "C001", "C002", 0, 20))
                 .thenReturn(view("louvain", "C001 / C002", "ties", true));
         mockMvc.perform(get("/api/social-network/datasets/" + DATASET_ID
                         + "/network/louvain/communities/C001/between/C002/evidence"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.section").value("ties"))
                 .andExpect(jsonPath("$.data.evidenceAvailable").value(true));
-        verify(service).betweenCommunities(DATASET_ID, "C001", "C002", 0, 20);
+        verify(service).betweenCommunities(DATASET_ID, null, null,
+                "C001", "C002", 0, 20);
+    }
+
+    @Test
+    void forwardsUploadContextToLouvainEvidenceRoutes() throws Exception {
+        SocialNetworkGroupEvidenceService service =
+                mock(SocialNetworkGroupEvidenceService.class);
+        MockMvc mockMvc = MockMvcBuilders.standaloneSetup(
+                new SocialNetworkGroupEvidenceController(service)).build();
+        when(service.louvain(
+                "upload-1", "version-1", "session-1", "C001", "members", 0, 20))
+                .thenReturn(view("louvain", "C001", "members", true));
+        when(service.betweenCommunities(
+                "upload-1", "version-1", "session-1", "C001", "C002", 0, 20))
+                .thenReturn(view("louvain", "C001 / C002", "ties", true));
+
+        mockMvc.perform(get("/api/social-network/datasets/upload-1/network/"
+                        + "louvain/communities/C001/evidence")
+                        .param("datasetVersion", "version-1")
+                        .param("sessionId", "session-1"))
+                .andExpect(status().isOk());
+        verify(service).louvain(
+                "upload-1", "version-1", "session-1", "C001", "members", 0, 20);
+
+        mockMvc.perform(get("/api/social-network/datasets/upload-1/network/"
+                        + "louvain/communities/C001/between/C002/evidence")
+                        .param("datasetVersion", "version-1")
+                        .param("sessionId", "session-1"))
+                .andExpect(status().isOk());
+        verify(service).betweenCommunities(
+                "upload-1", "version-1", "session-1", "C001", "C002", 0, 20);
     }
 
     @Test

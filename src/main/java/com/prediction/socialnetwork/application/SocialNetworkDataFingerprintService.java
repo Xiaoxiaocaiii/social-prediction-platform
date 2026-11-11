@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.security.MessageDigest;
@@ -19,9 +20,13 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HexFormat;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -81,6 +86,106 @@ public class SocialNetworkDataFingerprintService {
                 RELATION_PROJECTION_VERSION,
                 fileFingerprints,
                 sha256(canonicalManifest(manifest)));
+    }
+
+    public Fingerprint fingerprintUpload(
+            SocialNetworkDataset dataset, Path stagingRoot, Map<String, Path> stagedFiles)
+            throws IOException {
+        Objects.requireNonNull(dataset, "dataset");
+        Objects.requireNonNull(stagingRoot, "stagingRoot");
+        Objects.requireNonNull(stagedFiles, "stagedFiles");
+        if (!dataset.isUploadSession()) {
+            throw new IllegalArgumentException("Upload input fingerprint requires an upload dataset");
+        }
+
+        Path normalizedRoot = stagingRoot.toAbsolutePath().normalize();
+        Path realRoot = normalizedRoot.toRealPath();
+        Set<String> registeredNames = new HashSet<>();
+        List<DatasetFileDescriptor> graphInputs = new ArrayList<>();
+        Map<String, Path> realPaths = new HashMap<>();
+        for (DatasetFileDescriptor descriptor : dataset.files()) {
+            if (!registeredNames.add(descriptor.logicalFileName())) {
+                throw new IllegalArgumentException("Upload dataset contains duplicate logical files");
+            }
+            validateUploadLogicalName(descriptor.logicalFileName());
+            Path mappedPath = stagedFiles.get(descriptor.logicalFileName());
+            if (mappedPath == null) {
+                throw new IllegalArgumentException("A registered upload file has no staged input");
+            }
+            Path stagedPath = mappedPath.toAbsolutePath().normalize();
+            if (!stagedPath.startsWith(normalizedRoot)
+                    || !Files.isRegularFile(stagedPath, LinkOption.NOFOLLOW_LINKS)) {
+                throw new IllegalArgumentException(
+                        "Upload input must be a regular file inside its staging directory");
+            }
+            Path realPath = stagedPath.toRealPath();
+            if (!realPath.startsWith(realRoot)) {
+                throw new IllegalArgumentException(
+                        "Upload input must remain inside its staging directory");
+            }
+            realPaths.put(descriptor.logicalFileName(), realPath);
+            if (descriptor.role() == DatasetFileRole.USERS
+                    || descriptor.role() == DatasetFileRole.RELATIONSHIPS) {
+                if (!"utf8".equalsIgnoreCase(descriptor.encoding())) {
+                    throw new IllegalArgumentException(
+                            "Upload graph inputs must use UTF-8 encoding");
+                }
+                graphInputs.add(descriptor);
+            }
+        }
+        if (!registeredNames.equals(stagedFiles.keySet())) {
+            throw new IllegalArgumentException(
+                    "Staged inputs must match the registered upload files");
+        }
+
+        List<FileFingerprint> fileFingerprints = new ArrayList<>(graphInputs.size());
+        Map<String, String> formatsByLogicalName = new HashMap<>();
+        for (DatasetFileDescriptor descriptor : graphInputs) {
+            FileFingerprint fingerprint =
+                    fingerprintFile(descriptor, realPaths.get(descriptor.logicalFileName()));
+            fileFingerprints.add(fingerprint);
+            formatsByLogicalName.put(
+                    descriptor.logicalFileName(), descriptor.format().name().toLowerCase(Locale.ROOT));
+        }
+        fileFingerprints.sort(Comparator.comparing(FileFingerprint::role)
+                .thenComparing(FileFingerprint::logicalPath));
+
+        List<UploadManifestFile> manifestFiles = fileFingerprints.stream()
+                .map(file -> new UploadManifestFile(
+                        file.role(),
+                        formatsByLogicalName.get(file.logicalPath()),
+                        file.byteLength(),
+                        file.sha256()))
+                .sorted(Comparator.comparing(UploadManifestFile::role)
+                        .thenComparing(UploadManifestFile::format)
+                        .thenComparing(UploadManifestFile::sha256)
+                        .thenComparingLong(UploadManifestFile::byteLength))
+                .toList();
+        UploadManifest manifest = new UploadManifest(
+                dataset.normalizationVersion(),
+                INPUT_CONTRACT_VERSION,
+                RELATION_PROJECTION_VERSION,
+                manifestFiles);
+        return new Fingerprint(
+                dataset.datasetId(),
+                dataset.datasetVersion(),
+                dataset.normalizationVersion(),
+                INPUT_CONTRACT_VERSION,
+                RELATION_PROJECTION_VERSION,
+                fileFingerprints,
+                sha256(canonicalManifest(manifest)));
+    }
+
+    private static void validateUploadLogicalName(String logicalFileName) {
+        String canonicalName = logicalFileName.replace('\\', '/');
+        if (canonicalName.isBlank()
+                || ".".equals(canonicalName)
+                || "..".equals(canonicalName)
+                || canonicalName.startsWith("/")
+                || canonicalName.contains("/")) {
+            throw new IllegalArgumentException(
+                    "Upload logical file names must be relative file names");
+        }
     }
 
     private static void requireSupportedDataset(SocialNetworkDataset dataset) {
@@ -178,7 +283,7 @@ public class SocialNetworkDataFingerprintService {
                 HexFormat.of().formatHex(digest.digest()));
     }
 
-    private static byte[] canonicalManifest(Manifest manifest) throws IOException {
+    private static byte[] canonicalManifest(Object manifest) throws IOException {
         try {
             return OBJECT_MAPPER.writeValueAsBytes(manifest);
         } catch (JsonProcessingException exception) {
@@ -219,6 +324,27 @@ public class SocialNetworkDataFingerprintService {
     private record ManifestFile(
             String role,
             String logicalPath,
+            long byteLength,
+            String sha256) {
+    }
+
+    @JsonPropertyOrder({
+        "normalizationVersion",
+        "inputContractVersion",
+        "relationProjectionVersion",
+        "files"
+    })
+    private record UploadManifest(
+            String normalizationVersion,
+            String inputContractVersion,
+            String relationProjectionVersion,
+            List<UploadManifestFile> files) {
+    }
+
+    @JsonPropertyOrder({"role", "format", "byteLength", "sha256"})
+    private record UploadManifestFile(
+            String role,
+            String format,
             long byteLength,
             String sha256) {
     }

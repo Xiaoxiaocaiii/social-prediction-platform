@@ -23,20 +23,12 @@ import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 
 class LouvainRealDataSensitivityTest {
 
-    private static final long MINIMUM_PARENT_HEAP_BYTES = 768L * 1024L * 1024L;
-    private static final long MINIMUM_AVAILABLE_MEMORY_BYTES =
-            2L * WindowsJobLimits.GIBIBYTE;
-
     @Test
     @EnabledIfSystemProperty(named = "louvain.real.sensitivity", matches = "true")
     void comparesBoundedRealDataVariantsAgainstThePrimaryPartition() {
         Assumptions.assumeTrue(
                 System.getProperty("os.name", "").toLowerCase(Locale.ROOT).contains("windows"),
                 "Real-data Louvain sensitivity requires Windows Job Object support");
-        Assumptions.assumeTrue(
-                Runtime.getRuntime().maxMemory() >= MINIMUM_PARENT_HEAP_BYTES,
-                "Run with a parent JVM heap of at least 768 MiB");
-        requireMemory("before network input construction");
 
         SocialNetworkDatasetRegistry registry = new SocialNetworkDatasetRegistry();
         SocialNetworkDataset dataset = registry.findDataset(
@@ -63,10 +55,6 @@ class LouvainRealDataSensitivityTest {
                 .calculateWithoutCommunities(normalized.users(), normalized.relationships());
         assertEquals(626, network.nodes().size());
         assertEquals(12_963, network.edges().size());
-        Assumptions.assumeTrue(
-                WindowsResourcePreflight.currentAvailablePhysicalMemoryBytes()
-                        >= MINIMUM_AVAILABLE_MEMORY_BYTES,
-                "Skipped before baseline run after network input construction");
 
         List<LouvainAnalysisParameters> scenarios = List.of(
                 LouvainAnalysisParameters.DEFAULT,
@@ -91,7 +79,6 @@ class LouvainRealDataSensitivityTest {
         LouvainWorkerRunResult baseline = null;
         LouvainPartitionSimilarity similarity = new LouvainPartitionSimilarity();
         for (int index = 0; index < scenarios.size(); index++) {
-            requireMemory("before variant " + (index + 1));
             LouvainAnalysisParameters parameters = scenarios.get(index);
             LouvainWorkerRunResult result =
                     runner.run(network.nodes(), network.edges(), parameters, () -> false);
@@ -102,9 +89,6 @@ class LouvainRealDataSensitivityTest {
                     baseline,
                     network.nodes(),
                     similarity);
-            Assumptions.assumeTrue(
-                    result.status() != LouvainWorkerRunResult.Status.MEMORY_LIMIT,
-                    "Production Runner refused a variant below its 2 GiB preflight");
             assertEquals(LouvainWorkerRunResult.Status.COMPLETED, result.status());
             if (index == 0) {
                 baseline = result;
@@ -171,13 +155,6 @@ class LouvainRealDataSensitivityTest {
                 result.requestBytes(),
                 result.resultArtifactBytes(),
                 result.terminationDetail());
-    }
-
-    private static void requireMemory(String phase) {
-        Assumptions.assumeTrue(
-                WindowsResourcePreflight.currentAvailablePhysicalMemoryBytes()
-                        >= MINIMUM_AVAILABLE_MEMORY_BYTES,
-                "Skipped " + phase + " below the 2 GiB physical-memory preflight");
     }
 
     private static DatasetFileDescriptor descriptor(

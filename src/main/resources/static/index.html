@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light">
     <title>社交媒体分析平台</title>
     <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="css/style.css?v=20261107-overview-heading-gap-1">
+<link rel="stylesheet" href="css/style.css?v=20261111-ranking-bridge-spacing-1">
 </head>
 <body>
 <header class="topbar">
@@ -253,7 +253,7 @@
                         </li>
                     </ol>
                     <p class="home-workflow-note">
-                        当前提供内置数据集分析；全局关系图与社群展示已有代码，当前暂停并待负责人复核，不作为已验收能力宣传。结果不代表传播路径或因果关系。
+                        当前支持内置智库数据集的关系网络、Louvain 社群及跨社群连接候选查看与证据导出；上传数据支持 Louvain 社群划分与导出、Clique 团体分析与成员来源核对及当前团列表页导出、关系网络查看、社群筛选与跨社群候选导出。候选仅供结构核对，不代表传播路径、现实影响力或因果关系；内置数据完整链路仍待最终验收。
                     </p>
                 </article>
             </div>
@@ -283,11 +283,11 @@
                         <svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="5"></circle><circle cx="10" cy="12" r="4"></circle><circle cx="38" cy="13" r="4"></circle><circle cx="37" cy="37" r="4"></circle><path d="m20 21-7-6m15 5 7-4m-8 12 7 6"></path></svg>
                     </div>
                     <span class="home-scene-index">02</span>
-                    <h3>传播关系判断</h3>
-                    <p>从用户关系和互动数据中，识别关键节点与连接。</p>
+                    <h3>社交网络结构探索</h3>
+                    <p>查看用户关注关系、节点指标和跨社群连接候选。</p>
                     <span class="home-scene-link">查看研究方向 <b aria-hidden="true">↗</b></span>
                     <div class="home-scene-detail">
-                        <p>你将看到关键节点、关系连接和互动结构。</p>
+                        <p>可核对用户关注关系与跨社群连接证据；候选不代表传播能力或现实影响力。</p>
                         <a href="#/social-network">进入社交网络分析 <b aria-hidden="true">↗</b></a>
                     </div>
                 </article>
@@ -361,8 +361,8 @@
                 <div class="home-advantage-copy">
                     <span class="home-advantage-index">03 / NETWORK INSIGHT</span>
                     <h3><span>看见关系，</span><span>而不只是数字</span></h3>
-                    <p>用关系网络呈现用户、主题和互动之间的连接，快速定位值得继续研究的节点。</p>
-                    <span class="home-advantage-note">中心节点 · 关系边 · 用户详情</span>
+                    <p>用关注关系网络查看账号之间的直接连接，并结合节点指标和来源证据继续核对。</p>
+                    <span class="home-advantage-note">用户账号 · 关注关系 · 来源证据</span>
                 </div>
                 <div class="home-advantage-visual home-advantage-network" aria-label="社交网络关系展开动画">
                     <span class="home-network-orbit orbit-a"></span>
@@ -683,7 +683,7 @@
                                     </span>
                                     <span class="social-network-overview-task-kicker">关系与节点</span>
                                     <span class="social-network-overview-task-description">
-                                        查看网络结构，识别重要节点并查询用户关系。
+                                        查看用户关注网络、节点指标排行及关系证据。
                                     </span>
                                     <span class="social-network-overview-task-scope">
                                         网络结构 · 节点排行 · 用户关系
@@ -910,6 +910,8 @@
                                         data-group-refresh>刷新状态</button>
                                 <button type="button" class="button button-primary"
                                         data-group-start>开始计算</button>
+                                <a class="button button-secondary"
+                                   href="#/social-network/network">全局关系图</a>
                             </div>
                         </div>
                         <p data-group-notice class="social-network-group-notice"
@@ -1007,10 +1009,12 @@
 
     <section id="page-social-network-graph" class="page social-network-graph-page">
         <div class="social-network-graph-heading">
-            <a class="social-network-graph-back" href="#/social-network">返回社交网络分析</a>
+            <a id="social-network-graph-back"
+               class="social-network-graph-back"
+               href="#/social-network">返回社交网络分析</a>
             <div class="page-overline">GLOBAL RELATIONSHIP MAP</div>
             <h1>关系网络图</h1>
-            <p>查看当前数据集中的用户节点与真实关注关系。滚轮缩放画布，拖动画布平移，拖动节点可调整当前视图布局。</p>
+            <p>查看当前数据集中的用户节点与真实关注关系。画布会标明本次展示量和完整范围；可缩放、平移并调整当前视图布局。</p>
         </div>
         <div class="social-network-graph-context card-panel">
             <div><span>数据集</span><strong id="social-network-graph-dataset">智库社交网络数据集</strong></div>
@@ -1018,10 +1022,73 @@
             <div><span>本次展示节点 / 完整范围</span><strong id="social-network-graph-node-count">-</strong></div>
             <div><span>本次展示关系 / 完整范围</span><strong id="social-network-graph-edge-count">-</strong></div>
             <span id="social-network-graph-status" class="social-network-graph-status" role="status">
-                正在加载全量关系网络…
+                正在读取关系网络…
             </span>
         </div>
         <div class="social-network-graph-workspace">
+            <aside class="social-network-graph-sidebar">
+                <section class="social-network-graph-side-card card-panel">
+                    <div class="page-overline">LEGEND</div>
+                    <h2>图例与范围</h2>
+                    <div class="social-network-graph-legend-content">
+                        <div class="social-network-graph-legend">
+                            <span id="social-network-graph-profile-legend">
+                                <i class="is-profile"></i>用户节点（社群未计算）
+                            </span>
+                            <span id="social-network-graph-external-legend">
+                                <i class="is-external"></i>外部节点（资料未采集）
+                            </span>
+                            <span><i class="is-selected"></i>当前选中</span>
+                        </div>
+                        <p>关系方向：来源用户 → 被关注用户。缩放后可查看方向箭头；选中节点时会突出显示相邻关系。</p>
+                    </div>
+                </section>
+                <section class="social-network-graph-side-card card-panel">
+                    <div class="page-overline">COMMUNITY STRUCTURE</div>
+                    <div class="social-network-graph-community-heading">
+                        <div class="social-network-graph-community-title">
+                            <h2>社群划分</h2>
+                            <span class="social-network-scope-term social-network-graph-community-note">
+                                <button class="social-network-scope-term-trigger"
+                                        type="button"
+                                        data-network-scope-term
+                                        aria-label="查看社群划分说明"
+                                        aria-describedby="social-network-graph-community-method-tooltip"
+                                        aria-expanded="false">i</button>
+                                <span id="social-network-graph-community-method-tooltip"
+                                      class="social-network-scope-term-tooltip"
+                                      role="tooltip">
+                                    <strong>社群划分说明</strong>
+                                    <span id="social-network-graph-community-method">
+                                        正在读取当前数据的社群分析状态。
+                                    </span>
+                                </span>
+                            </span>
+                        </div>
+                        <select id="social-network-graph-community-filter"
+                                class="social-network-graph-community-filter"
+                                aria-label="筛选关系图社群" disabled>
+                            <option value="all">全部账号</option>
+                        </select>
+                    </div>
+                    <div id="social-network-graph-community-summary"
+                         class="social-network-graph-community-summary">社群分析尚未运行。</div>
+                    <div id="social-network-graph-community-list"
+                         class="social-network-graph-community-list"></div>
+                </section>
+                <section class="social-network-graph-side-card card-panel">
+                    <div class="page-overline">SELECTED NODE</div>
+                    <h2>选中节点</h2>
+                    <div id="social-network-graph-selected" class="social-network-graph-selected">
+                        点击画布中的节点查看资料和网络位置。
+                    </div>
+                    <button id="social-network-graph-user-detail" class="button"
+                            type="button" disabled>打开用户详情</button>
+                </section>
+                <p class="social-network-graph-boundary">
+                    当前图只表示本数据集记录的静态关注关系。节点位置仅用于布局，不代表地理位置或真实社会影响力；无有效关系的孤立节点不归入社群。
+                </p>
+            </aside>
             <section class="social-network-graph-main card-panel" aria-label="关系网络画布">
                 <div class="social-network-graph-toolbar">
                     <form id="social-network-graph-search-form" class="social-network-graph-search">
@@ -1042,7 +1109,9 @@
                         <label class="social-network-graph-community-toggle">
                             <input id="social-network-graph-community-toggle" type="checkbox"
                                    checked disabled>
-                            显示社群圈（分析未运行）
+                            <span id="social-network-graph-community-toggle-label">
+                                显示社群圈（分析未运行）
+                            </span>
                         </label>
                     </div>
                 </div>
@@ -1050,7 +1119,7 @@
                      role="listbox" aria-label="用户搜索结果"></div>
                 <div id="social-network-graph-canvas-shell" class="social-network-graph-canvas-shell">
                     <canvas id="social-network-graph-canvas" tabindex="0"
-                            aria-label="可缩放和平移的全量用户关注关系网络"></canvas>
+                            aria-label="可缩放和平移的用户关注关系网络"></canvas>
                     <div id="social-network-graph-tooltip" class="social-network-graph-tooltip hidden"
                          role="status"></div>
                     <div id="social-network-graph-loading" class="social-network-graph-loading">
@@ -1058,41 +1127,6 @@
                     </div>
                 </div>
             </section>
-            <aside class="social-network-graph-sidebar">
-                <section class="social-network-graph-side-card card-panel">
-                    <div class="page-overline">LEGEND</div>
-                    <h2>图例与范围</h2>
-                    <div class="social-network-graph-legend">
-                        <span><i class="is-profile"></i>用户节点（社群未计算）</span>
-                        <span><i class="is-external"></i>外部节点（资料未采集）</span>
-                        <span><i class="is-selected"></i>当前选中</span>
-                    </div>
-                    <p>关系方向：来源用户 → 被关注用户。缩放后可查看方向箭头；选中节点时会突出显示相邻关系。</p>
-                </section>
-                <section class="social-network-graph-side-card card-panel">
-                    <div class="page-overline">COMMUNITY STRUCTURE</div>
-                    <h2>社群划分</h2>
-                    <div id="social-network-graph-community-summary"
-                         class="social-network-graph-community-summary">社群分析尚未运行。</div>
-                    <div id="social-network-graph-community-list"
-                         class="social-network-graph-community-list"></div>
-                    <p id="social-network-graph-community-method">
-                        当前快照未运行 Louvain；社群统计不可用，不代表网络没有社群。
-                    </p>
-                </section>
-                <section class="social-network-graph-side-card card-panel">
-                    <div class="page-overline">SELECTED NODE</div>
-                    <h2>选中节点</h2>
-                    <div id="social-network-graph-selected" class="social-network-graph-selected">
-                        点击画布中的节点查看资料和网络位置。
-                    </div>
-                    <button id="social-network-graph-user-detail" class="button button-primary"
-                            type="button" disabled>打开用户详情</button>
-                </section>
-                <p class="social-network-graph-boundary">
-                    当前图只表示本数据集记录的静态关注关系。节点位置仅用于布局，不代表地理位置或真实社会影响力；无有效关系的孤立节点不归入社群。
-                </p>
-            </aside>
         </div>
     </section>
 </main>
@@ -1364,6 +1398,52 @@
     </div>
 </dialog>
 
+<dialog id="social-network-graph-evidence-dialog"
+        class="social-network-topic-dialog social-network-graph-evidence-dialog"
+        aria-labelledby="social-network-graph-evidence-title">
+    <header class="social-network-topic-dialog-head">
+        <div>
+            <p class="page-overline">COMMUNITY EVIDENCE</p>
+            <h2 id="social-network-graph-evidence-title">社群证据</h2>
+        </div>
+        <button id="social-network-graph-evidence-close"
+                class="social-network-user-drawer-close" type="button"
+                aria-label="关闭社群证据">×</button>
+    </header>
+    <div class="social-network-graph-evidence-body">
+        <p id="social-network-graph-evidence-context"
+           class="social-network-graph-evidence-context"></p>
+        <div class="social-network-group-evidence-tabs"
+             role="tablist" aria-label="社群证据类型">
+            <button type="button" role="tab" aria-selected="true"
+                    data-graph-evidence-tab="members">成员来源</button>
+            <button type="button" role="tab" aria-selected="false"
+                    data-graph-evidence-tab="ties">社群内关系</button>
+            <button type="button" role="tab" aria-selected="false"
+                    data-graph-evidence-tab="between">社群间关系</button>
+        </div>
+        <label id="social-network-graph-evidence-pair-label"
+               class="social-network-graph-evidence-pair" hidden>
+            选择另一个社群
+            <select id="social-network-graph-evidence-pair"></select>
+        </label>
+        <p id="social-network-graph-evidence-count"
+           class="social-network-group-evidence-status" role="status"
+           aria-live="polite"></p>
+        <div id="social-network-graph-evidence-list"
+             class="social-network-group-evidence-list"
+             aria-live="polite"></div>
+        <nav class="social-network-group-pagination"
+             aria-label="社群证据分页">
+            <button id="social-network-graph-evidence-prev" type="button"
+                    aria-label="上一页">上一页</button>
+            <span id="social-network-graph-evidence-page">—</span>
+            <button id="social-network-graph-evidence-next" type="button"
+                    aria-label="下一页">下一页</button>
+        </nav>
+    </div>
+</dialog>
+
 <div id="toast" class="toast"></div>
 
 <script src="lib/echarts.min.js?v=20260917"></script>
@@ -1380,11 +1460,12 @@
 <script src="js/social-network-quality-model.js?v=20261022-ui11-1"></script>
 <script src="js/social-network-network-structure-model.js?v=20261106-network-structure-4"></script>
 <script src="js/social-network-ranking-model.js?v=20261107-ranking-readable-1"></script>
-<script src="js/social-network-groups-model.js?v=20261102-cl15-1"></script>
-<script src="js/social-network.js?v=20261107-overview-heading-gap-1"></script>
-<script src="js/social-network-groups.js?v=20261105-cl16-2"></script>
-<script src="js/social-network-graph.js?v=20261031-cl04-1"></script>
-<script src="js/router.js?v=20261021-ui02-1"></script>
+<script src="js/social-network-groups-model.js?v=20261110-e07-upload-clique-1"></script>
+<script src="js/social-network.js?v=20261108-global-graph-entry-1-bridge-c04-1-d01-export-1-20261110-d03-capability-copy-1-e05-upload-bridge-1-e06-upload-export-1-20261111-network-summary-status-1-20261111-ranking-layout-6"></script>
+<script src="js/social-network-groups.js?v=20261111-e08-upload-clique-export-1"></script>
+<script src="js/social-network-bridge-candidates.js?v=20261110-e05-upload-context-1"></script>
+<script src="js/social-network-graph.js?v=20261110-community-method-tooltip-1-e05-upload-context-1"></script>
+<script src="js/router.js?v=20261108-global-graph-return-1"></script>
 <script src="js/predict.js?v=20261004-quick-nav-toggle-1"></script>
 <script src="js/home-demo.js?v=20261007-home-demo-timeline-1"></script>
 </body>

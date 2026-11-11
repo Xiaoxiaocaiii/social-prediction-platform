@@ -26,21 +26,12 @@ import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 
 class LouvainRealDataBaselineTest {
 
-    private static final long MINIMUM_PARENT_HEAP_BYTES =
-            768L * 1024L * 1024L;
-    private static final long MINIMUM_AVAILABLE_MEMORY_BYTES =
-            2L * WindowsJobLimits.GIBIBYTE;
-
     @Test
     @EnabledIfSystemProperty(named = "louvain.real", matches = "true")
     void calculatesTheCompleteBuiltInDatasetInsideTheBoundedWorker() {
         Assumptions.assumeTrue(
                 System.getProperty("os.name", "").toLowerCase(Locale.ROOT).contains("windows"),
                 "Louvain real-data baseline requires Windows Job Object support");
-        Assumptions.assumeTrue(
-                Runtime.getRuntime().maxMemory() >= MINIMUM_PARENT_HEAP_BYTES,
-                "Run with a parent JVM heap of at least 768 MiB");
-        requireMemory("before snapshot construction");
 
         long inputStartedAt = System.nanoTime();
         SocialNetworkDatasetRegistry registry = new SocialNetworkDatasetRegistry();
@@ -72,29 +63,20 @@ class LouvainRealDataBaselineTest {
                 SocialNetworkDatasetRegistry.BUILTIN_DATASET_VERSION,
                 dataset.datasetVersion());
 
-        long availableBeforeWorker =
-                WindowsResourcePreflight.currentAvailablePhysicalMemoryBytes();
         System.out.printf(
                 Locale.ROOT,
                 "CL11_NETWORK_INPUT dataset=%s version=%s nodes=%d directedRelationships=%d "
-                        + "elapsedMs=%d availableBytesBeforeWorker=%d%n",
+                        + "elapsedMs=%d%n",
                 dataset.datasetId(),
                 dataset.datasetVersion(),
                 network.nodes().size(),
                 network.edges().size(),
-                inputBuildMillis,
-                availableBeforeWorker);
-        Assumptions.assumeTrue(
-                WindowsResourcePreflight.hasRequiredMemory(availableBeforeWorker),
-                "Skipped before worker because snapshot construction used the 2 GiB reserve");
+                inputBuildMillis);
 
         WindowsLouvainAnalysisRunner runner = new WindowsLouvainAnalysisRunner();
         LouvainWorkerRunResult result = runner.run(
                 network.nodes(), network.edges(), () -> false);
         printResult(dataset.datasetId(), dataset.datasetVersion(), network, result);
-        Assumptions.assumeTrue(
-                result.status() != LouvainWorkerRunResult.Status.MEMORY_LIMIT,
-                "Production Runner refused to start below its 2 GiB preflight");
         assertEquals(LouvainWorkerRunResult.Status.COMPLETED, result.status());
 
         assertEquals(
@@ -203,13 +185,6 @@ class LouvainRealDataBaselineTest {
                 .filter(candidate -> candidate.role() == role)
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("Missing built-in " + role + " file"));
-    }
-
-    private static void requireMemory(String phase) {
-        Assumptions.assumeTrue(
-                WindowsResourcePreflight.currentAvailablePhysicalMemoryBytes()
-                        >= MINIMUM_AVAILABLE_MEMORY_BYTES,
-                "Skipped " + phase + " below the 2 GiB physical-memory preflight");
     }
 
     private static long elapsedMillis(long startedAt) {

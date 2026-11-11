@@ -54,7 +54,8 @@ public final class SocialNetworkJsonExportAssembler {
         String normalizedType = requireText(exportType, "exportType").toLowerCase();
         Map<String, Object> normalizedQuery = query == null ? Map.of() : Map.copyOf(query);
         Map<String, Object> normalizedScope = scope == null ? Map.of() : Map.copyOf(scope);
-        if (resultCount <= 0) {
+        if (resultCount < 0
+                || (resultCount == 0 && !"bridge-candidates".equals(normalizedType))) {
             throw new IllegalStateException("SN_EXPORT_EMPTY_RESULT");
         }
 
@@ -165,9 +166,15 @@ public final class SocialNetworkJsonExportAssembler {
         sampleCounts.put("tweetCount", snapshot.tweets().size());
         sampleCounts.put("edgeCount", snapshot.network().edges().size());
         List<String> boundaryNotes = new ArrayList<>();
-        boundaryNotes.add("导出仅包含当前数据集和筛选范围内已有真实证据。");
-        boundaryNotes.add("PageRank 表示网络结构位置，不等同于社会影响力。");
-        boundaryNotes.add("点赞、评论和转发保持独立统计，不生成综合互动分。");
+        if ("bridge-candidates".equals(exportType)) {
+            boundaryNotes.add("候选仅按既定条件用于技术筛查，不代表影响力或传播控制能力。");
+            boundaryNotes.add("候选按完整网络及文件中记录的社群结果计算，不受画布筛选影响。");
+            boundaryNotes.add("文件仅包含标注的候选页；只有明确选中的关系证据页才会附带逐条来源。");
+        } else {
+            boundaryNotes.add("导出仅包含当前数据集和筛选范围内已有真实证据。");
+            boundaryNotes.add("PageRank 表示网络结构位置，不等同于社会影响力。");
+            boundaryNotes.add("点赞、评论和转发保持独立统计，不生成综合互动分。");
+        }
         return new SocialNetworkExportMetadata(
                 dataset.datasetId(),
                 dataset.datasetVersion(),

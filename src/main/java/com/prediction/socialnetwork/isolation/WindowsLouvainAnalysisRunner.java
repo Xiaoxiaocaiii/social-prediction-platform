@@ -441,11 +441,6 @@ public final class WindowsLouvainAnalysisRunner implements LouvainAnalysisExecut
 
     private LouvainWorkerRunResult classifyLaunchFailure(
             RuntimeException exception, long startedAt) {
-        String message = exception.getMessage();
-        if (message != null
-                && message.startsWith("Analysis refused: available physical memory")) {
-            return result(Status.MEMORY_LIMIT, "physical_memory_preflight", startedAt);
-        }
         return result(Status.FAILED, exception.getClass().getName(), startedAt);
     }
 

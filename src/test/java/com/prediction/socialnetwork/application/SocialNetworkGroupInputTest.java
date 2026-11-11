@@ -1,12 +1,8 @@
 package com.prediction.socialnetwork.application;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.mockStatic;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.prediction.socialnetwork.isolation.WindowsResourcePreflight;
 import com.prediction.socialnetwork.network.CommunityDetectionResult;
 import com.prediction.socialnetwork.network.NetworkEdge;
 import com.prediction.socialnetwork.network.NetworkNode;
@@ -23,7 +19,6 @@ import java.util.Map;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import org.mockito.MockedStatic;
 
 class SocialNetworkGroupInputTest {
 
@@ -40,22 +35,7 @@ class SocialNetworkGroupInputTest {
     }
 
     @Test
-    void checksMemoryBeforeLoadingNewGroupEvidenceInput() {
-        SocialNetworkWorkspaceService workspace =
-                new SocialNetworkWorkspaceService(new SocialNetworkDatasetRegistry());
-        try (MockedStatic<WindowsResourcePreflight> preflight =
-                mockStatic(WindowsResourcePreflight.class)) {
-            preflight.when(WindowsResourcePreflight::requireMinimumAvailableMemory)
-                    .thenThrow(new IllegalStateException("insufficient memory"));
-            assertThrows(IllegalStateException.class,
-                    () -> workspace.getGroupEvidenceInput(
-                            SocialNetworkDatasetRegistry.BUILTIN_DATASET_ID, "fixture"));
-            preflight.verify(WindowsResourcePreflight::requireMinimumAvailableMemory);
-        }
-    }
-
-    @Test
-    void restoresPersistedEvidenceInputWithoutRebuildingBehindMemoryGate() {
+    void restoresPersistedEvidenceInputWithoutRebuildingIt() {
         String fingerprint = "fixture-fingerprint";
         SocialNetworkAnalysisResultStore store =
                 new SocialNetworkAnalysisResultStore(
@@ -70,14 +50,10 @@ class SocialNetworkGroupInputTest {
                 new SocialNetworkWorkspaceService(
                         new SocialNetworkDatasetRegistry(), store);
 
-        try (MockedStatic<WindowsResourcePreflight> preflight =
-                mockStatic(WindowsResourcePreflight.class)) {
-            assertEquals(
-                    persisted,
-                    restartedWorkspace.getGroupEvidenceInput(
-                            SocialNetworkDatasetRegistry.BUILTIN_DATASET_ID, fingerprint));
-            preflight.verifyNoInteractions();
-        }
+        assertEquals(
+                persisted,
+                restartedWorkspace.getGroupEvidenceInput(
+                        SocialNetworkDatasetRegistry.BUILTIN_DATASET_ID, fingerprint));
     }
 
     private static SocialNetworkWorkspaceService.GroupEvidenceInput evidenceInput() {

@@ -26,10 +26,27 @@
         BUSY: "另一个分析任务正在运行"
     };
 
-    function isSupportedContext(context) {
+    function isBuiltinContext(context) {
         return Boolean(context &&
             context.datasetId === BUILTIN_DATASET_ID &&
             !String(context.sessionId || "").trim());
+    }
+
+    function isUploadContext(context) {
+        return Boolean(context &&
+            /^upload-/.test(String(context.datasetId || "")) &&
+            String(context.datasetVersion || "").trim() &&
+            String(context.sessionId || "").trim());
+    }
+
+    function isSupportedContext(context) {
+        return isBuiltinContext(context) || isUploadContext(context);
+    }
+
+    function isAnalysisSupportedContext(context, analysisType) {
+        return isBuiltinContext(context) ||
+            (isUploadContext(context) &&
+                (analysisType === "louvain" || analysisType === "clique"));
     }
 
     function labelForStatus(status) {
@@ -92,7 +109,10 @@
     return {
         BUILTIN_DATASET_ID: BUILTIN_DATASET_ID,
         PAGE_SIZE: PAGE_SIZE,
+        isBuiltinContext: isBuiltinContext,
+        isUploadContext: isUploadContext,
         isSupportedContext: isSupportedContext,
+        isAnalysisSupportedContext: isAnalysisSupportedContext,
         labelForStatus: labelForStatus,
         cliqueDistribution: cliqueDistribution,
         louvainDistribution: louvainDistribution,

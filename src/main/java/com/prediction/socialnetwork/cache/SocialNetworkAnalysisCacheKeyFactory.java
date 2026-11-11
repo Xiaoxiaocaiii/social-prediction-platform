@@ -1,6 +1,7 @@
 package com.prediction.socialnetwork.cache;
 
 import com.prediction.socialnetwork.application.SocialNetworkDataFingerprintService;
+import com.prediction.socialnetwork.domain.DatasetType;
 import com.prediction.socialnetwork.domain.SocialNetworkDataset;
 import com.prediction.socialnetwork.network.CliqueEnumerationWorkerProtocol;
 import com.prediction.socialnetwork.network.LouvainAnalysisParameters;
@@ -98,12 +99,21 @@ public final class SocialNetworkAnalysisCacheKeyFactory {
                 "inputContractVersion", fingerprint.inputContractVersion(),
                 "relationProjectionVersion", fingerprint.relationProjectionVersion(),
                 "projection", projection);
-        SocialNetworkCacheContext context = SocialNetworkCacheContext.builtin(
-                dataset.datasetId(),
-                SocialNetworkVersionContext.from(dataset),
-                resultType,
-                scope,
-                parameters);
+        SocialNetworkVersionContext versions = SocialNetworkVersionContext.from(dataset);
+        SocialNetworkCacheContext context = dataset.isUploadSession()
+                ? SocialNetworkCacheContext.uploadSession(
+                        dataset.datasetId(),
+                        dataset.sessionId(),
+                        versions,
+                        resultType,
+                        scope,
+                        parameters)
+                : SocialNetworkCacheContext.builtin(
+                        dataset.datasetId(),
+                        versions,
+                        resultType,
+                        scope,
+                        parameters);
         return new Identity(
                 resultType,
                 keyGenerator.generate(context),
@@ -112,7 +122,11 @@ public final class SocialNetworkAnalysisCacheKeyFactory {
                 parameters,
                 fingerprint.files(),
                 fingerprint.inputContractVersion(),
-                fingerprint.relationProjectionVersion());
+                fingerprint.relationProjectionVersion(),
+                dataset.datasetId(),
+                dataset.type(),
+                dataset.sessionId(),
+                dataset.datasetVersion());
     }
 
     public record Identity(
@@ -123,7 +137,11 @@ public final class SocialNetworkAnalysisCacheKeyFactory {
             Map<String, Object> parameters,
             java.util.List<SocialNetworkDataFingerprintService.FileFingerprint> inputFiles,
             String inputContractVersion,
-            String relationProjectionVersion) {
+            String relationProjectionVersion,
+            String datasetId,
+            DatasetType datasetType,
+            String sessionId,
+            String datasetVersion) {
 
         public Identity {
             resultType = Objects.requireNonNull(resultType, "resultType");
@@ -140,6 +158,21 @@ public final class SocialNetworkAnalysisCacheKeyFactory {
                     inputContractVersion, "inputContractVersion");
             relationProjectionVersion = Objects.requireNonNull(
                     relationProjectionVersion, "relationProjectionVersion");
+            if (datasetId == null || datasetId.isBlank()
+                    || datasetVersion == null || datasetVersion.isBlank()) {
+                throw new IllegalArgumentException(
+                        "dataset identity fields must not be blank");
+            }
+            datasetType = Objects.requireNonNull(datasetType, "datasetType");
+            if (datasetType == DatasetType.BUILTIN && sessionId != null) {
+                throw new IllegalArgumentException(
+                        "builtin analysis identity must not have a sessionId");
+            }
+            if (datasetType == DatasetType.UPLOAD_SESSION
+                    && (sessionId == null || sessionId.isBlank())) {
+                throw new IllegalArgumentException(
+                        "upload analysis identity must have a sessionId");
+            }
         }
     }
 }

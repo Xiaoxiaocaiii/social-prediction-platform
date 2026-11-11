@@ -16,6 +16,31 @@ assert.equal(model.isSupportedContext({
     datasetVersion: "upload-v1",
     sessionId: "upload-session"
 }), false);
+assert.equal(model.isUploadContext({
+    datasetId: "upload-session-1",
+    datasetVersion: "session-1",
+    sessionId: "session-1"
+}), true);
+assert.equal(model.isSupportedContext({
+    datasetId: "upload-session-1",
+    datasetVersion: "session-1",
+    sessionId: "session-1"
+}), true);
+assert.equal(model.isAnalysisSupportedContext({
+    datasetId: "upload-session-1",
+    datasetVersion: "session-1",
+    sessionId: "session-1"
+}, "louvain"), true);
+assert.equal(model.isAnalysisSupportedContext({
+    datasetId: "upload-session-1",
+    datasetVersion: "session-1",
+    sessionId: "session-1"
+}, "clique"), true);
+assert.equal(model.isAnalysisSupportedContext({
+    datasetId: "upload-session-1",
+    datasetVersion: "session-1",
+    sessionId: "session-1"
+}, "unknown-analysis"), false);
 assert.equal(model.isSupportedContext({
     datasetId: "other-network",
     sessionId: null
@@ -56,4 +81,4 @@ assert.deepEqual(model.topParticipants({
     { nodeId: "b", count: 3 }
 ]);
 
-console.log("social-network-groups-model: 16 checks passed");
+console.log("social-network-groups-model: 20 checks passed");

@@ -160,12 +160,17 @@ function bootstrap(datasetContext) {
     };
     const workspace = {
         getDatasetContext: () => Object.assign({}, context),
-        datasetUrl(resource, query) {
-            return resource + (query ? "?" + new URLSearchParams(query) : "");
+        datasetUrl(resource, query, requestContext) {
+            const params = new URLSearchParams(query || {});
+            if (requestContext && requestContext.sessionId) {
+                params.set("datasetVersion", requestContext.datasetVersion);
+                params.set("sessionId", requestContext.sessionId);
+            }
+            return resource + (params.size ? "?" + params : "");
         },
         async requestDataset(url, options) {
             calls.push({ url, method: options.method, options });
-            if (url.endsWith("network/exports")) {
+            if (url.split("?")[0].endsWith("network/exports")) {
                 return { data: {
                     result: "{\"exportType\":\"clique\",\"data\":{}}",
                     contentType: "application/json; charset=UTF-8"
@@ -346,8 +351,15 @@ async function main() {
         indexSource,
         /data-group-analysis="louvain"[\s\S]*?aria-describedby="social-network-group-louvain-method"[\s\S]*?id="social-network-group-louvain-method"[\s\S]*?role="tooltip">[\s\S]*?Louvain 计算口径/
     );
-    assert.match(indexSource, /style\.css\?v=20261107-overview-heading-gap-1/);
-    assert.match(indexSource, /social-network-groups\.js\?v=20261105-cl16-2/);
+    assert.match(indexSource, /style\.css\?v=20261111-ranking-bridge-spacing-1/);
+    assert.match(indexSource,
+        /social-network-groups-model\.js\?v=20261110-e07-upload-clique-1/);
+    assert.match(indexSource,
+        /social-network-groups\.js\?v=20261111-e08-upload-clique-export-1/);
+    assert.match(
+        indexSource,
+        /<div class="social-network-group-actions">[\s\S]*?<a class="button button-secondary"\s+href="#\/social-network\/network">全局关系图<\/a>[\s\S]*?<\/div>/
+    );
     assert.match(indexSource, /data-group-export disabled>导出当前结果/);
     assert.match(indexSource, /单次文件上限为 2 MiB，超限整体拒绝/);
     assert.match(pageSource, /requestUrl\("network\/exports"\)/);
@@ -708,17 +720,183 @@ async function main() {
     findingsPage.window.socialNetworkGroupsPage.onHidden();
 
     const uploadPage = bootstrap({
-        datasetId: "think-tank-social-network",
-        datasetVersion: "upload-v1",
+        datasetId: "upload-temporary-session",
+        datasetVersion: "session-temporary-session",
         sessionId: "temporary-session"
     });
     uploadPage.window.socialNetworkGroupsPage.onShown();
     await flushPromises();
-    assert.equal(uploadPage.calls.length, 0);
+    assert.equal(uploadPage.calls.length, 1);
+    assert.equal(uploadPage.calls[0].url.startsWith("network/louvain"), true);
+    assert.match(uploadPage.calls[0].url,
+        /datasetVersion=session-temporary-session&sessionId=temporary-session/);
+    assert.equal(uploadPage.analysisTabs[0].disabled, false);
+    assert.equal(uploadPage.analysisTabs[1].disabled, false);
     assert.equal(
         uploadPage.elements.get("[data-group-start]").disabled,
+        false
+    );
+    assert.equal(
+        uploadPage.elements.get("[data-group-export]").disabled,
         true
     );
+    uploadPage.setLouvainResult({
+        state: "COMPLETED",
+        complete: true,
+        converged: true,
+        dataFingerprint: "upload-fingerprint",
+        cacheKey: "upload-cache-key",
+        communities: [{ id: "C001", nodeCount: 2 }]
+    });
+    click(
+        uploadPage.listeners.get("click"),
+        "[data-group-refresh]",
+        uploadPage.root.querySelector("[data-group-refresh]")
+    );
+    await flushPromises();
+    assert.equal(
+        uploadPage.elements.get("[data-group-export]").disabled,
+        false
+    );
+    click(
+        uploadPage.listeners.get("click"),
+        "[data-group-export]",
+        makeElement()
+    );
+    assert.equal(
+        uploadPage.documentElements
+            .get("social-network-group-export-dialog").open,
+        true
+    );
+    await uploadPage.documentElements
+        .get("social-network-group-export-submit").dispatch("click");
+    await flushPromises();
+    const uploadExport = uploadPage.calls.find((call) =>
+        call.url.split("?")[0].endsWith("network/exports"));
+    assert.ok(uploadExport);
+    assert.match(uploadExport.url,
+        /datasetVersion=session-temporary-session&sessionId=temporary-session/);
+    assert.equal(JSON.parse(uploadExport.options.body).analysisType, "louvain");
+    assert.equal(uploadPage.downloads.length, 1);
+
+    uploadPage.setCliqueResult({
+        state: "NOT_REQUESTED", complete: false, offset: 0, pageSize: 20,
+        cliques: []
+    });
+    click(
+        uploadPage.listeners.get("click"),
+        "[data-group-analysis]",
+        uploadPage.analysisTabs[0]
+    );
+    await flushPromises();
+    assert.match(uploadPage.calls.at(-1).url,
+        /^network\/cliques\?offset=0&pageSize=20&datasetVersion=session-temporary-session&sessionId=temporary-session$/);
+    assert.equal(uploadPage.elements.get("[data-group-export]").disabled, true);
+    click(
+        uploadPage.listeners.get("click"),
+        "[data-group-start]",
+        uploadPage.root.querySelector("[data-group-start]")
+    );
+    await flushPromises();
+    const cliqueStart = uploadPage.calls.find((call) =>
+        call.method === "POST" && call.url.startsWith("network/cliques"));
+    assert.ok(cliqueStart);
+    assert.match(cliqueStart.url,
+        /datasetVersion=session-temporary-session&sessionId=temporary-session/);
+
+    uploadPage.setCliqueResult({
+        state: "COMPLETED", complete: true, membershipListComplete: true,
+        dataFingerprint: "upload-clique-fingerprint", cacheKey: "upload-clique-cache",
+        retainedCliqueCount: 1, enumeratedCliqueCount: 1, offset: 0,
+        cliques: [["a", "b", "c"]]
+    });
+    click(
+        uploadPage.listeners.get("click"),
+        "[data-group-refresh]",
+        uploadPage.root.querySelector("[data-group-refresh]")
+    );
+    await flushPromises();
+    click(
+        uploadPage.listeners.get("click"),
+        "[data-group-select]",
+        makeElement({ groupSelect: "clique", groupIndex: "0" })
+    );
+    await flushPromises();
+    const cliqueEvidence = uploadPage.calls.at(-1);
+    assert.match(cliqueEvidence.url,
+        /^network\/cliques\/0\/evidence\?section=members&offset=0&pageSize=20&datasetVersion=session-temporary-session&sessionId=temporary-session$/);
+    assert.equal(uploadPage.elements.get("[data-group-export]").disabled, false);
+    click(
+        uploadPage.listeners.get("click"),
+        "[data-group-export]",
+        makeElement()
+    );
+    await uploadPage.documentElements
+        .get("social-network-group-export-submit").dispatch("click");
+    await flushPromises();
+    const cliqueExport = uploadPage.calls
+        .filter((call) => call.url.split("?")[0].endsWith("network/exports"))
+        .at(-1);
+    assert.ok(cliqueExport);
+    assert.match(cliqueExport.url,
+        /datasetVersion=session-temporary-session&sessionId=temporary-session/);
+    const cliqueExportRequest = JSON.parse(cliqueExport.options.body);
+    assert.equal(cliqueExportRequest.analysisType, "clique");
+    assert.equal(cliqueExportRequest.evidence.type, "clique");
+    assert.equal(cliqueExportRequest.evidence.id, "0");
+    assert.equal(uploadPage.downloads.length, 2);
+
+    uploadPage.setCliqueResult({
+        state: "COMPLETED", complete: true, membershipListComplete: true,
+        dataFingerprint: "upload-clique-empty-fingerprint",
+        cacheKey: "upload-clique-empty-cache",
+        retainedCliqueCount: 0, enumeratedCliqueCount: 0, offset: 0,
+        cliques: []
+    });
+    click(
+        uploadPage.listeners.get("click"),
+        "[data-group-refresh]",
+        uploadPage.root.querySelector("[data-group-refresh]")
+    );
+    await flushPromises();
+    assert.equal(uploadPage.elements.get("[data-group-export]").disabled, false);
+    assert.match(
+        uploadPage.elements.get("[data-group-list]").innerHTML,
+        /当前没有可展示的团成员列表/
+    );
+    click(
+        uploadPage.listeners.get("click"),
+        "[data-group-export]",
+        makeElement()
+    );
+    assert.match(
+        uploadPage.documentElements
+            .get("social-network-group-export-note").textContent,
+        /没有团条目/
+    );
+
+    uploadPage.setCliqueResult({
+        state: "TIME_LIMIT", complete: false, membershipListComplete: false,
+        dataFingerprint: "upload-clique-partial-fingerprint",
+        cacheKey: "upload-clique-partial-cache",
+        retainedCliqueCount: 1, enumeratedCliqueCount: 2, offset: 0,
+        cliques: [["a", "b", "c"]]
+    });
+    click(
+        uploadPage.listeners.get("click"),
+        "[data-group-refresh]",
+        uploadPage.root.querySelector("[data-group-refresh]")
+    );
+    await flushPromises();
+    click(
+        uploadPage.listeners.get("click"),
+        "[data-group-export]",
+        makeElement()
+    );
+    const partialExportNote = uploadPage.documentElements
+        .get("social-network-group-export-note").textContent;
+    assert.match(partialExportNote, /成员明细未全部保留/);
+    assert.match(partialExportNote, /分析未完整完成/);
 
     console.log("social-network-groups-page: terminology annotations and behavior passed");
 }

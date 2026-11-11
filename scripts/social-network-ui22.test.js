@@ -151,10 +151,15 @@ assert.match(index, /id="page-social-network-graph"/);
 assert.doesNotMatch(index, /social-network-upload-(?:input|files|source)"/);
 assert.doesNotMatch(
     index + source,
-    /尚未接入|后续获授权 UI|预览激活将在 UI10 接入/
+    /后续获授权 UI|预览激活将在 UI10 接入/
 );
-assert.match(index, /social-network\.js\?v=20261107-overview-heading-gap-1/);
-assert.match(index, /style\.css\?v=20261107-overview-heading-gap-1/);
+assert.match(
+    index,
+    /上传数据支持[^。]*Clique 团体分析与成员来源核对及当前团列表页导出/
+);
+assert.doesNotMatch(index, /Clique 导出尚未开放/);
+assert.match(index, /social-network\.js\?v=20261108-global-graph-entry-1/);
+assert.match(index, /style\.css\?v=20261111-ranking-bridge-spacing-1/);
 assert.doesNotMatch(index, /id="social-network-data-tabs"/);
 assert.equal((index.match(/class="social-network-overview-task-eyebrow"/g) || []).length, 3);
 assert.match(index, /href="#\/social-network\/data">[\s\S]*?DATA &amp; QUALITY[\s\S]*?数据与质量/);

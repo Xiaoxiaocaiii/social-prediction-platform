@@ -59,7 +59,7 @@ const pageShown = source.slice(pageShownStart, pageShownEnd);
 
 assert.match(routes, /"\/social-network\/relations\/user": "user-relations"/);
 assert.ok(index.indexOf("social-network-ranking-model.js") <
-    index.indexOf("js/social-network.js?v=20261107-overview-heading-gap-1"));
+    index.indexOf("js/social-network.js?v=20261108-global-graph-entry-1"));
 assert.match(view, /data-user-relations-search>查找用户/);
 assert.match(view, /空关键词不会列出全部用户/);
 assert.match(view,

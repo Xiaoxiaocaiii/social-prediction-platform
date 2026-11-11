@@ -1,5 +1,6 @@
 package com.prediction.socialnetwork.application;
 
+import com.prediction.socialnetwork.cache.SocialNetworkAnalysisResultCache;
 import com.prediction.socialnetwork.domain.DatasetFileDescriptor;
 import com.prediction.socialnetwork.domain.DatasetFileRole;
 import com.prediction.socialnetwork.domain.DatasetStatus;
@@ -22,6 +23,7 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -54,6 +56,8 @@ public class SocialNetworkUploadTaskService {
     private final SocialNetworkDatasetRegistry registry;
     private final SocialNetworkWorkspaceService workspace;
     private final SocialNetworkFileReader fileReader;
+    private final SocialNetworkDataFingerprintService fingerprintService;
+    private final SocialNetworkAnalysisResultCache analysisResultCache;
     private final Executor executor;
     private final Path stagingRoot;
     private final SocialNetworkUploadTemporaryFileCleanup temporaryFileCleanup;
@@ -66,13 +70,17 @@ public class SocialNetworkUploadTaskService {
             SocialNetworkDatasetRegistry registry,
             SocialNetworkWorkspaceService workspace,
             @Qualifier("socialNetworkUploadExecutor") Executor executor,
-            SocialNetworkUploadTemporaryFileCleanup temporaryFileCleanup) {
+            SocialNetworkUploadTemporaryFileCleanup temporaryFileCleanup,
+            SocialNetworkDataFingerprintService fingerprintService,
+            SocialNetworkAnalysisResultCache analysisResultCache) {
         this(
                 registry,
                 workspace,
                 executor,
                 Path.of(System.getProperty("java.io.tmpdir"), "social-network-analysis-uploads"),
-                temporaryFileCleanup);
+                temporaryFileCleanup,
+                fingerprintService,
+                analysisResultCache);
     }
 
     SocialNetworkUploadTaskService(
@@ -90,7 +98,9 @@ public class SocialNetworkUploadTaskService {
                                 System.getProperty("java.io.tmpdir"),
                                 "social-network-analysis-http-uploads"),
                         stagingRoot,
-                        Clock.systemUTC()));
+                        Clock.systemUTC()),
+                new SocialNetworkDataFingerprintService(),
+                new SocialNetworkAnalysisResultCache());
     }
 
     SocialNetworkUploadTaskService(
@@ -99,9 +109,48 @@ public class SocialNetworkUploadTaskService {
             Executor executor,
             Path stagingRoot,
             SocialNetworkUploadTemporaryFileCleanup temporaryFileCleanup) {
+        this(
+                registry,
+                workspace,
+                executor,
+                stagingRoot,
+                temporaryFileCleanup,
+                new SocialNetworkDataFingerprintService(),
+                new SocialNetworkAnalysisResultCache());
+    }
+
+    SocialNetworkUploadTaskService(
+            SocialNetworkDatasetRegistry registry,
+            SocialNetworkWorkspaceService workspace,
+            Executor executor,
+            Path stagingRoot,
+            SocialNetworkUploadTemporaryFileCleanup temporaryFileCleanup,
+            SocialNetworkDataFingerprintService fingerprintService) {
+        this(
+                registry,
+                workspace,
+                executor,
+                stagingRoot,
+                temporaryFileCleanup,
+                fingerprintService,
+                new SocialNetworkAnalysisResultCache());
+    }
+
+    SocialNetworkUploadTaskService(
+            SocialNetworkDatasetRegistry registry,
+            SocialNetworkWorkspaceService workspace,
+            Executor executor,
+            Path stagingRoot,
+            SocialNetworkUploadTemporaryFileCleanup temporaryFileCleanup,
+            SocialNetworkDataFingerprintService fingerprintService,
+            SocialNetworkAnalysisResultCache analysisResultCache) {
         this.registry = Objects.requireNonNull(registry, "registry");
         this.workspace = Objects.requireNonNull(workspace, "workspace");
         this.fileReader = new SocialNetworkFileReader();
+        this.fingerprintService =
+                Objects.requireNonNull(fingerprintService, "fingerprintService");
+        this.analysisResultCache =
+                Objects.requireNonNull(analysisResultCache, "analysisResultCache");
         this.executor = Objects.requireNonNull(executor, "executor");
         this.stagingRoot = Objects.requireNonNull(stagingRoot, "stagingRoot");
         this.temporaryFileCleanup =
@@ -198,6 +247,7 @@ public class SocialNetworkUploadTaskService {
 
     public void closeSession(String datasetId, String datasetVersion, String sessionId) {
         registry.closeUploadSession(datasetId, datasetVersion, sessionId);
+        analysisResultCache.removeSession(sessionId);
         workspace.removeUploadSnapshot(sessionId);
         Path stagingDirectory = sessionStagingDirectories.remove(sessionId);
         temporaryFileCleanup.deleteManagedDirectory(stagingDirectory);
@@ -239,6 +289,9 @@ public class SocialNetworkUploadTaskService {
             }
             SocialNetworkDataset candidate =
                     registry.prepareUploadDataset(descriptors, sourceDescription);
+            SocialNetworkDataFingerprintService.Fingerprint inputFingerprint =
+                    fingerprintService.fingerprintUpload(
+                            candidate, task.stagingDirectory, stagedInputs(task.files));
             List<RawRecord> users = recordsForRole(task.files, fileResults, DatasetFileRole.USERS);
             List<RawRecord> relationships =
                     recordsForRole(task.files, fileResults, DatasetFileRole.RELATIONSHIPS);
@@ -251,7 +304,8 @@ public class SocialNetworkUploadTaskService {
                     users,
                     relationships,
                     tweets,
-                    fileResults.stream().map(FileReadResult::report).toList());
+                    fileResults.stream().map(FileReadResult::report).toList())
+                    .withInputFingerprint(inputFingerprint);
             if (snapshot.quality().datasetStatus() == DatasetStatus.UNAVAILABLE
                     || !hasUsableRecords(snapshot)) {
                 throw new UploadFailure(
@@ -409,6 +463,17 @@ public class SocialNetworkUploadTaskService {
         return List.copyOf(records);
     }
 
+    private static Map<String, Path> stagedInputs(List<StagedFile> files) {
+        Map<String, Path> stagedInputs = new HashMap<>();
+        for (StagedFile file : files) {
+            if (stagedInputs.put(file.descriptor().logicalFileName(), file.path()) != null) {
+                throw new IllegalArgumentException(
+                        "upload contains duplicate logical file names");
+            }
+        }
+        return Map.copyOf(stagedInputs);
+    }
+
     private static boolean hasUsableRecords(SocialNetworkWorkspaceSnapshot snapshot) {
         boolean hasUser = snapshot.users().stream()
                 .anyMatch(user -> user.userId() != null
@@ -506,6 +571,7 @@ public class SocialNetworkUploadTaskService {
     }
 
     private void closeRegisteredSession(SocialNetworkDataset dataset) {
+        analysisResultCache.removeSession(dataset.sessionId());
         workspace.removeUploadSnapshot(dataset.sessionId());
         registry.closeUploadSession(dataset.sessionId());
         sessionStagingDirectories.remove(dataset.sessionId());
@@ -534,6 +600,7 @@ public class SocialNetworkUploadTaskService {
                         preview.datasetId(), preview.datasetVersion(), preview.sessionId());
             } catch (SocialNetworkDatasetSessionExpiredException exception) {
                 registry.expireSessions();
+                analysisResultCache.removeSession(preview.sessionId());
                 workspace.removeUploadSnapshot(preview.sessionId());
                 temporaryFileCleanup.deleteManagedDirectory(
                         sessionStagingDirectories.remove(preview.sessionId()));

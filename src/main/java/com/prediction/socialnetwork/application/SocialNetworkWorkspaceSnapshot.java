@@ -21,7 +21,8 @@ public record SocialNetworkWorkspaceSnapshot(
         Supplier<SocialNetworkTextAnalysis.Result> textAnalysisProvider,
         List<NormalizedUser> users,
         List<NormalizedRelationship> relationships,
-        List<NormalizedTweet> tweets) {
+        List<NormalizedTweet> tweets,
+        SocialNetworkDataFingerprintService.Fingerprint inputFingerprint) {
 
     public SocialNetworkWorkspaceSnapshot {
         textAnalysisProvider = memoize(textAnalysisProvider);
@@ -30,8 +31,62 @@ public record SocialNetworkWorkspaceSnapshot(
         tweets = List.copyOf(tweets);
     }
 
+    public SocialNetworkWorkspaceSnapshot(
+            SocialNetworkDataset dataset,
+            SocialNetworkQualityReport quality,
+            SocialNetworkCapabilityMatrix capabilities,
+            SocialNetworkGraphResult network,
+            SocialNetworkInteractionScale interactions,
+            Supplier<SocialNetworkTextAnalysis.Result> textAnalysisProvider,
+            List<NormalizedUser> users,
+            List<NormalizedRelationship> relationships,
+            List<NormalizedTweet> tweets) {
+        this(
+                dataset,
+                quality,
+                capabilities,
+                network,
+                interactions,
+                textAnalysisProvider,
+                users,
+                relationships,
+                tweets,
+                null);
+    }
+
     public SocialNetworkTextAnalysis.Result textAnalysis() {
         return textAnalysisProvider.get();
+    }
+
+    public GraphAnalysisInput graphAnalysisInput() {
+        return new GraphAnalysisInput(network, users, relationships, inputFingerprint);
+    }
+
+    public SocialNetworkWorkspaceSnapshot withInputFingerprint(
+            SocialNetworkDataFingerprintService.Fingerprint fingerprint) {
+        return new SocialNetworkWorkspaceSnapshot(
+                dataset,
+                quality,
+                capabilities,
+                network,
+                interactions,
+                this::textAnalysis,
+                users,
+                relationships,
+                tweets,
+                Objects.requireNonNull(fingerprint, "fingerprint"));
+    }
+
+    public record GraphAnalysisInput(
+            SocialNetworkGraphResult network,
+            List<NormalizedUser> users,
+            List<NormalizedRelationship> relationships,
+            SocialNetworkDataFingerprintService.Fingerprint inputFingerprint) {
+
+        public GraphAnalysisInput {
+            users = List.copyOf(users);
+            relationships = List.copyOf(relationships);
+        }
     }
 
     private static Supplier<SocialNetworkTextAnalysis.Result> memoize(

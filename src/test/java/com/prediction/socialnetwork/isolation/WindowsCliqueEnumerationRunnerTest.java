@@ -20,7 +20,6 @@ import java.util.Locale;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class WindowsCliqueEnumerationRunnerTest {
@@ -38,20 +37,8 @@ class WindowsCliqueEnumerationRunnerTest {
                 "Windows Job Object integration tests require Windows");
     }
 
-    @BeforeEach
-    void preserveMemoryMargin() {
-        Assumptions.assumeTrue(
-                WindowsResourcePreflight.currentAvailablePhysicalMemoryBytes()
-                        >= 1536L * WindowsJobLimits.MEBIBYTE,
-                "Skipped to preserve the 1.5 GiB margin for bounded synthetic workers");
-    }
-
     @Test
     void runsTheCliqueEnumeratorInsideTheBoundedWorkerAndReadsItsArtifact() {
-        Assumptions.assumeTrue(
-                WindowsResourcePreflight.currentAvailablePhysicalMemoryBytes()
-                        >= 2L * WindowsJobLimits.GIBIBYTE,
-                "Skipped below the production 2 GiB worker preflight");
         WindowsCliqueEnumerationRunner runner = runner(
                 WindowsJobLimits.DEFAULT, CliqueEnumerationWorkerMain.class.getName());
 

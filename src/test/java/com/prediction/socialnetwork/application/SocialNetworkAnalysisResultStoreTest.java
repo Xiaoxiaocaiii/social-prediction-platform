@@ -17,6 +17,7 @@ import com.prediction.socialnetwork.normalization.NormalizationStatus;
 import com.prediction.socialnetwork.normalization.NormalizedRelationship;
 import com.prediction.socialnetwork.normalization.NormalizedUser;
 import com.prediction.socialnetwork.normalization.RelationStatus;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
@@ -126,27 +127,68 @@ class SocialNetworkAnalysisResultStoreTest {
                                 NormalizationStatus.NORMALIZED,
                                 true)));
         List<SocialNetworkGroupInsightCalculator.CommunityPair> pairs = List.of(
-                new SocialNetworkGroupInsightCalculator.CommunityPair("C001", "C002", 1));
+                new SocialNetworkGroupInsightCalculator.CommunityPair(
+                        "C001", "C002", 1, 1));
 
-        store.saveGroupEvidenceInput("dataset", "v1", "fingerprint", input);
+        store.saveGroupEvidenceInput(
+                SocialNetworkDatasetRegistry.BUILTIN_DATASET_ID,
+                SocialNetworkDatasetRegistry.BUILTIN_DATASET_VERSION,
+                "fingerprint",
+                input);
         store.saveCommunityPairs(
-                "dataset", "v1", "analysis-key", "fingerprint", pairs);
+                SocialNetworkDatasetRegistry.BUILTIN_DATASET_ID,
+                SocialNetworkDatasetRegistry.BUILTIN_DATASET_VERSION,
+                "analysis-key",
+                "fingerprint",
+                pairs);
 
         SocialNetworkAnalysisResultStore restartedStore =
                 new SocialNetworkAnalysisResultStore(objectMapper, tempDir);
         assertEquals(
                 input,
-                restartedStore.loadGroupEvidenceInput("dataset", "v1", "fingerprint")
+                restartedStore.loadGroupEvidenceInput(
+                                SocialNetworkDatasetRegistry.BUILTIN_DATASET_ID,
+                                SocialNetworkDatasetRegistry.BUILTIN_DATASET_VERSION,
+                                "fingerprint")
                         .orElseThrow());
         assertEquals(
                 pairs,
                 restartedStore.loadCommunityPairs(
-                                "dataset", "v1", "analysis-key", "fingerprint")
+                                SocialNetworkDatasetRegistry.BUILTIN_DATASET_ID,
+                                SocialNetworkDatasetRegistry.BUILTIN_DATASET_VERSION,
+                                "analysis-key",
+                                "fingerprint")
                         .orElseThrow());
         assertTrue(restartedStore.loadGroupEvidenceInput(
-                "dataset", "v1", "changed-fingerprint").isEmpty());
+                SocialNetworkDatasetRegistry.BUILTIN_DATASET_ID,
+                SocialNetworkDatasetRegistry.BUILTIN_DATASET_VERSION,
+                "changed-fingerprint").isEmpty());
         assertTrue(restartedStore.loadCommunityPairs(
-                "dataset", "v1", "changed-key", "fingerprint").isEmpty());
+                SocialNetworkDatasetRegistry.BUILTIN_DATASET_ID,
+                SocialNetworkDatasetRegistry.BUILTIN_DATASET_VERSION,
+                "changed-key",
+                "fingerprint").isEmpty());
+    }
+
+    @Test
+    void uploadSessionResultsAreNeverWrittenToPersistentStore() {
+        SocialNetworkAnalysisResultStore store =
+                new SocialNetworkAnalysisResultStore(objectMapper, tempDir);
+        var input = new SocialNetworkWorkspaceService.GroupEvidenceInput(
+                null, List.of(), List.of());
+        var pairs = List.of(new SocialNetworkGroupInsightCalculator.CommunityPair(
+                "C001", "C002", 1, 1));
+
+        store.saveGroupEvidenceInput("upload-session-a", "session-a", "fingerprint", input);
+        store.saveCommunityPairs(
+                "upload-session-a", "session-a", "cache-key", "fingerprint", pairs);
+
+        assertTrue(store.loadGroupEvidenceInput(
+                "upload-session-a", "session-a", "fingerprint").isEmpty());
+        assertTrue(store.loadCommunityPairs(
+                "upload-session-a", "session-a", "cache-key", "fingerprint").isEmpty());
+        assertTrue(Files.notExists(tempDir.resolve("group-evidence-v1.json")));
+        assertTrue(Files.notExists(tempDir.resolve("louvain-community-pairs-v2.json")));
     }
 
     @Test

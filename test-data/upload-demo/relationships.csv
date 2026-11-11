@@ -1,0 +1,9 @@
+source_user_id,target_user_id
+demo_u01,demo_u02
+demo_u01,demo_u03
+demo_u02,demo_u03
+demo_u02,demo_u04
+demo_u03,demo_u01
+demo_u04,demo_u01
+demo_u04,demo_u05
+demo_u05,demo_u04

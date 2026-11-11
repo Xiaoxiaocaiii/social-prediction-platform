@@ -47,7 +47,7 @@ const view = functionBlock("ensureRankingTaskView", "rankingTaskIsCurrent");
 assert.match(view,
     /metricControl\.addEventListener\("change"[\s\S]*?setCondition\("ranking",\s*\{\s*metric:\s*this\.value\s*\}\)[\s\S]*?loadRankingTask\(taskCard\)/);
 assert.match(view,
-    /data-ranking-task-view[\s\S]*?rankingTaskView = button\.getAttribute\([\s\S]*?loadRankingTask\(taskCard\)/);
+    /data-ranking-task-view[\s\S]*?var nextView = button\.getAttribute\([\s\S]*?rankingTaskView = nextView;[\s\S]*?loadRankingTask\(taskCard\)/);
 const selection = functionBlock(
     "rankingTaskSelectionHtml",
     "ensureRankingTaskView"
@@ -78,7 +78,7 @@ assert.ok(pageShownStart >= 0 && pageShownEnd > pageShownStart);
 const pageShown = source.slice(pageShownStart, pageShownEnd);
 
 assert.ok(index.indexOf("social-network-ranking-model.js") <
-    index.indexOf("js/social-network.js?v=20261107-overview-heading-gap-1"));
+    index.indexOf("js/social-network.js?v=20261108-global-graph-entry-1"));
 assert.match(index,
     /social-network-ranking-model\.js\?v=20261107-ranking-readable-1/);
 assert.match(index, /social-network-module-export-users-metric-field/);
@@ -96,8 +96,48 @@ assert.match(view, /rankingTaskSelectionHtml\(selectedMetric\)/);
 assert.match(view, /data-ranking-task-view="single"/);
 assert.match(view, /data-ranking-task-view="comparison"/);
 assert.match(view, /data-ranking-task-comparison-view hidden/);
+assert.match(view,
+    /<div class="social-network-node-ranking-metric-field">[\s\S]*?<label for="social-network-node-ranking-metric">选择排序角度<\/label>[\s\S]*?<select id="social-network-node-ranking-metric"[\s\S]*?aria-describedby="social-network-node-ranking-note"/);
+assert.match(view,
+    /<small id="social-network-node-ranking-note"[\s\S]*?data-ranking-task-note aria-live="polite"><\/small>/);
+assert.match(view,
+    /data-ranking-task-note aria-live="polite"><\/small>' \+[\s\S]*?data-ranking-task-refresh/);
+assert.doesNotMatch(view,
+    /data-ranking-task-refresh[\s\S]*?<\/div><p class="social-network-node-ranking-note"/);
+assert.match(view,
+    /两项结果都不代表账号影响力或因果关系。' \+\s*'<span class="social-network-cross-metric-summary"[\s\S]*?data-ranking-cross-metric-summary/);
+assert.doesNotMatch(view, /CROSS-COMMUNITY CONNECTIONS/);
+assert.match(view, /<h3 id="social-network-bridge-candidates-title">跨社群连接候选<\/h3>/);
+assert.match(view,
+    /也不代表传播控制能力。 ' \+\s*'<span class="social-network-bridge-candidates-status"[\s\S]*?data-ranking-bridge-status role="status" aria-live="polite"><\/span><\/p><\/div>/);
+assert.doesNotMatch(view,
+    /'<p class="social-network-bridge-candidates-status"[\s\S]*?data-ranking-bridge-status/);
 assert.match(css,
     /\.social-network-cross-metric-view\[hidden\]\s*\{\s*display:\s*none\s*!important;/);
+assert.match(css,
+    /\.social-network-cross-metric-heading\s*\{\s*display:\s*block;/);
+assert.match(css,
+    /\.social-network-cross-metric-view\s*\{\s*display:\s*grid;\s*gap:\s*8px;/);
+assert.match(css,
+    /body\.social-network-shell-active \.social-network-task-card\s+\.social-network-cross-metric-heading p\s*\{\s*margin-bottom:\s*0;/);
+assert.match(css,
+    /\.social-network-bridge-candidates-heading\s*\{[\s\S]*?margin:\s*0 0 8px;/);
+assert.match(css,
+    /body\.social-network-shell-active \.social-network-task-card\s+\.social-network-bridge-candidates-heading > div > p\s*\{\s*margin:\s*0;/);
+assert.match(css,
+    /\.social-network-bridge-candidates-status\s*\{\s*display:\s*inline;\s*margin:\s*0;/);
+assert.doesNotMatch(css,
+    /\.social-network-cross-metric-heading > p/);
+assert.match(css,
+    /\.social-network-node-ranking-controls\s*\{[\s\S]*?display:\s*grid;[\s\S]*?grid-template-columns:\s*minmax\(0,\s*420px\)\s+max-content\s+minmax\(0,\s*1fr\);/);
+assert.match(css,
+    /\.social-network-node-ranking-controls \.social-network-node-ranking-note\s*\{[\s\S]*?grid-column:\s*1\s*\/\s*-1;[\s\S]*?white-space:\s*normal;/);
+assert.match(css,
+    /\.social-network-node-ranking-controls > button\s*\{[\s\S]*?grid-column:\s*2;[\s\S]*?grid-row:\s*1;[\s\S]*?margin-top:\s*22px;/);
+assert.match(css,
+    /@media \(max-width: 760px\)[\s\S]*?\.social-network-node-ranking-controls > button\s*\{[\s\S]*?margin-top:\s*0;[\s\S]*?\.social-network-node-ranking-controls \.social-network-node-ranking-note\s*\{[\s\S]*?white-space:\s*normal;/);
+assert.match(crossRender,
+    /" 本次比较覆盖 "\s*\+\s*formatNumber\(result\.populationSize\)/);
 assert.match(css,
     /\.social-network-cross-metric-grid\s*\{[\s\S]*?grid-template-columns:\s*minmax\(0,\s*1fr\);/);
 assert.match(css,
@@ -129,6 +169,8 @@ assert.match(source, /ranking: "NODE RANKING"/);
 assert.match(source, /"user-relations": "USER RELATIONS"/);
 assert.match(source, /groups: "GROUPS & COMMUNITIES"/);
 assert.match(view, /openModuleExportDialog\(\s*"users"/);
+assert.match(view, /openModuleExportDialog\(\s*"bridge-candidates"/);
+assert.match(view, /getExportSnapshot\(\)/);
 assert.match(render, /item\.rank/);
 assert.match(render, /result\.rows\.length/);
 assert.match(render, /未采集/);
@@ -143,7 +185,7 @@ assert.match(view, /每项显示该角度的数值，下方小字是它在全部
 assert.doesNotMatch(crossRender, /（数值 \/ 排名）/);
 assert.match(crossFailure, /crossMetricReasonLabel\(message\)/);
 assert.match(crossFailure,
-    /"暂时无法比较不同角度：" \+\s*evidenceMessage/);
+    /" 暂时无法比较不同角度：" \+\s*evidenceMessage/);
 assert.doesNotMatch(crossFailure, /escapeHtml\(message\)/);
 assert.doesNotMatch(
     crossRender,
@@ -169,6 +211,10 @@ assert.match(pageShown, /is-node-ranking/);
 assert.match(pageShown, /rankingTaskMountElement\.remove\(\)/);
 
 assert.match(exportDialog, /social-network-module-export-users-metric-field/);
+assert.match(exportDialog, /bridge-candidates/);
+assert.match(exportDialog, /只有已经打开并成功读取的具体账号关系证据页会附带/);
+assert.match(source, /exportButton\.disabled = false/);
+assert.doesNotMatch(source, /uploadBridgeExport/);
 assert.match(exportDialog, /isOrdinaryExportMetric/);
 assert.match(exportDialog, /query = \{ metric: usersMetricControl\.value \}/);
 assert.match(exportDialog, /请选择入度、出度或 PageRank/);

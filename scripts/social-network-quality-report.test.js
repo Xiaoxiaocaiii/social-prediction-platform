@@ -61,7 +61,7 @@ const pageShown = source.slice(pageShownStart, pageShownEnd);
 
 assert.match(source, /var socialNetworkQualityModel = window\.socialNetworkQualityModel/);
 assert.ok(index.indexOf("social-network-quality-model.js") <
-    index.indexOf("js/social-network.js?v=20261107-overview-heading-gap-1"));
+    index.indexOf("js/social-network.js?v=20261108-global-graph-entry-1"));
 assert.match(index,
     /id="social-network-quality-report-export"[\s\S]*?data-social-network-quality-export hidden/);
 assert.match(index,

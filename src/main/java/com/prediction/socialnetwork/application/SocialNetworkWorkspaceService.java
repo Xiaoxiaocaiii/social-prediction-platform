@@ -12,7 +12,6 @@ import com.prediction.socialnetwork.normalization.NormalizedTweet;
 import com.prediction.socialnetwork.normalization.NormalizedRelationship;
 import com.prediction.socialnetwork.normalization.NormalizedUser;
 import com.prediction.socialnetwork.normalization.AssociationStatus;
-import com.prediction.socialnetwork.isolation.WindowsResourcePreflight;
 import com.prediction.socialnetwork.network.SocialNetworkCalculator;
 import com.prediction.socialnetwork.network.SocialNetworkGraphResult;
 import com.prediction.socialnetwork.quality.SocialNetworkQualityReport;
@@ -175,8 +174,21 @@ public class SocialNetworkWorkspaceService {
         List<RawRecord> users = readBuiltinRecords(dataset, DatasetFileRole.USERS);
         SocialNetworkNormalizationResult normalized =
                 normalizer.normalize(users, List.of(), List.of());
+        return profileNames(normalized.users());
+    }
+
+    public Map<String, String> analysisProfileNames(
+            String datasetId, String datasetVersion, String sessionId) {
+        if (datasetVersion == null && sessionId == null) {
+            return analysisProfileNames(datasetId);
+        }
+        SocialNetworkWorkspaceSnapshot snapshot = get(datasetId, datasetVersion, sessionId);
+        return profileNames(snapshot.users());
+    }
+
+    private static Map<String, String> profileNames(List<NormalizedUser> users) {
         Map<String, String> names = new java.util.LinkedHashMap<>();
-        normalized.users().forEach(user -> {
+        users.forEach(user -> {
             if (user.userId() != null && !user.userId().isBlank()) {
                 String username = user.fields().getOrDefault("username", "");
                 if (!username.isBlank()) {
@@ -215,7 +227,6 @@ public class SocialNetworkWorkspaceService {
                 cacheGroupEvidence(key, expectedGraphFingerprint, input);
                 return input;
             }
-            WindowsResourcePreflight.requireMinimumAvailableMemory();
             List<RawRecord> users = readBuiltinRecords(dataset, DatasetFileRole.USERS);
             List<RawRecord> relationships =
                     readBuiltinRecords(dataset, DatasetFileRole.RELATIONSHIPS);
@@ -235,6 +246,36 @@ public class SocialNetworkWorkspaceService {
                     input);
             return input;
         }
+    }
+
+    public GroupEvidenceInput getGroupEvidenceInput(
+            String datasetId,
+            String datasetVersion,
+            String sessionId,
+            String expectedGraphFingerprint) {
+        if (expectedGraphFingerprint == null || expectedGraphFingerprint.isBlank()) {
+            throw new IllegalArgumentException("expectedGraphFingerprint must not be blank");
+        }
+        if (datasetVersion == null && sessionId == null) {
+            return getGroupEvidenceInput(datasetId, expectedGraphFingerprint);
+        }
+        SocialNetworkDataset dataset =
+                registry.resolveDatasetContext(datasetId, datasetVersion, sessionId);
+        if (!dataset.isUploadSession()) {
+            return getGroupEvidenceInput(datasetId, expectedGraphFingerprint);
+        }
+        SocialNetworkWorkspaceSnapshot snapshot = get(
+                dataset.datasetId(), dataset.datasetVersion(), dataset.sessionId());
+        SocialNetworkDataFingerprintService.Fingerprint fingerprint =
+                snapshot.inputFingerprint();
+        if (fingerprint == null
+                || !dataset.datasetId().equals(fingerprint.datasetId())
+                || !dataset.datasetVersion().equals(fingerprint.datasetVersion())
+                || !expectedGraphFingerprint.equals(fingerprint.dataFingerprint())) {
+            throw new IllegalStateException("upload evidence input fingerprint does not match");
+        }
+        return new GroupEvidenceInput(
+                snapshot.network(), snapshot.users(), snapshot.relationships());
     }
 
     private void cacheGroupEvidence(

@@ -33,12 +33,14 @@ class SocialNetworkPrintableSummaryGeneratorTest {
                 .generate(metadata, "interactions");
 
         assertTrue(summary.contains("数据集：think-tank-social-network"));
-        assertTrue(summary.contains("指标版本：network-metrics-v1.0"));
-        assertTrue(summary.contains("网络位置估算算法版本: pagerank-v1.0"));
         assertTrue(summary.contains("点赞数"));
         assertTrue(summary.contains("本次导出记录数: 3"));
         assertTrue(summary.contains(
                 "边界说明：PageRank 表示网络结构位置，不等同于社会影响力。"));
+        assertFalse(summary.contains("network-metrics-v1.0"));
+        assertFalse(summary.contains("pagerank-v1.0"));
+        assertFalse(summary.contains("text-processing-v1.0"));
+        assertFalse(summary.contains("explanation-v1.0"));
         assertFalse(summary.contains("data."));
         assertFalse(summary.contains("like_count"));
     }
@@ -174,9 +176,28 @@ class SocialNetworkPrintableSummaryGeneratorTest {
         assertTrue(report.contains("最大连接组包含 7/10 个账号。"));
         assertTrue(report.contains("网络汇总指标；全网节点证据"));
         assertTrue(report.contains("资料外账号：纳入统计"));
+        assertFalse(report.contains("network-metrics-v4"));
+        assertFalse(report.contains("pagerank-v2"));
+        assertFalse(report.contains("roles-v2"));
         assertFalse(report.contains("weaklyConnectedComponentCount"));
         assertFalse(report.contains("evidenceReferences"));
         assertFalse(report.contains("GET /api/"));
+    }
+
+    @Test
+    void explainsWhenNetworkReportHasNoRowLevelEvidence() {
+        String report = new SocialNetworkPrintableSummaryGenerator().generate(
+                metadata(Map.of()),
+                "network",
+                Map.of(
+                        "nodeCount", 5,
+                        "edgeCount", 8,
+                        "evidenceSummary", Map.of("facts", List.of())));
+
+        assertTrue(report.contains(
+                "本报告未附逐账号或逐关系的原始记录证据；以上数值是按当前数据集计算的网络汇总指标。"));
+        assertFalse(report.contains("未提供全网事实摘要"));
+        assertFalse(report.contains("请通过 JSON/CSV"));
     }
 
     @Test
@@ -253,6 +274,173 @@ class SocialNetworkPrintableSummaryGeneratorTest {
         assertNotEquals(users, interactions);
         assertNotEquals(interactions, topic);
         assertNotEquals(topic, tweets);
+    }
+
+    @Test
+    void writesBridgeCandidateScopeAndSelectedRelationshipSourcesAsReadableReport() {
+        SocialNetworkExportMetadata metadata = metadata(Map.of());
+        Map<String, Object> result = Map.of(
+                "question", "哪些资料账号连接了其他社群？",
+                "conclusion", "完整网络中共有 21 个跨社群连接候选。",
+                "methodology", Map.of(
+                        "candidateDefinition", "有资料且已归属社群的账号。",
+                        "relationshipCounting", "按有效有向关系计数。",
+                        "excludedRelationships", List.of("自环", "同社群关系"),
+                        "interpretationLimit", "不代表影响力或传播控制能力。"),
+                "scope", Map.of(
+                        "calculationScope", "完整网络和当前 Louvain 结果",
+                        "canvasFiltersApplied", false),
+                "candidatePage", Map.of(
+                        "offset", 0,
+                        "returnedCount", 1,
+                        "totalCount", 21,
+                        "truncated", true),
+                "analysisIdentity", Map.of(
+                        "analysisResultId", "sha256:bridge-report-test",
+                        "dataFingerprint", "bridge-report-fingerprint"),
+                "candidates", List.of(Map.of(
+                        "rank", 1,
+                        "accountId", "account-1",
+                        "displayName", "示例账号",
+                        "communityId", "C001",
+                        "connectedCommunityCount", 1,
+                        "distinctOtherAccountCount", 2,
+                        "outgoingRelationshipCount", 2,
+                        "incomingRelationshipCount", 1,
+                        "communities", List.of())),
+                "evidencePage", Map.of(
+                        "state", "available",
+                        "accountId", "account-1",
+                        "communityId", "C002",
+                        "direction", "outgoing",
+                        "offset", 0,
+                        "pageSize", 20,
+                        "returnedCount", 1,
+                        "totalCount", 21,
+                        "truncated", true,
+                        "items", List.of(Map.of(
+                                "sourceId", "account-1",
+                                "targetId", "external-2",
+                                "sourceCommunityId", "C001",
+                                "targetCommunityId", "C002",
+                                "direction", "outgoing",
+                                "sources", List.of(Map.of(
+                                        "sourceFileName", "relationships.csv",
+                                        "sourceRowNumber", 18,
+                                        "sourceArrayIndex", 0,
+                                        "sourceNodeStatus", "LINKED",
+                                        "targetNodeStatus", "EXTERNAL_NODE",
+                                        "relationStatus", "VALID",
+                                        "normalizationStatus", "NORMALIZED_WITH_WARNINGS",
+                                        "analysisIncluded", true,
+                                        "duplicate", false))))));
+
+        String report = new SocialNetworkPrintableSummaryGenerator()
+                .generate(metadata, "bridge-candidates", result);
+
+        assertTrue(report.contains("跨社群连接候选核对报告"));
+        assertTrue(report.contains("完整候选共 21 个"));
+        assertTrue(report.contains("第 1 至 1 项"));
+        assertTrue(report.contains("本文件只包含这一页候选"));
+        assertFalse(report.contains("0 起"));
+        assertTrue(report.contains("当前筛选条件下共 21 条"));
+        assertTrue(report.contains("不能视为完整关系证据"));
+        assertTrue(report.contains("主动关系是候选关注其他社群账号"));
+        assertTrue(report.contains("不同账号计数"));
+        assertTrue(report.contains("依据本报告所附来源文件和行号"));
+        assertTrue(report.contains("ID account-1"));
+        assertTrue(report.contains("relationships.csv 第 18 行"));
+        assertTrue(report.contains("关注列表索引 0"));
+        assertTrue(report.contains("有效关系，计入关系统计"));
+        assertTrue(report.contains("账号资料已采集 → 关系端点，资料未采集"));
+        assertTrue(report.contains("规范化完成但有提示"));
+        assertTrue(report.contains("分析结果身份：sha256:bridge-report-test"));
+        assertTrue(report.contains("不代表影响力或传播控制能力。"));
+        assertFalse(report.contains("\"candidatePage\""));
+    }
+
+    @Test
+    void omitsArrayIndexForRelationshipRowsWithoutAnArraySource() {
+        Map<String, Object> source = new java.util.LinkedHashMap<>();
+        source.put("sourceFileName", "relationships.csv");
+        source.put("sourceRowNumber", 9);
+        source.put("sourceArrayIndex", null);
+        source.put("sourceNodeStatus", "LINKED");
+        source.put("targetNodeStatus", "EXTERNAL_NODE");
+        source.put("relationStatus", "VALID");
+        source.put("normalizationStatus", "NORMALIZED_WITH_WARNINGS");
+        source.put("analysisIncluded", true);
+        source.put("duplicate", false);
+        String report = new SocialNetworkPrintableSummaryGenerator().generate(
+                metadata(Map.of()),
+                "bridge-candidates",
+                Map.of(
+                        "scope", Map.of(),
+                        "candidatePage", Map.of(
+                                "offset", 0,
+                                "returnedCount", 1,
+                                "totalCount", 1),
+                        "analysisIdentity", Map.of(),
+                        "question", "问题",
+                        "conclusion", "结论",
+                        "methodology", Map.of(),
+                        "candidates", List.of(Map.of(
+                                "rank", 1,
+                                "accountId", "account-a",
+                                "communities", List.of())),
+                        "evidencePage", Map.of(
+                                "state", "available",
+                                "accountId", "account-a",
+                                "direction", "outgoing",
+                                "offset", 0,
+                                "totalCount", 1,
+                                "truncated", false,
+                                "items", List.of(Map.of(
+                                        "sourceId", "account-a",
+                                        "targetId", "account-b",
+                                        "sources", List.of(source))))));
+
+        assertTrue(report.contains("relationships.csv 第 9 行"));
+        assertTrue(report.contains("有效关系，计入关系统计"));
+        assertFalse(report.contains("数组索引"));
+        assertFalse(report.contains("数组索引 -1"));
+    }
+
+    @Test
+    void distinguishesValidZeroCandidatesFromAnOutOfRangeCandidatePage() {
+        SocialNetworkPrintableSummaryGenerator generator =
+                new SocialNetworkPrintableSummaryGenerator();
+        SocialNetworkExportMetadata metadata = metadata(Map.of());
+        Map<String, Object> shared = Map.of(
+                "question", "哪些资料账号连接了其他社群？",
+                "conclusion", "当前结果说明。",
+                "methodology", Map.of(),
+                "scope", Map.of("canvasFiltersApplied", false),
+                "analysisIdentity", Map.of(
+                        "analysisResultId", "sha256:bridge-empty-test",
+                        "dataFingerprint", "bridge-empty-fingerprint"),
+                "candidates", List.of(),
+                "evidencePage", Map.of("state", "not_selected", "items", List.of()));
+        Map<String, Object> zeroResult = new java.util.LinkedHashMap<>(shared);
+        zeroResult.put("candidatePage", Map.of(
+                "offset", 0, "returnedCount", 0, "totalCount", 0, "truncated", false));
+        String zeroReport = generator.generate(
+                metadata, "bridge-candidates", zeroResult);
+        assertTrue(zeroReport.contains("有效零结果，不代表分析不可用"));
+        assertTrue(zeroReport.contains("完整网络中没有符合条件的候选"));
+        assertFalse(zeroReport.contains("0 起"));
+        assertTrue(zeroReport.contains("请在平台打开目标账号的关系证据页后再导出"));
+        assertFalse(zeroReport.contains("按文件中的来源行号"));
+
+        Map<String, Object> outOfRangeResult =
+                new java.util.LinkedHashMap<>(shared);
+        outOfRangeResult.put("candidatePage", Map.of(
+                "offset", 20, "returnedCount", 0, "totalCount", 21, "truncated", true));
+        String outOfRangeReport = generator.generate(
+                metadata, "bridge-candidates", outOfRangeResult);
+        assertTrue(outOfRangeReport.contains("完整候选总数不为 0"));
+        assertTrue(outOfRangeReport.contains("请刷新候选页后重试"));
+        assertTrue(outOfRangeReport.contains("当前页未返回账号"));
     }
 
     @Test

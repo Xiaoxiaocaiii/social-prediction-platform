@@ -72,14 +72,15 @@ class SocialNetworkGroupInsightCalculatorTest {
                 List.of(
                         new NetworkEdge("a", "b", "following"),
                         new NetworkEdge("b", "a", "following"),
+                        new NetworkEdge("a", "b", "following"),
                         new NetworkEdge("a", "c", "following"),
                         new NetworkEdge("c", "d", "following"),
                         new NetworkEdge("a", "a", "following"),
                         new NetworkEdge("x", "a", "following")),
                 Map.of("a", "C1", "b", "C2", "c", "C2", "d", "C3"));
         assertEquals(List.of(
-                new SocialNetworkGroupInsightCalculator.CommunityPair("C1", "C2", 2),
-                new SocialNetworkGroupInsightCalculator.CommunityPair("C2", "C3", 1)), pairs);
+                new SocialNetworkGroupInsightCalculator.CommunityPair("C1", "C2", 2, 3),
+                new SocialNetworkGroupInsightCalculator.CommunityPair("C2", "C3", 1, 1)), pairs);
     }
 
     private static CliqueEnumerationResult result(

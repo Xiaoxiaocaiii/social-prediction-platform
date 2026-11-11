@@ -1,0 +1,6 @@
+user_id,username,display_name,bio,followers_count,following_count,tweet_count,created_at,location
+demo_u01,walk_demo_01,林间散步,记录城市步行与社区生活,320,42,18,2021-03-04T09:00:00Z,上海
+demo_u02,walk_demo_02,街角观察员,关注街区更新和公共空间,185,37,24,2022-06-12T11:30:00Z,杭州
+demo_u03,walk_demo_03,慢行地图,整理适合步行的路线,510,63,31,2020-09-21T08:15:00Z,南京
+demo_u04,walk_demo_04,社区记录本,分享社区活动与居民故事,96,28,12,2023-01-18T14:20:00Z,苏州
+demo_u05,walk_demo_05,城市边缘,观察城市绿地和河岸空间,245,51,20,2021-11-02T06:45:00Z,宁波

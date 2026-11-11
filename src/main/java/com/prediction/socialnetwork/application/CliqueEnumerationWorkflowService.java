@@ -6,7 +6,6 @@ import com.prediction.socialnetwork.cache.SocialNetworkAnalysisCacheKeyFactory.I
 import com.prediction.socialnetwork.cache.SocialNetworkAnalysisResultCache;
 import com.prediction.socialnetwork.domain.DatasetType;
 import com.prediction.socialnetwork.domain.SocialNetworkDataset;
-import com.prediction.socialnetwork.isolation.WindowsResourcePreflight;
 import com.prediction.socialnetwork.network.CliqueEnumerationLimits;
 import com.prediction.socialnetwork.network.CliqueEnumerationResult;
 import com.prediction.socialnetwork.network.CliqueEnumerationStatus;
@@ -39,7 +38,6 @@ public class CliqueEnumerationWorkflowService {
     private final SocialNetworkAnalysisCacheKeyFactory cacheKeyFactory;
     private final SocialNetworkAnalysisResultCache resultCache;
     private final SocialNetworkAnalysisResultStore resultStore;
-    private final Runnable resourcePreflight;
     private final ExecutorService executor = Executors.newSingleThreadExecutor(task -> {
         Thread thread = new Thread(task, "social-network-clique-workflow");
         thread.setDaemon(true);
@@ -58,45 +56,6 @@ public class CliqueEnumerationWorkflowService {
             SocialNetworkAnalysisCacheKeyFactory cacheKeyFactory,
             SocialNetworkAnalysisResultCache resultCache,
             SocialNetworkAnalysisResultStore resultStore) {
-        this(
-                registry,
-                workspace,
-                runner,
-                fingerprintService,
-                cacheKeyFactory,
-                resultCache,
-                WindowsResourcePreflight::requireMinimumAvailableMemory,
-                resultStore);
-    }
-
-    CliqueEnumerationWorkflowService(
-            SocialNetworkDatasetRegistry registry,
-            SocialNetworkWorkspaceService workspace,
-            CliqueEnumerationExecutor runner,
-            SocialNetworkDataFingerprintService fingerprintService,
-            SocialNetworkAnalysisCacheKeyFactory cacheKeyFactory,
-            SocialNetworkAnalysisResultCache resultCache,
-            Runnable resourcePreflight) {
-        this(
-                registry,
-                workspace,
-                runner,
-                fingerprintService,
-                cacheKeyFactory,
-                resultCache,
-                resourcePreflight,
-                SocialNetworkAnalysisResultStore.disabled());
-    }
-
-    CliqueEnumerationWorkflowService(
-            SocialNetworkDatasetRegistry registry,
-            SocialNetworkWorkspaceService workspace,
-            CliqueEnumerationExecutor runner,
-            SocialNetworkDataFingerprintService fingerprintService,
-            SocialNetworkAnalysisCacheKeyFactory cacheKeyFactory,
-            SocialNetworkAnalysisResultCache resultCache,
-            Runnable resourcePreflight,
-            SocialNetworkAnalysisResultStore resultStore) {
         this.registry = Objects.requireNonNull(registry, "registry");
         this.workspace = Objects.requireNonNull(workspace, "workspace");
         this.runner = Objects.requireNonNull(runner, "runner");
@@ -105,7 +64,6 @@ public class CliqueEnumerationWorkflowService {
         this.cacheKeyFactory = Objects.requireNonNull(cacheKeyFactory, "cacheKeyFactory");
         this.resultCache = Objects.requireNonNull(resultCache, "resultCache");
         this.resultStore = Objects.requireNonNull(resultStore, "resultStore");
-        this.resourcePreflight = Objects.requireNonNull(resourcePreflight, "resourcePreflight");
     }
 
     public CliqueEnumerationWorkflowView request(String datasetId) {
@@ -113,7 +71,12 @@ public class CliqueEnumerationWorkflowService {
     }
 
     public CliqueEnumerationWorkflowView request(String datasetId, boolean force) {
-        Identity identity = currentIdentity(datasetId);
+        return request(datasetId, null, null, force);
+    }
+
+    public CliqueEnumerationWorkflowView request(
+            String datasetId, String datasetVersion, String sessionId, boolean force) {
+        Identity identity = currentIdentity(datasetId, datasetVersion, sessionId);
         if (identity == null) {
             return fingerprintUnavailableView(datasetId);
         }
@@ -143,7 +106,7 @@ public class CliqueEnumerationWorkflowService {
             ActiveRun run = new ActiveRun(identity, Instant.now());
             activeRun = run;
             try {
-                executor.execute(() -> calculate(datasetId, run));
+                executor.execute(() -> calculate(run));
             } catch (RejectedExecutionException exception) {
                 finish(run, failedResult("workflow_executor_unavailable"), false);
             }
@@ -153,9 +116,18 @@ public class CliqueEnumerationWorkflowService {
 
     public CliqueEnumerationWorkflowView status(
             String datasetId, int requestedOffset, int requestedPageSize) {
+        return status(datasetId, null, null, requestedOffset, requestedPageSize);
+    }
+
+    public CliqueEnumerationWorkflowView status(
+            String datasetId,
+            String datasetVersion,
+            String sessionId,
+            int requestedOffset,
+            int requestedPageSize) {
         int offset = Math.max(0, requestedOffset);
         int pageSize = Math.max(1, Math.min(requestedPageSize, MAX_PAGE_SIZE));
-        Identity identity = currentIdentity(datasetId);
+        Identity identity = currentIdentity(datasetId, datasetVersion, sessionId);
         if (identity == null) {
             return fingerprintUnavailableView(datasetId);
         }
@@ -180,7 +152,12 @@ public class CliqueEnumerationWorkflowService {
     }
 
     Optional<CliqueEnumerationResult> completedMemberships(String datasetId) {
-        Identity identity = currentIdentity(datasetId);
+        return completedMemberships(datasetId, null, null);
+    }
+
+    Optional<CliqueEnumerationResult> completedMemberships(
+            String datasetId, String datasetVersion, String sessionId) {
+        Identity identity = currentIdentity(datasetId, datasetVersion, sessionId);
         if (identity == null) {
             return Optional.empty();
         }
@@ -194,31 +171,10 @@ public class CliqueEnumerationWorkflowService {
         executor.shutdownNow();
     }
 
-    private void calculate(String datasetId, ActiveRun run) {
+    private void calculate(ActiveRun run) {
         try {
-            resourcePreflight.run();
-        } catch (IllegalStateException exception) {
-            if (isPhysicalMemoryRefusal(exception)) {
-                finish(
-                        run,
-                        CliqueEnumerationResult.externalTermination(
-                                CliqueEnumerationStatus.MEMORY_LIMIT,
-                                CliqueEnumerationWorkerProtocol.DEFAULT_WORKER_LIMITS,
-                                "physical_memory_preflight"),
-                        false);
-                return;
-            }
-            finish(run, failedResult("workflow_input_or_runner_failure"), true);
-            return;
-        } catch (RuntimeException exception) {
-            finish(run, failedResult("workflow_input_or_runner_failure"), true);
-            return;
-        }
-
-        try {
-            SocialNetworkGraphResult network = workspace.getNetworkForAnalysis(
-                    datasetId, run.identity.dataFingerprint());
-            if (!fingerprintMatches(datasetId, run.identity.dataFingerprint())) {
+            SocialNetworkGraphResult network = networkFor(run.identity);
+            if (!fingerprintMatches(run.identity)) {
                 finish(run, failedResult("input_changed_during_snapshot_load"), false);
                 return;
             }
@@ -230,7 +186,7 @@ public class CliqueEnumerationWorkflowService {
             }
             CliqueEnumerationResult completed = runner.run(
                     nodes, directedEdges, Thread.currentThread()::isInterrupted);
-            if (!fingerprintMatches(datasetId, run.identity.dataFingerprint())) {
+            if (!fingerprintMatches(run.identity)) {
                 finish(run, failedResult("input_changed_during_analysis"), false);
                 return;
             }
@@ -238,12 +194,6 @@ public class CliqueEnumerationWorkflowService {
         } catch (RuntimeException exception) {
             finish(run, failedResult("workflow_input_or_runner_failure"), true);
         }
-    }
-
-    private static boolean isPhysicalMemoryRefusal(IllegalStateException exception) {
-        return exception.getMessage() != null
-                && exception.getMessage().startsWith(
-                        "Analysis refused: available physical memory");
     }
 
     private void finish(
@@ -261,10 +211,13 @@ public class CliqueEnumerationWorkflowService {
                     .orElse(false);
             boolean currentComplete = completed.isComplete()
                     && completed.membershipListComplete();
-            if (cacheable && (!previousComplete || currentComplete)) {
+            boolean uploadSessionActive = !isUploadIdentity(run.identity)
+                    || fingerprintMatches(run.identity);
+            if (cacheable && uploadSessionActive && (!previousComplete || currentComplete)) {
                 resultCache.put(
                         CacheResultType.CLIQUE_ANALYSIS,
                         run.identity.cacheKey(),
+                        run.identity.sessionId(),
                         new CliqueWorkflowCacheValue(
                                 completed,
                                 run.inputNodeCount,
@@ -273,19 +226,24 @@ public class CliqueEnumerationWorkflowService {
                                 run.finishedAt),
                         run.finishedAt);
             }
+            if (isUploadIdentity(run.identity) && !uploadSessionActive) {
+                resultCache.removeSession(run.identity.sessionId());
+            }
         }
-        resultStore.saveClique(buildView(
-                run.identity,
-                run.state,
-                completed,
-                run.requestedAt,
-                run.finishedAt,
-                run.inputNodeCount,
-                run.inputDirectedEdgeCount,
-                false,
-                0,
-                Math.max(1, completed.retainedCliqueCount()),
-                completed.terminationDetail()));
+        if (!isUploadIdentity(run.identity)) {
+            resultStore.saveClique(buildView(
+                    run.identity,
+                    run.state,
+                    completed,
+                    run.requestedAt,
+                    run.finishedAt,
+                    run.inputNodeCount,
+                    run.inputDirectedEdgeCount,
+                    false,
+                    0,
+                    Math.max(1, completed.retainedCliqueCount()),
+                    completed.terminationDetail()));
+        }
     }
 
     private CliqueEnumerationWorkflowView view(ActiveRun run, int offset, int pageSize) {
@@ -349,8 +307,8 @@ public class CliqueEnumerationWorkflowService {
                 ? CliqueEnumerationWorkerProtocol.DEFAULT_WORKER_LIMITS
                 : current.limits();
         return new CliqueEnumerationWorkflowView(
-                SocialNetworkDatasetRegistry.BUILTIN_DATASET_ID,
-                SocialNetworkDatasetRegistry.BUILTIN_DATASET_VERSION,
+                identity.datasetId(),
+                identity.datasetVersion(),
                 state,
                 current != null && current.isComplete(),
                 detail,
@@ -384,21 +342,80 @@ public class CliqueEnumerationWorkflowService {
                 cacheHit);
     }
 
-    private Identity currentIdentity(String datasetId) {
-        requireSupportedDataset(datasetId);
-        SocialNetworkDataset dataset = registry.findDataset(datasetId);
+    private Identity currentIdentity(
+            String datasetId, String datasetVersion, String sessionId) {
+        SocialNetworkDataset dataset =
+                resolveDatasetContext(datasetId, datasetVersion, sessionId);
+        requireSupportedDataset(dataset);
         try {
+            SocialNetworkDataFingerprintService.Fingerprint fingerprint;
+            if (dataset.isUploadSession()) {
+                SocialNetworkWorkspaceSnapshot snapshot = workspace.get(
+                        dataset.datasetId(), dataset.datasetVersion(), dataset.sessionId());
+                fingerprint = snapshot.inputFingerprint();
+                if (fingerprint == null
+                        || !dataset.datasetId().equals(fingerprint.datasetId())
+                        || !dataset.datasetVersion().equals(fingerprint.datasetVersion())
+                        || !dataset.normalizationVersion()
+                                .equals(fingerprint.normalizationVersion())) {
+                    return null;
+                }
+            } else {
+                fingerprint = fingerprintService.fingerprint(dataset);
+            }
             return cacheKeyFactory.clique(
-                    dataset, fingerprintService.fingerprint(dataset));
+                    dataset, fingerprint);
         } catch (IOException exception) {
             return null;
         }
     }
 
-    private boolean fingerprintMatches(String datasetId, String expectedFingerprint) {
+    private SocialNetworkDataset resolveDatasetContext(
+            String datasetId, String datasetVersion, String sessionId) {
+        if (datasetVersion == null && sessionId == null) {
+            SocialNetworkDataset dataset = registry.findDataset(datasetId);
+            if (dataset.isUploadSession()) {
+                throw new SocialNetworkDatasetContextException();
+            }
+            return dataset;
+        }
+        if (datasetVersion == null || datasetVersion.isBlank()) {
+            throw new SocialNetworkDatasetContextException();
+        }
+        return registry.resolveDatasetContext(datasetId, datasetVersion, sessionId);
+    }
+
+    private SocialNetworkGraphResult networkFor(Identity identity) {
+        if (!isUploadIdentity(identity)) {
+            return workspace.getNetworkForAnalysis(
+                    identity.datasetId(), identity.dataFingerprint());
+        }
+        SocialNetworkDataset dataset = registry.resolveDatasetContext(
+                identity.datasetId(), identity.datasetVersion(), identity.sessionId());
+        SocialNetworkWorkspaceSnapshot snapshot = workspace.get(
+                dataset.datasetId(), dataset.datasetVersion(), dataset.sessionId());
+        if (snapshot.inputFingerprint() == null
+                || !identity.dataFingerprint().equals(
+                        snapshot.inputFingerprint().dataFingerprint())) {
+            throw new IllegalStateException("upload snapshot fingerprint changed");
+        }
+        return snapshot.network();
+    }
+
+    private boolean fingerprintMatches(Identity identity) {
         try {
-            return expectedFingerprint.equals(
-                    fingerprintService.fingerprint(registry.findDataset(datasetId))
+            if (isUploadIdentity(identity)) {
+                SocialNetworkDataset dataset = registry.resolveDatasetContext(
+                        identity.datasetId(), identity.datasetVersion(), identity.sessionId());
+                SocialNetworkWorkspaceSnapshot snapshot = workspace.get(
+                        dataset.datasetId(), dataset.datasetVersion(), dataset.sessionId());
+                return snapshot.inputFingerprint() != null
+                        && identity.dataFingerprint().equals(
+                                snapshot.inputFingerprint().dataFingerprint());
+            }
+            return identity.dataFingerprint().equals(
+                    fingerprintService.fingerprint(
+                                    registry.findDataset(identity.datasetId()))
                             .dataFingerprint());
         } catch (IOException | RuntimeException exception) {
             return false;
@@ -414,6 +431,9 @@ public class CliqueEnumerationWorkflowService {
                 CliqueWorkflowCacheValue.class);
         if (cached.isPresent()) {
             return cached;
+        }
+        if (isUploadIdentity(identity)) {
+            return Optional.empty();
         }
         Optional<CliqueEnumerationWorkflowView> persisted =
                 resultStore.loadClique(identity.cacheKey().value());
@@ -442,6 +462,7 @@ public class CliqueEnumerationWorkflowService {
         resultCache.put(
                 CacheResultType.CLIQUE_ANALYSIS,
                 identity.cacheKey(),
+                identity.sessionId(),
                 value,
                 view.finishedAt());
         return resultCache.find(
@@ -454,13 +475,20 @@ public class CliqueEnumerationWorkflowService {
         return left.cacheKey().value().equals(right.cacheKey().value());
     }
 
-    private void requireSupportedDataset(String datasetId) {
-        SocialNetworkDataset dataset = registry.findDataset(datasetId);
-        if (!SocialNetworkDatasetRegistry.BUILTIN_DATASET_ID.equals(datasetId)
+    private static boolean isUploadIdentity(Identity identity) {
+        return identity.datasetType() == DatasetType.UPLOAD_SESSION;
+    }
+
+    private void requireSupportedDataset(SocialNetworkDataset dataset) {
+        if (dataset.isUploadSession() && dataset.type() == DatasetType.UPLOAD_SESSION) {
+            return;
+        }
+        if (!SocialNetworkDatasetRegistry.BUILTIN_DATASET_ID.equals(dataset.datasetId())
                 || dataset.type() != DatasetType.BUILTIN
                 || !SocialNetworkDatasetRegistry.BUILTIN_DATASET_VERSION
                         .equals(dataset.datasetVersion())) {
-            throw new IllegalArgumentException("Clique analysis supports built-in v1 only");
+            throw new IllegalArgumentException(
+                    "Clique analysis supports built-in v1 and active upload sessions");
         }
     }
 

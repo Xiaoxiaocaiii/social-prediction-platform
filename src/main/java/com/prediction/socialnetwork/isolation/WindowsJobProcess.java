@@ -57,7 +57,6 @@ public final class WindowsJobProcess implements AutoCloseable {
             List<String> arguments,
             WindowsJobLimits limits) {
         requireSupportedPlatform();
-        WindowsResourcePreflight.requireMinimumAvailableMemory();
         return startWithLimits(executable, arguments, limits);
     }
 

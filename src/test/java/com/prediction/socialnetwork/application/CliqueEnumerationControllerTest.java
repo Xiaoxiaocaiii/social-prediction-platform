@@ -29,6 +29,7 @@ class CliqueEnumerationControllerTest {
                 workflow,
                 mock(LouvainAnalysisWorkflowService.class),
                 mock(SocialNetworkEvidenceFactSummaryService.class),
+                mock(SocialNetworkBridgeCandidateExportService.class),
                 new ObjectMapper());
         MockMvc mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
 

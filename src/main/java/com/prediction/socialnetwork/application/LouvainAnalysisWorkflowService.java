@@ -8,7 +8,6 @@ import com.prediction.socialnetwork.domain.DatasetType;
 import com.prediction.socialnetwork.domain.SocialNetworkDataset;
 import com.prediction.socialnetwork.isolation.LouvainWorkerRunResult;
 import com.prediction.socialnetwork.isolation.LouvainWorkerRunResult.Status;
-import com.prediction.socialnetwork.isolation.WindowsResourcePreflight;
 import com.prediction.socialnetwork.network.LouvainAnalysisParameters;
 import com.prediction.socialnetwork.network.LouvainAnalysisWorkerProtocol;
 import com.prediction.socialnetwork.network.LouvainCommunityDetector;
@@ -23,10 +22,12 @@ import com.prediction.socialnetwork.network.SocialNetworkGraphResult;
 import jakarta.annotation.PreDestroy;
 import java.io.IOException;
 import java.time.Instant;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
@@ -43,7 +44,6 @@ public class LouvainAnalysisWorkflowService {
     private final SocialNetworkAnalysisCacheKeyFactory cacheKeyFactory;
     private final SocialNetworkAnalysisResultCache resultCache;
     private final SocialNetworkAnalysisResultStore resultStore;
-    private final Runnable resourcePreflight;
     private final ExecutorService executor = Executors.newSingleThreadExecutor(task -> {
         Thread thread = new Thread(task, "social-network-louvain-workflow");
         thread.setDaemon(true);
@@ -62,45 +62,6 @@ public class LouvainAnalysisWorkflowService {
             SocialNetworkAnalysisCacheKeyFactory cacheKeyFactory,
             SocialNetworkAnalysisResultCache resultCache,
             SocialNetworkAnalysisResultStore resultStore) {
-        this(
-                registry,
-                workspace,
-                runner,
-                fingerprintService,
-                cacheKeyFactory,
-                resultCache,
-                WindowsResourcePreflight::requireMinimumAvailableMemory,
-                resultStore);
-    }
-
-    LouvainAnalysisWorkflowService(
-            SocialNetworkDatasetRegistry registry,
-            SocialNetworkWorkspaceService workspace,
-            LouvainAnalysisExecutor runner,
-            SocialNetworkDataFingerprintService fingerprintService,
-            SocialNetworkAnalysisCacheKeyFactory cacheKeyFactory,
-            SocialNetworkAnalysisResultCache resultCache,
-            Runnable resourcePreflight) {
-        this(
-                registry,
-                workspace,
-                runner,
-                fingerprintService,
-                cacheKeyFactory,
-                resultCache,
-                resourcePreflight,
-                SocialNetworkAnalysisResultStore.disabled());
-    }
-
-    LouvainAnalysisWorkflowService(
-            SocialNetworkDatasetRegistry registry,
-            SocialNetworkWorkspaceService workspace,
-            LouvainAnalysisExecutor runner,
-            SocialNetworkDataFingerprintService fingerprintService,
-            SocialNetworkAnalysisCacheKeyFactory cacheKeyFactory,
-            SocialNetworkAnalysisResultCache resultCache,
-            Runnable resourcePreflight,
-            SocialNetworkAnalysisResultStore resultStore) {
         this.registry = Objects.requireNonNull(registry, "registry");
         this.workspace = Objects.requireNonNull(workspace, "workspace");
         this.runner = Objects.requireNonNull(runner, "runner");
@@ -109,7 +70,6 @@ public class LouvainAnalysisWorkflowService {
         this.cacheKeyFactory = Objects.requireNonNull(cacheKeyFactory, "cacheKeyFactory");
         this.resultCache = Objects.requireNonNull(resultCache, "resultCache");
         this.resultStore = Objects.requireNonNull(resultStore, "resultStore");
-        this.resourcePreflight = Objects.requireNonNull(resourcePreflight, "resourcePreflight");
     }
 
     public LouvainAnalysisWorkflowView request(String datasetId) {
@@ -117,7 +77,12 @@ public class LouvainAnalysisWorkflowService {
     }
 
     public LouvainAnalysisWorkflowView request(String datasetId, boolean force) {
-        Identity identity = currentIdentity(datasetId);
+        return request(datasetId, null, null, force);
+    }
+
+    public LouvainAnalysisWorkflowView request(
+            String datasetId, String datasetVersion, String sessionId, boolean force) {
+        Identity identity = currentIdentity(datasetId, datasetVersion, sessionId);
         if (identity == null) {
             return buildView(
                     null, "FAILED", null, 0, 0, null, null, false,
@@ -162,7 +127,7 @@ public class LouvainAnalysisWorkflowService {
             ActiveRun run = new ActiveRun(identity, Instant.now());
             activeRun = run;
             try {
-                executor.execute(() -> calculate(datasetId, run));
+                executor.execute(() -> calculate(run));
             } catch (RejectedExecutionException exception) {
                 finish(run, failedResult("workflow_executor_unavailable"), false);
             }
@@ -171,12 +136,49 @@ public class LouvainAnalysisWorkflowService {
     }
 
     public LouvainAnalysisWorkflowView status(String datasetId) {
-        Identity identity = currentIdentity(datasetId);
+        return status(datasetId, null, null);
+    }
+
+    public LouvainAnalysisWorkflowView status(
+            String datasetId, String datasetVersion, String sessionId) {
+        return readOnlySnapshot(datasetId, datasetVersion, sessionId).status();
+    }
+
+    /**
+     * Reads the current status and reusable result against one input identity.
+     */
+    public ReadOnlySnapshot readOnlySnapshot(String datasetId) {
+        return readOnlySnapshot(datasetId, null, null);
+    }
+
+    public ReadOnlySnapshot readOnlySnapshot(
+            String datasetId, String datasetVersion, String sessionId) {
+        Identity identity = currentIdentity(datasetId, datasetVersion, sessionId);
         if (identity == null) {
-            return buildView(
+            LouvainAnalysisWorkflowView failed = buildView(
                     null, "FAILED", null, 0, 0, null, Instant.now(), false,
                     "input_fingerprint_unavailable");
+            return new ReadOnlySnapshot(failed, Optional.empty());
         }
+        LouvainAnalysisWorkflowView view = currentView(identity);
+        Optional<LouvainAnalysisWorkflowView> reusable =
+                isReusableResult(view, identity) ? Optional.of(view) : Optional.empty();
+        return new ReadOnlySnapshot(view, reusable);
+    }
+
+    /**
+     * Returns only a complete result for the current input identity; this never starts analysis.
+     */
+    public Optional<LouvainAnalysisWorkflowView> reusableResult(String datasetId) {
+        return readOnlySnapshot(datasetId).reusableResult();
+    }
+
+    public Optional<LouvainAnalysisWorkflowView> reusableResult(
+            String datasetId, String datasetVersion, String sessionId) {
+        return readOnlySnapshot(datasetId, datasetVersion, sessionId).reusableResult();
+    }
+
+    private LouvainAnalysisWorkflowView currentView(Identity identity) {
         synchronized (stateLock) {
             if (activeRun != null
                     && "RUNNING".equals(activeRun.state)
@@ -212,25 +214,10 @@ public class LouvainAnalysisWorkflowService {
         executor.shutdownNow();
     }
 
-    private void calculate(String datasetId, ActiveRun run) {
+    private void calculate(ActiveRun run) {
         try {
-            resourcePreflight.run();
-        } catch (IllegalStateException exception) {
-            if (isPhysicalMemoryRefusal(exception)) {
-                finish(run, memoryLimitedResult("physical_memory_preflight"), false);
-                return;
-            }
-            finish(run, failedResult("workflow_input_or_runner_failure"), false);
-            return;
-        } catch (RuntimeException exception) {
-            finish(run, failedResult("workflow_input_or_runner_failure"), false);
-            return;
-        }
-
-        try {
-            SocialNetworkGraphResult network = workspace.getNetworkForAnalysis(
-                    datasetId, run.identity.dataFingerprint());
-            if (!fingerprintMatches(datasetId, run.identity.dataFingerprint())) {
+            SocialNetworkGraphResult network = networkFor(run.identity);
+            if (!fingerprintMatches(run.identity)) {
                 finish(run, failedResult("input_changed_during_snapshot_load"), false);
                 return;
             }
@@ -246,7 +233,7 @@ public class LouvainAnalysisWorkflowService {
                     directedEdges,
                     LouvainAnalysisParameters.DEFAULT,
                     Thread.currentThread()::isInterrupted);
-            if (!fingerprintMatches(datasetId, run.identity.dataFingerprint())) {
+            if (!fingerprintMatches(run.identity)) {
                 finish(run, failedResult("input_changed_during_analysis", result), false);
                 return;
             }
@@ -254,12 +241,6 @@ public class LouvainAnalysisWorkflowService {
         } catch (RuntimeException exception) {
             finish(run, failedResult("workflow_input_or_runner_failure"), false);
         }
-    }
-
-    private static boolean isPhysicalMemoryRefusal(IllegalStateException exception) {
-        return exception.getMessage() != null
-                && exception.getMessage().startsWith(
-                        "Analysis refused: available physical memory");
     }
 
     private void finish(ActiveRun run, LouvainWorkerRunResult result, boolean cacheable) {
@@ -278,10 +259,13 @@ public class LouvainAnalysisWorkflowService {
             boolean currentComplete = result.status() == Status.COMPLETED
                     && result.detection().converged()
                     && result.quality() != null;
-            if (cacheable && (!previousComplete || currentComplete)) {
+            boolean uploadSessionActive = !isUploadIdentity(run.identity)
+                    || fingerprintMatches(run.identity);
+            if (cacheable && uploadSessionActive && (!previousComplete || currentComplete)) {
                 resultCache.put(
                         CacheResultType.LOUVAIN_ANALYSIS,
                         run.identity.cacheKey(),
+                        run.identity.sessionId(),
                         new LouvainWorkflowCacheValue(
                                 result,
                                 run.inputNodeCount,
@@ -290,17 +274,22 @@ public class LouvainAnalysisWorkflowService {
                                 run.finishedAt),
                         run.finishedAt);
             }
+            if (isUploadIdentity(run.identity) && !fingerprintMatches(run.identity)) {
+                resultCache.removeSession(run.identity.sessionId());
+            }
         }
-        resultStore.saveLouvain(buildView(
-                run.identity,
-                state(result),
-                result,
-                run.inputNodeCount,
-                run.inputDirectedRelationshipCount,
-                run.requestedAt,
-                run.finishedAt,
-                false,
-                result.terminationDetail()));
+        if (!isUploadIdentity(run.identity)) {
+            resultStore.saveLouvain(buildView(
+                    run.identity,
+                    state(result),
+                    result,
+                    run.inputNodeCount,
+                    run.inputDirectedRelationshipCount,
+                    run.requestedAt,
+                    run.finishedAt,
+                    false,
+                    result.terminationDetail()));
+        }
     }
 
     private LouvainAnalysisWorkflowView activeView(ActiveRun run) {
@@ -344,8 +333,12 @@ public class LouvainAnalysisWorkflowService {
                 ? defaultAlgorithmParameters()
                 : identity.parameters();
         return new LouvainAnalysisWorkflowView(
-                SocialNetworkDatasetRegistry.BUILTIN_DATASET_ID,
-                SocialNetworkDatasetRegistry.BUILTIN_DATASET_VERSION,
+                identity == null
+                        ? SocialNetworkDatasetRegistry.BUILTIN_DATASET_ID
+                        : identity.datasetId(),
+                identity == null
+                        ? SocialNetworkDatasetRegistry.BUILTIN_DATASET_VERSION
+                        : identity.datasetVersion(),
                 state,
                 complete,
                 workerCompleted,
@@ -386,23 +379,79 @@ public class LouvainAnalysisWorkflowService {
                 cacheHit);
     }
 
-    private Identity currentIdentity(String datasetId) {
-        requireSupportedDataset(datasetId);
-        SocialNetworkDataset dataset = registry.findDataset(datasetId);
+    private Identity currentIdentity(
+            String datasetId, String datasetVersion, String sessionId) {
+        SocialNetworkDataset dataset = resolveDatasetContext(datasetId, datasetVersion, sessionId);
         try {
+            SocialNetworkDataFingerprintService.Fingerprint fingerprint;
+            if (dataset.isUploadSession()) {
+                SocialNetworkWorkspaceSnapshot snapshot = workspace.get(
+                        dataset.datasetId(), dataset.datasetVersion(), dataset.sessionId());
+                fingerprint = snapshot.inputFingerprint();
+                if (fingerprint == null
+                        || !dataset.datasetId().equals(fingerprint.datasetId())
+                        || !dataset.datasetVersion().equals(fingerprint.datasetVersion())
+                        || !dataset.normalizationVersion()
+                                .equals(fingerprint.normalizationVersion())) {
+                    return null;
+                }
+            } else {
+                requireSupportedBuiltin(dataset);
+                fingerprint = fingerprintService.fingerprint(dataset);
+            }
             return cacheKeyFactory.louvain(
                     dataset,
-                    fingerprintService.fingerprint(dataset),
+                    fingerprint,
                     LouvainAnalysisParameters.DEFAULT);
         } catch (IOException exception) {
             return null;
         }
     }
 
-    private boolean fingerprintMatches(String datasetId, String expectedFingerprint) {
+    private SocialNetworkDataset resolveDatasetContext(
+            String datasetId, String datasetVersion, String sessionId) {
+        if (datasetVersion == null && sessionId == null) {
+            SocialNetworkDataset dataset = registry.findDataset(datasetId);
+            if (dataset.isUploadSession()) {
+                throw new SocialNetworkDatasetContextException();
+            }
+            return dataset;
+        }
+        if (datasetVersion == null || datasetVersion.isBlank()) {
+            throw new SocialNetworkDatasetContextException();
+        }
+        return registry.resolveDatasetContext(datasetId, datasetVersion, sessionId);
+    }
+
+    private SocialNetworkGraphResult networkFor(Identity identity) {
+        if (!isUploadIdentity(identity)) {
+            return workspace.getNetworkForAnalysis(
+                    identity.datasetId(), identity.dataFingerprint());
+        }
+        SocialNetworkDataset dataset = registry.resolveDatasetContext(
+                identity.datasetId(), identity.datasetVersion(), identity.sessionId());
+        SocialNetworkWorkspaceSnapshot snapshot = workspace.get(
+                dataset.datasetId(), dataset.datasetVersion(), dataset.sessionId());
+        if (!identity.dataFingerprint().equals(snapshot.inputFingerprint().dataFingerprint())) {
+            throw new IllegalStateException("upload snapshot fingerprint changed");
+        }
+        return snapshot.network();
+    }
+
+    private boolean fingerprintMatches(Identity identity) {
         try {
-            return expectedFingerprint.equals(
-                    fingerprintService.fingerprint(registry.findDataset(datasetId))
+            if (isUploadIdentity(identity)) {
+                SocialNetworkDataset dataset = registry.resolveDatasetContext(
+                        identity.datasetId(), identity.datasetVersion(), identity.sessionId());
+                SocialNetworkWorkspaceSnapshot snapshot = workspace.get(
+                        dataset.datasetId(), dataset.datasetVersion(), dataset.sessionId());
+                return snapshot.inputFingerprint() != null
+                        && identity.dataFingerprint().equals(
+                                snapshot.inputFingerprint().dataFingerprint());
+            }
+            return identity.dataFingerprint().equals(
+                    fingerprintService.fingerprint(
+                                    registry.findDataset(identity.datasetId()))
                             .dataFingerprint());
         } catch (IOException | RuntimeException exception) {
             return false;
@@ -419,6 +468,9 @@ public class LouvainAnalysisWorkflowService {
         if (cached.isPresent()) {
             return cached;
         }
+        if (isUploadIdentity(identity)) {
+            return Optional.empty();
+        }
         Optional<LouvainAnalysisWorkflowView> persisted =
                 resultStore.loadLouvain(identity.cacheKey().value());
         if (persisted.isEmpty()
@@ -427,6 +479,9 @@ public class LouvainAnalysisWorkflowService {
             return Optional.empty();
         }
         LouvainAnalysisWorkflowView view = persisted.get();
+        if (!isReusableResult(view, identity)) {
+            return Optional.empty();
+        }
         LouvainAnalysisParameters parameters = LouvainAnalysisParameters.DEFAULT;
         CommunityDetectionResult detection = new CommunityDetectionResult(
                 view.communities(),
@@ -459,6 +514,7 @@ public class LouvainAnalysisWorkflowService {
         resultCache.put(
                 CacheResultType.LOUVAIN_ANALYSIS,
                 identity.cacheKey(),
+                identity.sessionId(),
                 value,
                 view.finishedAt());
         return resultCache.find(
@@ -467,14 +523,59 @@ public class LouvainAnalysisWorkflowService {
                 LouvainWorkflowCacheValue.class);
     }
 
-    private void requireSupportedDataset(String datasetId) {
-        SocialNetworkDataset dataset = registry.findDataset(datasetId);
-        if (!SocialNetworkDatasetRegistry.BUILTIN_DATASET_ID.equals(datasetId)
+    private static boolean isReusableResult(
+            LouvainAnalysisWorkflowView view, Identity identity) {
+        if (view == null
+                || !identity.datasetId().equals(view.datasetId())
+                || !identity.datasetVersion().equals(view.datasetVersion())
+                || !"COMPLETED".equals(view.state())
+                || !"COMPLETED".equals(view.workerStatus())
+                || !view.complete()
+                || !view.workerCompleted()
+                || !view.converged()
+                || view.quality() == null
+                || !SocialNetworkAnalysisCacheKeyFactory.ANALYSIS_SCOPE
+                        .equals(view.analysisScope())
+                || !identity.dataFingerprint().equals(view.dataFingerprint())
+                || !identity.inputFiles().equals(view.inputFiles())
+                || !identity.inputContractVersion().equals(view.inputContractVersion())
+                || !identity.relationProjectionVersion()
+                        .equals(view.relationProjectionVersion())
+                || !identity.projection().equals(view.projection())
+                || !identity.parameters().equals(view.algorithmParameters())
+                || !identity.cacheKey().value().equals(view.cacheKey())
+                || !LouvainCommunityDetector.ALGORITHM_VERSION
+                        .equals(view.algorithmVersion())
+                || !LouvainQualityCalculator.QUALITY_CONTRACT_VERSION
+                        .equals(view.qualityContractVersion())) {
+            return false;
+        }
+
+        var quality = view.quality();
+        Set<String> unassigned = new HashSet<>(view.unassignedNodeIds());
+        return quality.inputNodeCount() == view.inputNodeCount()
+                && quality.assignedNodeCount() + quality.unassignedNodeCount()
+                        == view.inputNodeCount()
+                && quality.assignedNodeCount() == view.communityByNodeId().size()
+                && quality.unassignedNodeCount() == view.unassignedNodeCount()
+                && unassigned.size() == view.unassignedNodeIds().size()
+                && unassigned.equals(new HashSet<>(quality.unassignedNodeIds()))
+                && view.communities().stream()
+                        .mapToInt(community -> community.nodeCount())
+                        .sum() == quality.assignedNodeCount();
+    }
+
+    private void requireSupportedBuiltin(SocialNetworkDataset dataset) {
+        if (!SocialNetworkDatasetRegistry.BUILTIN_DATASET_ID.equals(dataset.datasetId())
                 || dataset.type() != DatasetType.BUILTIN
                 || !SocialNetworkDatasetRegistry.BUILTIN_DATASET_VERSION
                         .equals(dataset.datasetVersion())) {
             throw new IllegalArgumentException("Louvain analysis supports built-in v1 only");
         }
+    }
+
+    private static boolean isUploadIdentity(Identity identity) {
+        return identity.datasetType() == DatasetType.UPLOAD_SESSION;
     }
 
     private static Map<String, Object> defaultAlgorithmParameters() {
@@ -515,11 +616,6 @@ public class LouvainAnalysisWorkflowService {
                 Status.FAILED, null, 0.0, null, null, null, detail, 0, 0, 0, 0, 0);
     }
 
-    private static LouvainWorkerRunResult memoryLimitedResult(String detail) {
-        return new LouvainWorkerRunResult(
-                Status.MEMORY_LIMIT, null, 0.0, null, null, null, detail, 0, 0, 0, 0, 0);
-    }
-
     private static LouvainWorkerRunResult failedResult(
             String detail, LouvainWorkerRunResult previous) {
         return new LouvainWorkerRunResult(
@@ -543,6 +639,16 @@ public class LouvainAnalysisWorkflowService {
             int inputDirectedRelationshipCount,
             Instant requestedAt,
             Instant finishedAt) {
+    }
+
+    public record ReadOnlySnapshot(
+            LouvainAnalysisWorkflowView status,
+            Optional<LouvainAnalysisWorkflowView> reusableResult) {
+
+        public ReadOnlySnapshot {
+            Objects.requireNonNull(status, "status");
+            Objects.requireNonNull(reusableResult, "reusableResult");
+        }
     }
 
     private static final class ActiveRun {

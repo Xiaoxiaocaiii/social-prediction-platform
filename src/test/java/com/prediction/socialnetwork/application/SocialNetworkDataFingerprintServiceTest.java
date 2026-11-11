@@ -15,8 +15,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HexFormat;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import org.junit.jupiter.api.io.TempDir;
@@ -147,6 +149,123 @@ class SocialNetworkDataFingerprintServiceTest {
     }
 
     @Test
+    void uploadFingerprintSupportsMixedFormatsAndMultipleFilesWithoutSessionIdentity()
+            throws IOException {
+        byte[] firstUsers =
+                "user_id,username\nu1,one\n".getBytes(StandardCharsets.UTF_8);
+        byte[] secondUsers =
+                "{\"user_id\":\"u2\",\"username\":\"two\"}\n"
+                        .getBytes(StandardCharsets.UTF_8);
+        byte[] relationships =
+                "{\"source_user_id\":\"u1\",\"target_user_id\":\"u2\"}\n"
+                        .getBytes(StandardCharsets.UTF_8);
+
+        Path firstRoot = temporaryDirectory.resolve("upload-first");
+        Files.createDirectories(firstRoot);
+        DatasetFileDescriptor firstCsv = new DatasetFileDescriptor(
+                "file-01-users.csv", DatasetFileRole.USERS, SourceFormat.CSV, "utf8");
+        DatasetFileDescriptor firstJsonl = new DatasetFileDescriptor(
+                "file-02-users.jsonl", DatasetFileRole.USERS, SourceFormat.JSONL, "utf8");
+        DatasetFileDescriptor firstRelationships = new DatasetFileDescriptor(
+                "file-03-relationships.jsonl",
+                DatasetFileRole.RELATIONSHIPS,
+                SourceFormat.JSONL,
+                "utf8");
+        Map<String, Path> firstFiles = new LinkedHashMap<>();
+        firstFiles.put(firstCsv.logicalFileName(), writeStagedFile(
+                firstRoot, "part-01.csv", firstUsers));
+        firstFiles.put(firstJsonl.logicalFileName(), writeStagedFile(
+                firstRoot, "part-02.jsonl", secondUsers));
+        firstFiles.put(firstRelationships.logicalFileName(), writeStagedFile(
+                firstRoot, "part-03.jsonl", relationships));
+        var first = service.fingerprintUpload(
+                uploadDataset(List.of(firstCsv, firstJsonl, firstRelationships), "first"),
+                firstRoot,
+                firstFiles);
+
+        Path secondRoot = temporaryDirectory.resolve("upload-second");
+        Files.createDirectories(secondRoot);
+        DatasetFileDescriptor renamedRelationships = new DatasetFileDescriptor(
+                "renamed-relations.jsonl",
+                DatasetFileRole.RELATIONSHIPS,
+                SourceFormat.JSONL,
+                "utf8");
+        DatasetFileDescriptor renamedUsersJsonl = new DatasetFileDescriptor(
+                "renamed-users.jsonl", DatasetFileRole.USERS, SourceFormat.JSONL, "utf8");
+        DatasetFileDescriptor renamedUsersCsv = new DatasetFileDescriptor(
+                "renamed-users.csv", DatasetFileRole.USERS, SourceFormat.CSV, "utf8");
+        Map<String, Path> secondFiles = new LinkedHashMap<>();
+        secondFiles.put(renamedRelationships.logicalFileName(), writeStagedFile(
+                secondRoot, "other-01.jsonl", relationships));
+        secondFiles.put(renamedUsersJsonl.logicalFileName(), writeStagedFile(
+                secondRoot, "other-02.jsonl", secondUsers));
+        secondFiles.put(renamedUsersCsv.logicalFileName(), writeStagedFile(
+                secondRoot, "other-03.csv", firstUsers));
+        var second = service.fingerprintUpload(
+                uploadDataset(List.of(
+                        renamedRelationships, renamedUsersJsonl, renamedUsersCsv),
+                        "second"),
+                secondRoot,
+                secondFiles);
+
+        assertEquals(first.dataFingerprint(), second.dataFingerprint());
+        assertEquals(3, first.files().size());
+        assertEquals(
+                List.of("relationships", "users", "users"),
+                first.files().stream()
+                        .map(SocialNetworkDataFingerprintService.FileFingerprint::role)
+                        .toList());
+
+        DatasetFileDescriptor csvInterpretedAsJsonl = new DatasetFileDescriptor(
+                firstCsv.logicalFileName(),
+                DatasetFileRole.USERS,
+                SourceFormat.JSONL,
+                "utf8");
+        var formatChanged = service.fingerprintUpload(
+                uploadDataset(List.of(
+                        csvInterpretedAsJsonl, firstJsonl, firstRelationships),
+                        "format-changed"),
+                firstRoot,
+                firstFiles);
+        assertNotEquals(first.dataFingerprint(), formatChanged.dataFingerprint());
+
+        Files.writeString(firstFiles.get(firstRelationships.logicalFileName()),
+                "{\"source_user_id\":\"u1\",\"target_user_id\":\"u3\"}\n");
+        var changed = service.fingerprintUpload(
+                uploadDataset(List.of(firstCsv, firstJsonl, firstRelationships), "changed"),
+                firstRoot,
+                firstFiles);
+        assertNotEquals(first.dataFingerprint(), changed.dataFingerprint());
+    }
+
+    @Test
+    void uploadFingerprintRejectsPathsOutsideTheStagingRoot() throws IOException {
+        Path root = temporaryDirectory.resolve("upload-path-check");
+        Files.createDirectories(root);
+        DatasetFileDescriptor descriptor = new DatasetFileDescriptor(
+                "users.csv", DatasetFileRole.USERS, SourceFormat.CSV, "utf8");
+        Path outside = temporaryDirectory.resolve("outside-upload.csv");
+        Files.write(outside, USERS_BYTES);
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> service.fingerprintUpload(
+                        uploadDataset(List.of(descriptor)),
+                        root,
+                        Map.of(descriptor.logicalFileName(), outside)));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> service.fingerprintUpload(
+                        uploadDataset(List.of(new DatasetFileDescriptor(
+                                "../outside.csv",
+                                DatasetFileRole.USERS,
+                                SourceFormat.CSV,
+                                "utf8"))),
+                        root,
+                        Map.of("../outside.csv", writeStagedFile(root, "inside.csv", USERS_BYTES))));
+    }
+
+    @Test
     @EnabledIfSystemProperty(named = "fingerprint.real", matches = "true")
     void fingerprintsTheRegisteredBuiltInGraphInputs() throws IOException {
         SocialNetworkDatasetRegistry registry = new SocialNetworkDatasetRegistry();
@@ -171,6 +290,38 @@ class SocialNetworkDataFingerprintServiceTest {
         Files.write(root.resolve(USERS_PATH), USERS_BYTES);
         Files.write(root.resolve(RELATIONSHIPS_PATH), RELATIONSHIPS_BYTES);
         return root;
+    }
+
+    private static Path writeStagedFile(Path root, String name, byte[] content)
+            throws IOException {
+        Path file = root.resolve(name);
+        Files.write(file, content);
+        return file;
+    }
+
+    private static SocialNetworkDataset uploadDataset(
+            List<DatasetFileDescriptor> files) {
+        return uploadDataset(files, "test");
+    }
+
+    private static SocialNetworkDataset uploadDataset(
+            List<DatasetFileDescriptor> files, String identity) {
+        return new SocialNetworkDataset(
+                "upload-" + identity,
+                "upload test data",
+                DatasetType.UPLOAD_SESSION,
+                "session-" + identity,
+                DatasetStatus.PARTIAL,
+                "test upload",
+                "test",
+                null,
+                null,
+                files,
+                "session-" + identity,
+                "normalization-v1",
+                "metrics-v1",
+                "text-v1",
+                "explanation-v1");
     }
 
     private static SocialNetworkDataset dataset(List<DatasetFileDescriptor> files) {

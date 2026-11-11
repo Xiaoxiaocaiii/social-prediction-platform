@@ -71,6 +71,25 @@ const structureRender = functionBlock(
     "renderNetworkStructureView",
     "networkStructureMount"
 );
+assert.match(
+    structureRender,
+    /social-network-network-structure-actions/
+);
+assert.match(structureRender, /href="#\/social-network\/network"/);
+assert.match(structureRender, /全局关系图/);
+assert.match(structureRender, /data-network-structure-export/);
+assert.ok(
+    structureRender.indexOf("social-network-network-structure-actions") <
+        structureRender.indexOf('href="#/social-network/network"')
+);
+assert.ok(
+    structureRender.indexOf('href="#/social-network/network"') <
+        structureRender.indexOf("全局关系图")
+);
+assert.ok(
+    structureRender.indexOf("全局关系图") <
+        structureRender.indexOf("data-network-structure-export")
+);
 const load = functionBlock(
     "loadNetworkStructure",
     "handleSocialNetworkDatasetContextChanged"
@@ -95,9 +114,9 @@ const exportDialog = functionBlock(
 const exportDownload = functionBlock("downloadModuleExport", "firstPresent");
 
 assert.ok(index.indexOf("social-network-network-structure-model.js") <
-    index.indexOf("js/social-network.js?v=20261107-overview-heading-gap-1"));
+    index.indexOf("js/social-network.js?v=20261108-global-graph-entry-1"));
 assert.match(index,
-    /css\/style\.css\?v=20261107-overview-heading-gap-1/);
+    /css\/style\.css\?v=20261111-ranking-bridge-spacing-1/);
 assert.match(index,
     /social-network-network-structure-model\.js\?v=20261106-network-structure-4/);
 assert.match(source,
@@ -120,6 +139,8 @@ assert.match(load, /fromResponse\([\s\S]*body,[\s\S]*qualityBody,[\s\S]*structur
 assert.match(load, /activeSocialNetworkTask !== "relations"/);
 assert.match(load, /sequence !== networkStructureRequestSequence/);
 assert.match(load, /sameDatasetContext\(context, current\)/);
+assert.match(load,
+    /if \(currentNetworkStructure &&\s*networkStructureContextKey === contextKey\) \{\s*renderNetworkStructureView\(currentNetworkStructure, context\);\s*setText\("social-network-task-status", "当前网络结构摘要"\);\s*setText\("social-network-task-message",/);
 assert.match(load,
     /networkStructureModel\.fromResponse\([\s\S]*body,[\s\S]*qualityBody,[\s\S]*structureBody\s*\)/);
 assert.match(contextChanged, /activeSocialNetworkTask === "relations"\)\s*\{\s*loadNetworkStructure\(\)/);
@@ -295,9 +316,13 @@ assert.match(css,
     /\.social-network-network-structure-core-node-table\s*\{/);
 assert.match(css,
     /\.social-network-network-structure-core-pagination\s*\{/);
-assert.match(index, /style\.css\?v=20261107-overview-heading-gap-1/);
+assert.match(css,
+    /\.social-network-network-structure-actions\s*\{[^}]*display:\s*flex;[^}]*align-items:\s*center;[^}]*gap:\s*10px;/);
+assert.match(css,
+    /\.social-network-network-structure-actions\s*\{[^}]*flex-shrink:\s*0;[^}]*white-space:\s*nowrap;/);
+assert.match(index, /style\.css\?v=20261111-ranking-bridge-spacing-1/);
 assert.match(index,
     /social-network-network-structure-model\.js\?v=20261106-network-structure-4/);
-assert.match(index, /social-network\.js\?v=20261107-overview-heading-gap-1/);
+assert.match(index, /social-network\.js\?v=20261108-global-graph-entry-1/);
 
 console.log("social-network-network-structure: contract checks passed");

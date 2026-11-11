@@ -489,8 +489,8 @@ assert.match(
     /activeModuleExportSnapshot\.query\.term[\s\S]*?不使用输入草稿/
 );
 
-assert.match(index, /style\.css\?v=20261107-overview-heading-gap-1/);
-assert.match(index, /social-network\.js\?v=20261107-overview-heading-gap-1/);
+assert.match(index, /style\.css\?v=20261111-ranking-bridge-spacing-1/);
+assert.match(index, /social-network\.js\?v=20261108-global-graph-entry-1/);
 assert.doesNotMatch(ensureView, /social-network-content-task-nav/);
 assert.match(ensureView,
     /TOPIC SEARCH RESULTS<\/p><h2>主题查询与相关推文<\/h2>/);

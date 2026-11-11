@@ -69,13 +69,18 @@ class SocialNetworkGroupInsightsServiceTest {
         when(view.complete()).thenReturn(true);
         when(view.converged()).thenReturn(true);
         when(view.dataFingerprint()).thenReturn("fingerprint");
+        when(view.datasetId()).thenReturn(SocialNetworkDatasetRegistry.BUILTIN_DATASET_ID);
+        when(view.datasetVersion()).thenReturn(
+                SocialNetworkDatasetRegistry.BUILTIN_DATASET_VERSION);
         when(view.communityByNodeId()).thenReturn(Map.of("a", "C1", "b", "C2"));
         LouvainQualitySummary quality = mock(LouvainQualitySummary.class);
         when(quality.crossCommunityTieCount()).thenReturn(2);
         when(view.quality()).thenReturn(quality);
         when(louvain.status("dataset")).thenReturn(view);
         SocialNetworkGraphResult graph = mock(SocialNetworkGraphResult.class);
-        when(graph.edges()).thenReturn(List.of(new NetworkEdge("a", "b", "following")));
+        when(graph.edges()).thenReturn(List.of(
+                new NetworkEdge("a", "b", "following"),
+                new NetworkEdge("b", "a", "following")));
         when(workspace.cachedNetworkForAnalysis("dataset", "fingerprint"))
                 .thenReturn(Optional.of(graph));
         when(workspace.analysisProfileNames("dataset")).thenReturn(Map.of());
@@ -90,19 +95,25 @@ class SocialNetworkGroupInsightsServiceTest {
         when(view.complete()).thenReturn(true);
         when(view.converged()).thenReturn(true);
         when(view.dataFingerprint()).thenReturn("fingerprint");
+        when(view.datasetId()).thenReturn(SocialNetworkDatasetRegistry.BUILTIN_DATASET_ID);
+        when(view.datasetVersion()).thenReturn(
+                SocialNetworkDatasetRegistry.BUILTIN_DATASET_VERSION);
         when(view.communityByNodeId()).thenReturn(Map.of("a", "C1", "b", "C2"));
         LouvainQualitySummary quality = mock(LouvainQualitySummary.class);
         when(quality.crossCommunityTieCount()).thenReturn(1);
         when(view.quality()).thenReturn(quality);
         when(louvain.status("dataset")).thenReturn(view);
         SocialNetworkGraphResult graph = mock(SocialNetworkGraphResult.class);
-        when(graph.edges()).thenReturn(List.of(new NetworkEdge("a", "b", "following")));
+        when(graph.edges()).thenReturn(List.of(
+                new NetworkEdge("a", "b", "following"),
+                new NetworkEdge("b", "a", "following")));
         when(workspace.cachedNetworkForAnalysis("dataset", "fingerprint"))
                 .thenReturn(Optional.of(graph));
         when(workspace.analysisProfileNames("dataset")).thenReturn(Map.of());
         var result = service.louvain("dataset");
         assertTrue(result.available());
         assertEquals(1, result.communityPairs().get(0).tieCount());
+        assertEquals(2, result.communityPairs().get(0).directedRelationshipCount());
         verify(workspace, never()).getNetworkForAnalysis(any(), any());
     }
 
@@ -115,7 +126,9 @@ class SocialNetworkGroupInsightsServiceTest {
         when(louvain.status("dataset")).thenReturn(view);
 
         SocialNetworkGraphResult graph = mock(SocialNetworkGraphResult.class);
-        when(graph.edges()).thenReturn(List.of(new NetworkEdge("a", "b", "following")));
+        when(graph.edges()).thenReturn(List.of(
+                new NetworkEdge("a", "b", "following"),
+                new NetworkEdge("b", "a", "following")));
         when(workspace.cachedNetworkForAnalysis("dataset", "fingerprint"))
                 .thenReturn(Optional.of(graph));
         when(workspace.analysisProfileNames("dataset")).thenReturn(Map.of());
@@ -135,9 +148,55 @@ class SocialNetworkGroupInsightsServiceTest {
         var restored = restartedService.louvain("dataset");
         assertTrue(restored.available());
         assertEquals(1, restored.communityPairs().get(0).tieCount());
+        assertEquals(2, restored.communityPairs().get(0).directedRelationshipCount());
         verify(restartedWorkspace, never())
                 .cachedNetworkForAnalysis("dataset", "fingerprint");
         verify(restartedWorkspace, never()).getGroupEvidenceInput(any(), any());
+    }
+
+    @Test
+    void uploadCommunityPairsUseOnlyTheMatchingSessionSnapshotAndNeverPersist() {
+        LouvainAnalysisWorkflowView view = mock(LouvainAnalysisWorkflowView.class);
+        when(view.complete()).thenReturn(true);
+        when(view.converged()).thenReturn(true);
+        when(view.dataFingerprint()).thenReturn("upload-fingerprint");
+        when(view.cacheKey()).thenReturn("upload-cache-key");
+        when(view.datasetId()).thenReturn("upload-session-a");
+        when(view.datasetVersion()).thenReturn("version-a");
+        when(view.communityByNodeId()).thenReturn(Map.of("a", "C1", "b", "C2"));
+        when(view.quality()).thenReturn(new LouvainQualitySummary(
+                2, 2, 2, List.of(), 2, 1, 1, Map.of(), 0.0));
+        when(louvain.status("upload-session-a", "version-a", "session-a"))
+                .thenReturn(view);
+
+        SocialNetworkGraphResult graph = mock(SocialNetworkGraphResult.class);
+        when(graph.edges()).thenReturn(List.of(new NetworkEdge("a", "b", "following")));
+        SocialNetworkWorkspaceService.GroupEvidenceInput input =
+                mock(SocialNetworkWorkspaceService.GroupEvidenceInput.class);
+        when(input.network()).thenReturn(graph);
+        when(workspace.getGroupEvidenceInput(
+                "upload-session-a", "version-a", "session-a", "upload-fingerprint"))
+                .thenReturn(input);
+        when(workspace.analysisProfileNames(
+                "upload-session-a", "version-a", "session-a"))
+                .thenReturn(Map.of("a", "upload alpha"));
+
+        SocialNetworkAnalysisResultStore store =
+                mock(SocialNetworkAnalysisResultStore.class);
+        SocialNetworkGroupInsightsService uploadService =
+                new SocialNetworkGroupInsightsService(
+                        cliques, louvain, workspace, store);
+
+        var result = uploadService.louvain(
+                "upload-session-a", "version-a", "session-a");
+
+        assertTrue(result.available());
+        assertEquals("upload alpha", result.names().get("a"));
+        assertEquals(1, result.communityPairs().get(0).tieCount());
+        verify(workspace).getGroupEvidenceInput(
+                "upload-session-a", "version-a", "session-a", "upload-fingerprint");
+        verify(store, never()).loadCommunityPairs(any(), any(), any(), any());
+        verify(store, never()).saveCommunityPairs(any(), any(), any(), any(), any());
     }
 
     private static LouvainAnalysisWorkflowView completeLouvainView() {

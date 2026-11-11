@@ -22,10 +22,11 @@ class SocialNetworkGroupInsightsControllerTest {
         when(service.clique("dataset", 0, 20)).thenReturn(
                 new SocialNetworkGroupInsightsService.CliqueView(
                         false, "complete_memberships_unavailable", "fingerprint", Map.of(), null));
-        when(service.louvain("dataset")).thenReturn(
+        when(service.louvain("dataset", null, null)).thenReturn(
                 new SocialNetworkGroupInsightsService.LouvainView(
                         true, null, "fingerprint", Map.of("a", "alice"),
-                        List.of(new SocialNetworkGroupInsightCalculator.CommunityPair("C1", "C2", 3))));
+                        List.of(new SocialNetworkGroupInsightCalculator.CommunityPair(
+                                "C1", "C2", 3, 4))));
         when(service.clique("dataset", 0, 101))
                 .thenThrow(new IllegalArgumentException("invalid page size"));
         when(service.sharedCliques("dataset", "a", "b", 0, 20)).thenReturn(
@@ -42,7 +43,15 @@ class SocialNetworkGroupInsightsControllerTest {
         mvc.perform(get("/api/social-network/datasets/dataset/network/louvain/insights"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.communityPairs[0].tieCount").value(3))
+                .andExpect(jsonPath(
+                        "$.data.communityPairs[0].directedRelationshipCount").value(4))
                 .andExpect(jsonPath("$.data.names.a").value("alice"));
+        mvc.perform(get("/api/social-network/datasets/upload-1/network/louvain/insights")
+                        .param("datasetVersion", "version-1")
+                        .param("sessionId", "session-1"))
+                .andExpect(status().isOk());
+        org.mockito.Mockito.verify(service).louvain(
+                "upload-1", "version-1", "session-1");
         mvc.perform(get("/api/social-network/datasets/dataset/network/cliques/insights/shared")
                         .param("first", "a").param("second", "b"))
                 .andExpect(status().isOk())

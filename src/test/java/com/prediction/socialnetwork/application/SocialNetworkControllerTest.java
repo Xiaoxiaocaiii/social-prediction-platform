@@ -152,6 +152,22 @@ class SocialNetworkControllerTest {
         assertTrue(localNetworkLink.contains("datasetVersion=" + datasetVersion));
         assertTrue(localNetworkLink.contains("sessionId=" + sessionId));
 
+        mockMvc.perform(get(
+                        "/api/social-network/datasets/" + datasetId + "/network/graph")
+                        .param("datasetVersion", datasetVersion)
+                        .param("sessionId", sessionId)
+                        .param("communityFilter", "unassigned"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.graphDataFingerprint")
+                        .isNotEmpty())
+                .andExpect(jsonPath("$.data.communityDataFingerprint")
+                        .value(org.hamcrest.Matchers.nullValue()))
+                .andExpect(jsonPath("$.data.communityAssignmentsComplete").value(false))
+                .andExpect(jsonPath("$.data.communityByNodeId").isEmpty())
+                .andExpect(jsonPath("$.data.communityFilterAvailable").value(false))
+                .andExpect(jsonPath("$.data.communityFilterApplied").value(false))
+                .andExpect(jsonPath("$.data.communityFilter").value("all"));
+
         uploadTasks.closeSession(datasetId, datasetVersion, sessionId);
         mockMvc.perform(get(qualityPath)
                         .param("datasetVersion", datasetVersion)

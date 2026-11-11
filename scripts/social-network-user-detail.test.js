@@ -71,7 +71,7 @@ assert.match(index, /id="social-network-user-drawer-context"/);
 assert.match(index, /role="tabpanel"[\s\S]*?data-user-detail-panel="profile"/);
 assert.match(index, /data-user-detail-panel="tweets" hidden/);
 assert.match(index, /data-user-detail-panel="neighbors" hidden/);
-assert.match(index, /social-network\.js\?v=20261107-overview-heading-gap-1/);
+assert.match(index, /social-network\.js\?v=20261108-global-graph-entry-1/);
 
 assert.match(css, /width:\s*min\(560px,\s*calc\(100vw - 48px\)\)/);
 assert.match(css, /\.social-network-user-drawer \.social-network-detail-body\s*\{[^}]*overflow:\s*auto/s);

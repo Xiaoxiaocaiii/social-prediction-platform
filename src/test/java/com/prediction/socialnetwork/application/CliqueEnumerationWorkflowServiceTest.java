@@ -224,48 +224,6 @@ class CliqueEnumerationWorkflowServiceTest {
     }
 
     @Test
-    void memoryPreflightRejectsBeforeLoadingTheAnalysisGraph() throws Exception {
-        SocialNetworkDatasetRegistry registry = new SocialNetworkDatasetRegistry();
-        SocialNetworkDataset dataset = registry.findDataset(
-                SocialNetworkDatasetRegistry.BUILTIN_DATASET_ID);
-        SocialNetworkWorkspaceService workspace = mock(SocialNetworkWorkspaceService.class);
-        SocialNetworkDataFingerprintService fingerprintService =
-                mock(SocialNetworkDataFingerprintService.class);
-        when(fingerprintService.fingerprint(dataset))
-                .thenReturn(fingerprint(dataset, "preflight-data-fingerprint"));
-        AtomicInteger runnerCalls = new AtomicInteger();
-        CliqueEnumerationWorkflowService service = new CliqueEnumerationWorkflowService(
-                registry,
-                workspace,
-                (nodes, edges, cancelled) -> {
-                    runnerCalls.incrementAndGet();
-                    return null;
-                },
-                fingerprintService,
-                new SocialNetworkAnalysisCacheKeyFactory(),
-                new SocialNetworkAnalysisResultCache(),
-                () -> {
-                    throw new IllegalStateException(
-                            "Analysis refused: available physical memory is below the 2 GiB safety threshold");
-                });
-
-        try {
-            service.request(dataset.datasetId());
-            Awaitility.await()
-                    .atMost(2, TimeUnit.SECONDS)
-                    .untilAsserted(() -> assertEquals(
-                            "MEMORY_LIMIT",
-                            service.status(dataset.datasetId(), 0, 20).state()));
-            assertEquals("physical_memory_preflight",
-                    service.status(dataset.datasetId(), 0, 20).terminationDetail());
-            verifyNoInteractions(workspace);
-            assertEquals(0, runnerCalls.get());
-        } finally {
-            service.shutdown();
-        }
-    }
-
-    @Test
     void restoresPersistedCompleteResultWithoutStartingTheRunner() throws Exception {
         SocialNetworkDatasetRegistry registry = new SocialNetworkDatasetRegistry();
         SocialNetworkDataset dataset = registry.findDataset(
@@ -332,7 +290,6 @@ class CliqueEnumerationWorkflowServiceTest {
                 fingerprintService,
                 keyFactory,
                 new SocialNetworkAnalysisResultCache(),
-                () -> { },
                 resultStore);
 
         try {
@@ -389,7 +346,7 @@ class CliqueEnumerationWorkflowServiceTest {
                 fingerprintService,
                 new SocialNetworkAnalysisCacheKeyFactory(),
                 new SocialNetworkAnalysisResultCache(),
-                () -> { });
+                SocialNetworkAnalysisResultStore.disabled());
     }
 
     private static SocialNetworkDataFingerprintService.Fingerprint fingerprint(

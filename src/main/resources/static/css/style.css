@@ -1464,10 +1464,10 @@ body.social-network-shell-active .social-network-task-content:has(
 }
 
 .social-network-node-ranking-controls {
-    display: flex;
-    align-items: end;
-    flex-wrap: wrap;
-    gap: 14px;
+    display: grid;
+    grid-template-columns: minmax(0, 420px) max-content minmax(0, 1fr);
+    align-items: start;
+    gap: 6px 14px;
 }
 
 .social-network-node-ranking-controls label,
@@ -1477,6 +1477,29 @@ body.social-network-shell-active .social-network-task-content:has(
     color: var(--text-secondary);
     font-size: 12px;
     font-weight: 650;
+}
+
+.social-network-node-ranking-metric-field {
+    display: grid;
+    gap: 7px;
+    grid-column: 1;
+    grid-row: 1;
+    width: 100%;
+    min-width: 0;
+}
+
+.social-network-node-ranking-controls .social-network-node-ranking-note {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    margin: 0;
+    font-weight: 400;
+    white-space: normal;
+}
+
+.social-network-node-ranking-controls > button {
+    grid-column: 2;
+    grid-row: 1;
+    margin-top: 22px;
 }
 
 .social-network-node-ranking-controls select,
@@ -1633,7 +1656,7 @@ body.social-network-shell-active .social-network-task-content:has(
 
 .social-network-cross-metric-view {
     display: grid;
-    gap: 12px;
+    gap: 8px;
     min-width: 0;
 }
 
@@ -1642,10 +1665,7 @@ body.social-network-shell-active .social-network-task-content:has(
 }
 
 .social-network-cross-metric-heading {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 16px;
+    display: block;
 }
 
 .social-network-cross-metric-heading h3,
@@ -1657,8 +1677,7 @@ body.social-network-shell-active .social-network-task-content:has(
 
 .social-network-cross-metric-heading p,
 .social-network-cross-metric-panel > p,
-.social-network-cross-metric-evidence > p,
-.social-network-cross-metric-summary {
+.social-network-cross-metric-evidence > p {
     margin: 4px 0 0;
     color: var(--text-secondary);
     font-size: 12px;
@@ -1666,9 +1685,9 @@ body.social-network-shell-active .social-network-task-content:has(
     overflow-wrap: anywhere;
 }
 
-.social-network-cross-metric-heading > p {
-    max-width: 54%;
-    text-align: right;
+body.social-network-shell-active .social-network-task-card
+        .social-network-cross-metric-heading p {
+    margin-bottom: 0;
 }
 
 .social-network-cross-metric-grid {
@@ -2847,8 +2866,27 @@ body.social-network-shell-active .social-network-task-content:has(
     }
 
     .social-network-node-ranking-controls {
+        grid-template-columns: minmax(0, 1fr);
         align-items: stretch;
-        flex-direction: column;
+        gap: 7px;
+    }
+
+    .social-network-node-ranking-controls > button {
+        grid-column: 1;
+        grid-row: auto;
+        margin-top: 0;
+    }
+
+    .social-network-node-ranking-metric-field {
+        grid-column: 1;
+        grid-row: auto;
+        width: 100%;
+    }
+
+    .social-network-node-ranking-controls .social-network-node-ranking-note {
+        grid-column: 1;
+        grid-row: auto;
+        white-space: normal;
     }
 
     .social-network-node-ranking-controls select {
@@ -3627,6 +3665,16 @@ body.social-network-shell-active
     gap: 7px;
 }
 
+.social-network-group-actions {
+    gap: 6px;
+}
+
+.social-network-network-structure-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
 .social-network-group-tabs button,
 .social-network-group-evidence-tabs button,
 .social-network-group-pagination button {
@@ -3679,6 +3727,11 @@ body.social-network-shell-active
 .social-network-group-actions {
     justify-content: flex-end;
     margin-left: auto;
+}
+
+.social-network-network-structure-actions {
+    flex-shrink: 0;
+    white-space: nowrap;
 }
 
 .social-network-group-status {
@@ -10077,6 +10130,10 @@ main:has(#page-social-network-graph.active) {
     padding-left: 32px;
 }
 
+body:has(#page-social-network-graph.active) > .footer {
+    display: none;
+}
+
 .social-network-overview-actions {
     display: flex;
     align-items: center;
@@ -10168,12 +10225,13 @@ main:has(#page-social-network-graph.active) {
 
 .social-network-graph-workspace {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 300px;
-    align-items: start;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
     gap: 18px;
 }
 
 .social-network-graph-main {
+    grid-row: 2;
     min-width: 0;
     padding: 16px;
 }
@@ -10362,13 +10420,19 @@ main:has(#page-social-network-graph.active) {
 }
 
 .social-network-graph-sidebar {
-    position: sticky;
-    top: 92px;
+    position: static;
     display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: stretch;
     gap: 14px;
 }
 
 .social-network-graph-side-card {
+    display: flex;
+    min-width: 0;
+    height: 280px;
+    flex-direction: column;
+    overflow: hidden;
     padding: 18px;
 }
 
@@ -10389,6 +10453,10 @@ main:has(#page-social-network-graph.active) {
     display: grid;
     gap: 9px;
     margin-bottom: 14px;
+}
+
+.social-network-graph-legend-content {
+    margin-top: var(--sn-space-2);
 }
 
 .social-network-graph-legend span {
@@ -10426,9 +10494,11 @@ main:has(#page-social-network-graph.active) {
 
 .social-network-graph-community-list {
     display: grid;
+    min-height: 0;
+    flex: 1 1 auto;
     gap: 3px;
-    max-height: 260px;
-    margin-bottom: 12px;
+    max-height: none;
+    margin-bottom: 0;
     overflow: auto;
     padding-right: 3px;
 }
@@ -10470,8 +10540,10 @@ main:has(#page-social-network-graph.active) {
 .social-network-graph-selected {
     display: grid;
     gap: 7px;
-    min-height: 92px;
-    margin-bottom: 14px;
+    min-height: 0;
+    max-height: 126px;
+    margin: var(--sn-space-2) 0 14px;
+    overflow: auto;
     color: var(--text-secondary);
     font-size: 11px;
     line-height: 1.55;
@@ -10489,6 +10561,7 @@ main:has(#page-social-network-graph.active) {
 
 .social-network-graph-sidebar .button {
     width: 100%;
+    margin-top: auto;
 }
 
 .social-network-graph-sidebar .button:disabled {
@@ -10499,6 +10572,8 @@ main:has(#page-social-network-graph.active) {
 }
 
 .social-network-graph-boundary {
+    grid-column: 1 / -1;
+    margin: 0;
     padding: 4px 3px;
 }
 
@@ -10509,7 +10584,7 @@ main:has(#page-social-network-graph.active) {
     }
 
     .social-network-graph-workspace {
-        grid-template-columns: minmax(0, 1fr) 270px;
+        grid-template-columns: minmax(0, 1fr);
         gap: 14px;
     }
 
@@ -10540,6 +10615,10 @@ main:has(#page-social-network-graph.active) {
     .social-network-graph-sidebar {
         position: static;
         grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .social-network-graph-side-card {
+        height: 280px;
     }
 
     .social-network-graph-boundary {
@@ -10594,6 +10673,11 @@ main:has(#page-social-network-graph.active) {
 
     .social-network-graph-sidebar {
         grid-template-columns: 1fr;
+    }
+
+    .social-network-graph-side-card {
+        height: auto;
+        min-height: 240px;
     }
 }
 
@@ -12098,9 +12182,38 @@ body.social-network-shell-active #page-social-network-task :is(
     margin: 0;
 }
 
-.social-network-graph-heading h1,
-.social-network-graph-side-card h2 {
+.social-network-graph-heading h1 {
     margin-bottom: var(--sn-space-1);
+}
+
+.social-network-graph-page .social-network-graph-side-card h2 {
+    margin: 0;
+    line-height: 1.3;
+}
+
+.social-network-graph-side-card > .page-overline {
+    margin-bottom: 0;
+    line-height: 1.2;
+}
+
+.social-network-graph-community-note:hover .social-network-scope-term-tooltip {
+    opacity: 1;
+    pointer-events: auto;
+    visibility: visible;
+}
+
+.social-network-graph-community-note.is-dismissed
+        .social-network-scope-term-tooltip {
+    opacity: 0;
+    pointer-events: none;
+    visibility: hidden;
+}
+
+.social-network-graph-community-title {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 6px;
 }
 
 .social-network-graph-context {
@@ -12133,7 +12246,7 @@ body.social-network-shell-active #page-social-network-task :is(
 
 .social-network-graph-community-list {
     gap: var(--sn-space-1);
-    margin-bottom: var(--sn-space-2);
+    margin-bottom: 0;
 }
 
 .social-network-graph-community-item {
@@ -12265,4 +12378,514 @@ body.social-network-shell-active .social-network-task-card
 body.social-network-shell-active .social-network-task-card
         .social-network-user-relations-draft {
     padding: 8px 10px;
+}
+
+.social-network-graph-community-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.social-network-graph-side-card
+        .social-network-graph-community-heading h2 {
+    margin: 0;
+}
+
+.social-network-graph-page .social-network-graph-community-filter {
+    flex: 0 1 158px;
+    width: 158px;
+    min-width: 118px;
+    min-height: 32px;
+    padding: 5px 8px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    background: var(--surface);
+    font-size: 11px;
+}
+
+.social-network-graph-page .social-network-graph-community-filter:disabled {
+    color: var(--text-muted);
+    background: var(--surface-soft);
+    cursor: not-allowed;
+}
+
+.social-network-graph-community-item {
+    appearance: none;
+    width: 100%;
+    border: 0;
+    border-bottom: 1px solid var(--border);
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.social-network-graph-community-item:hover {
+    background: var(--surface-soft);
+}
+
+.social-network-graph-community-item:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 1px;
+}
+
+.social-network-graph-evidence-dialog {
+    width: min(820px, calc(100vw - 40px));
+    max-height: 84vh;
+}
+
+dialog.social-network-graph-evidence-dialog[open],
+body.social-network-shell-active
+        dialog.social-network-graph-evidence-dialog[open] {
+    position: fixed;
+    top: 50vh;
+    right: auto;
+    bottom: auto;
+    left: 50vw;
+    margin: 0;
+    transform: translate(-50%, -50%);
+}
+
+.social-network-graph-evidence-body {
+    display: grid;
+    gap: 10px;
+}
+
+.social-network-graph-evidence-context {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.social-network-graph-evidence-pair {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-secondary);
+    font-size: 12px;
+}
+
+.social-network-graph-evidence-pair::after {
+    position: absolute;
+    top: 50%;
+    right: 13px;
+    width: 7px;
+    height: 7px;
+    border-right: 1.5px solid var(--text-muted);
+    border-bottom: 1.5px solid var(--text-muted);
+    content: "";
+    pointer-events: none;
+    transform: translateY(-65%) rotate(45deg);
+}
+
+.social-network-graph-evidence-pair[hidden] {
+    display: none;
+}
+
+.social-network-graph-evidence-pair select {
+    flex: 1;
+    min-width: 0;
+    min-height: 38px;
+    padding: 0 36px 0 12px;
+    appearance: none;
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    color: var(--text);
+    background: var(--surface);
+    font: inherit;
+    line-height: 1.4;
+    cursor: pointer;
+    transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.social-network-graph-evidence-pair select:hover {
+    border-color: var(--primary);
+}
+
+.social-network-graph-evidence-pair select:focus-visible {
+    border-color: var(--primary);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(200, 107, 67, 0.14);
+}
+
+.social-network-graph-evidence-pair select:disabled {
+    color: var(--text-muted);
+    background: var(--surface-soft);
+    cursor: not-allowed;
+}
+
+.social-network-graph-evidence-pair option {
+    color: var(--text);
+    background: var(--surface);
+}
+
+.social-network-graph-evidence-dialog .social-network-group-evidence-list {
+    max-height: 42vh;
+    min-height: 140px;
+}
+
+@media (max-width: 640px) {
+    .social-network-graph-evidence-dialog {
+        width: calc(100vw - 20px);
+        max-height: 90vh;
+        padding: 16px;
+    }
+
+    .social-network-graph-evidence-dialog .social-network-topic-dialog-head {
+        top: -16px;
+        margin: -16px -16px 14px;
+        padding: 14px 16px 10px;
+    }
+}
+
+.social-network-graph-page .social-network-graph-toolbar .button,
+.social-network-graph-page #social-network-graph-user-detail {
+    appearance: none;
+    -webkit-appearance: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 42px;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-secondary);
+    background: var(--surface);
+    box-shadow: none;
+    font: 600 12px/1.35 var(--font-sans);
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 140ms ease, border-color 140ms ease,
+        color 140ms ease, box-shadow 140ms ease;
+}
+
+.social-network-graph-page #social-network-graph-user-detail {
+    color: var(--text-secondary);
+    background: var(--surface);
+}
+
+.social-network-graph-page .social-network-graph-toolbar .button-primary {
+    border-color: rgba(200, 107, 67, 0.38);
+    color: var(--primary-strong);
+    background: var(--primary-weak);
+}
+
+.social-network-graph-page .social-network-graph-toolbar
+        .button:not(:disabled):hover,
+.social-network-graph-page #social-network-graph-user-detail:not(:disabled):hover {
+    border-color: var(--primary);
+    color: var(--primary-strong);
+    background: var(--primary-weak);
+    box-shadow: var(--shadow-sm);
+}
+
+.social-network-graph-page .social-network-graph-toolbar
+        .button:focus-visible,
+.social-network-graph-page #social-network-graph-user-detail:focus-visible {
+    outline: 2px solid rgba(200, 107, 67, 0.3);
+    outline-offset: 2px;
+}
+
+.social-network-graph-page .social-network-graph-toolbar
+        .button:disabled,
+.social-network-graph-page #social-network-graph-user-detail:disabled {
+    color: var(--text-muted);
+    background: var(--surface-soft);
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.social-network-graph-page .social-network-graph-view-controls
+        button[aria-label] {
+    width: 38px;
+    min-width: 38px;
+    height: 38px;
+    padding: 0;
+    font-size: 17px;
+    line-height: 1;
+}
+
+.social-network-bridge-candidates-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin: 0 0 8px;
+}
+
+.social-network-bridge-candidates-heading > div {
+    display: grid;
+    gap: 6px;
+    min-width: 0;
+}
+
+.social-network-bridge-candidates-heading .page-overline,
+.social-network-bridge-candidates-heading h3,
+.social-network-bridge-candidates-heading p {
+    margin: 0;
+}
+
+.social-network-bridge-candidates-heading h3 {
+    color: var(--text);
+    font-size: 16px;
+}
+
+.social-network-bridge-candidates-heading > div > p:last-child,
+.social-network-bridge-candidates-status {
+    color: var(--text-muted);
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.social-network-bridge-candidates-heading > div > p:last-child {
+    max-width: 900px;
+}
+
+body.social-network-shell-active .social-network-task-card
+        .social-network-bridge-candidates-heading > div > p {
+    margin: 0;
+}
+
+.social-network-bridge-candidates-status {
+    display: inline;
+    margin: 0;
+}
+
+.social-network-bridge-candidates-view[hidden] {
+    display: none !important;
+}
+
+.social-network-bridge-candidates-table .social-network-bridge-candidate-table {
+    min-width: 1120px;
+}
+
+.social-network-bridge-candidates-table
+        .social-network-bridge-candidate-table :is(th, td) {
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+.social-network-bridge-candidates-table
+        .social-network-bridge-candidate-table :is(th, td):nth-child(1) {
+    width: 6%;
+}
+
+.social-network-bridge-candidates-table
+        .social-network-bridge-candidate-table :is(th, td):nth-child(2) {
+    width: 22%;
+}
+
+.social-network-bridge-candidates-table
+        .social-network-bridge-candidate-table :is(th, td):nth-child(3) {
+    width: 12%;
+    text-align: left;
+}
+
+.social-network-bridge-candidates-table
+        .social-network-bridge-candidate-table :is(th, td):nth-child(4),
+.social-network-bridge-candidates-table
+        .social-network-bridge-candidate-table :is(th, td):nth-child(5) {
+    width: 10%;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+}
+
+.social-network-bridge-candidates-table
+        .social-network-bridge-candidate-table :is(th, td):nth-child(6) {
+    width: 16%;
+}
+
+.social-network-bridge-candidates-table
+        .social-network-bridge-candidate-table :is(th, td):nth-child(7) {
+    width: 24%;
+}
+
+.social-network-bridge-candidate-actions {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 8px;
+    white-space: nowrap;
+}
+
+.social-network-bridge-candidate-actions button,
+.social-network-bridge-evidence-dialog
+        .social-network-group-pagination button {
+    min-height: 34px;
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    color: var(--text-secondary);
+    background: var(--surface);
+    font: 600 12px/1.35 var(--font-sans);
+    cursor: pointer;
+}
+
+.social-network-bridge-candidate-actions button:hover,
+.social-network-bridge-candidate-actions button:focus-visible,
+.social-network-bridge-evidence-dialog
+        .social-network-group-pagination button:not(:disabled):hover {
+    border-color: var(--primary);
+    color: var(--primary-strong);
+    background: var(--primary-weak);
+}
+
+.social-network-bridge-candidate-actions button:focus-visible,
+.social-network-bridge-evidence-dialog
+        .social-network-group-pagination button:focus-visible {
+    outline: 2px solid rgba(200, 107, 67, 0.3);
+    outline-offset: 2px;
+}
+
+.social-network-bridge-candidate-actions button:disabled,
+.social-network-bridge-evidence-dialog
+        .social-network-group-pagination button:disabled {
+    color: var(--text-muted);
+    background: var(--surface-soft);
+    cursor: not-allowed;
+}
+
+.social-network-bridge-candidates-pagination {
+    margin-top: 10px;
+}
+
+dialog.social-network-bridge-evidence-dialog[open],
+body.social-network-shell-active
+        dialog.social-network-bridge-evidence-dialog[open] {
+    position: fixed;
+    top: 50vh;
+    right: auto;
+    bottom: auto;
+    left: 50vw;
+    width: min(1040px, calc(100vw - 40px));
+    max-height: 86vh;
+    margin: 0;
+    transform: translate(-50%, -50%);
+}
+
+.social-network-bridge-evidence-dialog .social-network-bridge-evidence-body {
+    display: grid;
+    gap: 10px;
+}
+
+.social-network-bridge-evidence-body > p:first-child {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.social-network-bridge-evidence-filters {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.social-network-bridge-evidence-filters label {
+    display: grid;
+    gap: 6px;
+    color: var(--text-secondary);
+    font-size: 12px;
+}
+
+.social-network-bridge-evidence-filters select {
+    width: 100%;
+    min-width: 0;
+    min-height: 38px;
+    padding: 0 12px;
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    color: var(--text);
+    background: var(--surface);
+    font: inherit;
+}
+
+.social-network-bridge-evidence-filters select:focus-visible {
+    border-color: var(--primary);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(200, 107, 67, 0.14);
+}
+
+.social-network-bridge-evidence-list {
+    max-height: 48vh;
+    min-height: 150px;
+    overflow: auto;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+}
+
+.social-network-bridge-evidence-table {
+    width: 100%;
+    min-width: 820px;
+    border-collapse: collapse;
+    font-size: 12px;
+}
+
+.social-network-bridge-evidence-table th,
+.social-network-bridge-evidence-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+    vertical-align: top;
+    overflow-wrap: anywhere;
+}
+
+.social-network-bridge-evidence-table th {
+    color: var(--text-muted);
+    background: var(--surface-soft);
+    font-weight: 650;
+}
+
+.social-network-bridge-evidence-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.social-network-bridge-evidence-table td:first-child {
+    width: 27%;
+}
+
+.social-network-bridge-evidence-table td:nth-child(2) {
+    width: 25%;
+}
+
+.social-network-bridge-evidence-table td small {
+    display: block;
+    margin-top: 4px;
+    color: var(--text-muted);
+}
+
+.social-network-bridge-evidence-table ul {
+    display: grid;
+    gap: 5px;
+    margin: 0;
+    padding-left: 18px;
+}
+
+.social-network-bridge-duplicate {
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+@media (max-width: 760px) {
+    .social-network-bridge-candidates-heading {
+        flex-direction: column;
+    }
+
+    .social-network-bridge-evidence-filters {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    dialog.social-network-bridge-evidence-dialog[open],
+    body.social-network-shell-active
+            dialog.social-network-bridge-evidence-dialog[open] {
+        width: calc(100vw - 24px);
+        max-height: 90vh;
+        padding: 18px;
+    }
 }

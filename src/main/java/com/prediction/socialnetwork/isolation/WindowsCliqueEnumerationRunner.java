@@ -365,11 +365,6 @@ public final class WindowsCliqueEnumerationRunner implements CliqueEnumerationEx
 
     private CliqueEnumerationResult classifyLaunchFailure(
             RuntimeException exception, CliqueEnumerationLimits limits) {
-        String message = exception.getMessage();
-        if (message != null && message.startsWith("Analysis refused: available physical memory")) {
-            return externalResult(
-                    CliqueEnumerationStatus.MEMORY_LIMIT, limits, "physical_memory_preflight");
-        }
         return failedResult(limits, exception.getClass().getName());
     }
 

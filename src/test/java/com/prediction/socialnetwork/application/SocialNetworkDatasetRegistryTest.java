@@ -93,6 +93,46 @@ class SocialNetworkDatasetRegistryTest {
     }
 
     @Test
+    void idleAccessExtendsSessionButNeverBeyondHardExpiry() {
+        MutableClock clock = new MutableClock(NOW);
+        SocialNetworkDatasetRegistry registry = new SocialNetworkDatasetRegistry(clock);
+        var uploaded = registry.createUploadSession(List.of(
+                new DatasetFileDescriptor(
+                        "users.csv", DatasetFileRole.USERS, SourceFormat.CSV, "utf8")));
+
+        for (int hour = 1; hour <= 23; hour++) {
+            clock.advance(Duration.ofHours(1));
+            registry.resolveDatasetContext(
+                    uploaded.datasetId(), uploaded.datasetVersion(), uploaded.sessionId());
+        }
+
+        assertEquals(NOW.plus(Duration.ofHours(24)),
+                registry.sessionExpiresAt(uploaded.sessionId()));
+        clock.advance(Duration.ofHours(1));
+        assertThrows(
+                SocialNetworkDatasetSessionExpiredException.class,
+                () -> registry.resolveDatasetContext(
+                        uploaded.datasetId(), uploaded.datasetVersion(), uploaded.sessionId()));
+    }
+
+    @Test
+    void uploadSessionFromBeforeRestartIsReportedAsExpired() {
+        SocialNetworkDatasetRegistry beforeRestart = new SocialNetworkDatasetRegistry(fixedClock());
+        var uploaded = beforeRestart.createUploadSession(List.of(
+                new DatasetFileDescriptor(
+                        "users.csv", DatasetFileRole.USERS, SourceFormat.CSV, "utf8")));
+        SocialNetworkDatasetRegistry afterRestart = new SocialNetworkDatasetRegistry(fixedClock());
+
+        assertEquals(
+                DatasetType.BUILTIN,
+                afterRestart.currentDataset().type());
+        assertThrows(
+                SocialNetworkDatasetSessionExpiredException.class,
+                () -> afterRestart.resolveDatasetContext(
+                        uploaded.datasetId(), uploaded.datasetVersion(), uploaded.sessionId()));
+    }
+
+    @Test
     void rejectsSelectingUnknownDataset() {
         SocialNetworkDatasetRegistry registry = new SocialNetworkDatasetRegistry(fixedClock());
 

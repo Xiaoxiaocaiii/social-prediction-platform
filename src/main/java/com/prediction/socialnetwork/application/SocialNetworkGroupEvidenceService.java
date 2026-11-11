@@ -1,5 +1,6 @@
 package com.prediction.socialnetwork.application;
 
+import com.prediction.socialnetwork.domain.SocialNetworkDataset;
 import com.prediction.socialnetwork.network.SocialNetworkGraphResult;
 import java.io.IOException;
 import java.util.List;
@@ -36,9 +37,20 @@ public class SocialNetworkGroupEvidenceService {
             String section,
             int offset,
             int pageSize) {
+        return clique(datasetId, null, null, cliqueIndex, section, offset, pageSize);
+    }
+
+    public SocialNetworkGroupEvidenceView clique(
+            String datasetId,
+            String datasetVersion,
+            String sessionId,
+            int cliqueIndex,
+            String section,
+            int offset,
+            int pageSize) {
         validateQuery(cliqueIndex, section, offset, pageSize);
         CliqueEnumerationWorkflowView analysis =
-                cliqueWorkflow.status(datasetId, cliqueIndex, 1);
+                cliqueStatus(datasetId, datasetVersion, sessionId, cliqueIndex, 1);
         String targetId = Integer.toString(cliqueIndex);
         if (analysis.dataFingerprint() == null) {
             return unavailable(
@@ -60,7 +72,8 @@ public class SocialNetworkGroupEvidenceService {
                     reason, analysis.dataFingerprint(),
                     targetId, section, offset, pageSize);
         }
-        if (!inputMatches(datasetId, analysis.dataFingerprint())) {
+        if (!inputMatches(
+                datasetId, datasetVersion, sessionId, analysis.dataFingerprint())) {
             return unavailable(
                     datasetId, "clique", "FAILED", false,
                     false, null,
@@ -68,8 +81,9 @@ public class SocialNetworkGroupEvidenceService {
                     targetId, section, offset, pageSize);
         }
 
-        SocialNetworkWorkspaceService.GroupEvidenceInput snapshot = workspace.getGroupEvidenceInput(
-                datasetId, analysis.dataFingerprint());
+        SocialNetworkWorkspaceService.GroupEvidenceInput snapshot =
+                groupEvidenceInput(
+                        datasetId, datasetVersion, sessionId, analysis.dataFingerprint());
         SocialNetworkGraphResult network = snapshot.network();
         CliqueEvidenceAggregator aggregator = new CliqueEvidenceAggregator(
                 network.nodes(), snapshot.users(), snapshot.relationships());
@@ -80,7 +94,11 @@ public class SocialNetworkGroupEvidenceService {
                         section,
                         offset,
                         pageSize);
-        if (!inputMatches(datasetId, analysis.dataFingerprint())) {
+        CliqueEnumerationWorkflowView after =
+                cliqueStatus(datasetId, datasetVersion, sessionId, cliqueIndex, 1);
+        if (!inputMatches(
+                        datasetId, datasetVersion, sessionId, analysis.dataFingerprint())
+                || !sameCliqueResult(analysis, after)) {
             return unavailable(
                     datasetId, "clique", "FAILED", false,
                     false, null,
@@ -104,8 +122,43 @@ public class SocialNetworkGroupEvidenceService {
                 page.ties());
     }
 
+    private CliqueEnumerationWorkflowView cliqueStatus(
+            String datasetId,
+            String datasetVersion,
+            String sessionId,
+            int offset,
+            int pageSize) {
+        if (datasetVersion == null && sessionId == null) {
+            return cliqueWorkflow.status(datasetId, offset, pageSize);
+        }
+        return cliqueWorkflow.status(
+                datasetId, datasetVersion, sessionId, offset, pageSize);
+    }
+
+    private static boolean sameCliqueResult(
+            CliqueEnumerationWorkflowView before, CliqueEnumerationWorkflowView after) {
+        return Objects.equals(before.datasetId(), after.datasetId())
+                && Objects.equals(before.datasetVersion(), after.datasetVersion())
+                && Objects.equals(before.state(), after.state())
+                && Objects.equals(before.cacheKey(), after.cacheKey())
+                && Objects.equals(before.dataFingerprint(), after.dataFingerprint())
+                && Objects.equals(before.requestedAt(), after.requestedAt())
+                && Objects.equals(before.finishedAt(), after.finishedAt());
+    }
+
     public SocialNetworkGroupEvidenceView louvain(
             String datasetId,
+            String communityId,
+            String section,
+            int offset,
+            int pageSize) {
+        return louvain(datasetId, null, null, communityId, section, offset, pageSize);
+    }
+
+    public SocialNetworkGroupEvidenceView louvain(
+            String datasetId,
+            String datasetVersion,
+            String sessionId,
             String communityId,
             String section,
             int offset,
@@ -114,7 +167,8 @@ public class SocialNetworkGroupEvidenceService {
         if (communityId == null || communityId.isBlank()) {
             throw new IllegalArgumentException("communityId must not be blank");
         }
-        LouvainAnalysisWorkflowView analysis = louvainWorkflow.status(datasetId);
+        LouvainAnalysisWorkflowView analysis =
+                louvainStatus(datasetId, datasetVersion, sessionId);
         if (!analysis.workerCompleted() || analysis.dataFingerprint() == null) {
             return unavailable(
                     datasetId, "louvain", analysis.state(), analysis.complete(),
@@ -135,7 +189,7 @@ public class SocialNetworkGroupEvidenceService {
                     "community_not_found", analysis.dataFingerprint(),
                     communityId, section, offset, pageSize);
         }
-        if (!inputMatches(datasetId, analysis.dataFingerprint())) {
+        if (!inputMatches(datasetId, datasetVersion, sessionId, analysis.dataFingerprint())) {
             return unavailable(
                     datasetId, "louvain", "FAILED", false,
                     false, false,
@@ -143,14 +197,18 @@ public class SocialNetworkGroupEvidenceService {
                     communityId, section, offset, pageSize);
         }
 
-        SocialNetworkWorkspaceService.GroupEvidenceInput snapshot = workspace.getGroupEvidenceInput(
-                datasetId, analysis.dataFingerprint());
+        SocialNetworkWorkspaceService.GroupEvidenceInput snapshot =
+                groupEvidenceInput(
+                        datasetId, datasetVersion, sessionId, analysis.dataFingerprint());
         SocialNetworkGraphResult network = snapshot.network();
         LouvainEvidenceAggregator aggregator = new LouvainEvidenceAggregator(
                 network.nodes(), snapshot.users(), snapshot.relationships());
         LouvainEvidenceAggregator.EvidencePage page =
                 aggregator.page(members, section, offset, pageSize);
-        if (!inputMatches(datasetId, analysis.dataFingerprint())) {
+        LouvainAnalysisWorkflowView after =
+                louvainStatus(datasetId, datasetVersion, sessionId);
+        if (!inputMatches(datasetId, datasetVersion, sessionId, analysis.dataFingerprint())
+                || !sameLouvainResult(analysis, after)) {
             return unavailable(
                     datasetId, "louvain", "FAILED", false,
                     false, false,
@@ -176,12 +234,24 @@ public class SocialNetworkGroupEvidenceService {
 
     public SocialNetworkGroupEvidenceView betweenCommunities(
             String datasetId, String first, String second, int offset, int pageSize) {
+        return betweenCommunities(datasetId, null, null, first, second, offset, pageSize);
+    }
+
+    public SocialNetworkGroupEvidenceView betweenCommunities(
+            String datasetId,
+            String datasetVersion,
+            String sessionId,
+            String first,
+            String second,
+            int offset,
+            int pageSize) {
         validateQuery(0, "ties", offset, pageSize);
         if (first == null || first.isBlank() || second == null || second.isBlank()
                 || first.equals(second)) {
             throw new IllegalArgumentException("Two distinct community IDs are required");
         }
-        LouvainAnalysisWorkflowView analysis = louvainWorkflow.status(datasetId);
+        LouvainAnalysisWorkflowView analysis =
+                louvainStatus(datasetId, datasetVersion, sessionId);
         String targetId = first + " / " + second;
         if (!analysis.complete() || !analysis.converged() || analysis.dataFingerprint() == null) {
             return unavailable(datasetId, "louvain", analysis.state(), false,
@@ -197,22 +267,23 @@ public class SocialNetworkGroupEvidenceService {
                     true, true, "community_not_found",
                     analysis.dataFingerprint(), targetId, "ties", offset, pageSize);
         }
-        if (!inputMatches(datasetId, analysis.dataFingerprint())) {
+        if (!inputMatches(datasetId, datasetVersion, sessionId, analysis.dataFingerprint())) {
             return unavailable(datasetId, "louvain", "FAILED", false,
                     false, false, "input_changed_before_evidence_query",
                     analysis.dataFingerprint(), targetId, "ties", offset, pageSize);
         }
         SocialNetworkWorkspaceService.GroupEvidenceInput input =
-                workspace.getGroupEvidenceInput(datasetId, analysis.dataFingerprint());
+                groupEvidenceInput(
+                        datasetId, datasetVersion, sessionId, analysis.dataFingerprint());
         LouvainEvidenceAggregator aggregator = new LouvainEvidenceAggregator(
                 input.network().nodes(), input.users(), input.relationships());
         LouvainEvidenceAggregator.EvidencePage page =
                 aggregator.between(firstMembers, secondMembers, offset, pageSize);
-        LouvainAnalysisWorkflowView after = louvainWorkflow.status(datasetId);
-        if (!inputMatches(datasetId, analysis.dataFingerprint()) || !after.complete()
-                || !Objects.equals(analysis.dataFingerprint(), after.dataFingerprint())
-                || !Objects.equals(analysis.cacheKey(), after.cacheKey())
-                || !Objects.equals(analysis.finishedAt(), after.finishedAt())) {
+        LouvainAnalysisWorkflowView after =
+                louvainStatus(datasetId, datasetVersion, sessionId);
+        if (!inputMatches(datasetId, datasetVersion, sessionId, analysis.dataFingerprint())
+                || !sameLouvainResult(analysis, after)
+                || !after.complete()) {
             return unavailable(datasetId, "louvain", "FAILED", false,
                     false, false, "input_changed_during_evidence_query",
                     analysis.dataFingerprint(), targetId, "ties", offset, pageSize);
@@ -222,7 +293,54 @@ public class SocialNetworkGroupEvidenceService {
                 page.totalCount(), page.members(), page.ties());
     }
 
+    private static boolean sameLouvainResult(
+            LouvainAnalysisWorkflowView before, LouvainAnalysisWorkflowView after) {
+        return Objects.equals(before.datasetId(), after.datasetId())
+                && Objects.equals(before.datasetVersion(), after.datasetVersion())
+                && Objects.equals(before.dataFingerprint(), after.dataFingerprint())
+                && Objects.equals(before.cacheKey(), after.cacheKey())
+                && Objects.equals(before.requestedAt(), after.requestedAt())
+                && Objects.equals(before.finishedAt(), after.finishedAt());
+    }
+
+    private LouvainAnalysisWorkflowView louvainStatus(
+            String datasetId, String datasetVersion, String sessionId) {
+        if (datasetVersion == null && sessionId == null) {
+            return louvainWorkflow.status(datasetId);
+        }
+        return louvainWorkflow.status(datasetId, datasetVersion, sessionId);
+    }
+
+    private SocialNetworkWorkspaceService.GroupEvidenceInput groupEvidenceInput(
+            String datasetId,
+            String datasetVersion,
+            String sessionId,
+            String dataFingerprint) {
+        if (datasetVersion == null && sessionId == null) {
+            return workspace.getGroupEvidenceInput(datasetId, dataFingerprint);
+        }
+        return workspace.getGroupEvidenceInput(
+                datasetId, datasetVersion, sessionId, dataFingerprint);
+    }
+
     private boolean inputMatches(String datasetId, String expectedFingerprint) {
+        return inputMatches(datasetId, null, null, expectedFingerprint);
+    }
+
+    private boolean inputMatches(
+            String datasetId,
+            String datasetVersion,
+            String sessionId,
+            String expectedFingerprint) {
+        if (sessionId != null || datasetVersion != null) {
+            SocialNetworkDataset dataset = registry.resolveDatasetContext(
+                    datasetId, datasetVersion, sessionId);
+            SocialNetworkWorkspaceSnapshot snapshot = workspace.get(
+                    dataset.datasetId(), dataset.datasetVersion(), dataset.sessionId());
+            return snapshot.inputFingerprint() != null
+                    && expectedFingerprint.equals(
+                            snapshot.inputFingerprint().dataFingerprint());
+        }
         try {
             return expectedFingerprint.equals(fingerprintService.fingerprint(
                     registry.findDataset(datasetId)).dataFingerprint());

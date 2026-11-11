@@ -65,7 +65,9 @@ public final class SocialNetworkGroupInsightCalculator {
     public static List<CommunityPair> communityPairs(
             List<NetworkEdge> edges, Map<String, String> membership) {
         Set<NodePair> unique = new HashSet<>();
-        Map<CommunityKey, Integer> counts = new HashMap<>();
+        Set<DirectedPair> uniqueDirected = new HashSet<>();
+        Map<CommunityKey, Integer> tieCounts = new HashMap<>();
+        Map<CommunityKey, Integer> directedCounts = new HashMap<>();
         for (NetworkEdge edge : edges) {
             String firstCommunity = membership.get(edge.source());
             String secondCommunity = membership.get(edge.target());
@@ -74,13 +76,21 @@ public final class SocialNetworkGroupInsightCalculator {
                 continue;
             }
             NodePair pair = NodePair.of(edge.source(), edge.target());
+            CommunityKey communityPair =
+                    CommunityKey.of(firstCommunity, secondCommunity);
             if (unique.add(pair)) {
-                counts.merge(CommunityKey.of(firstCommunity, secondCommunity), 1, Integer::sum);
+                tieCounts.merge(communityPair, 1, Integer::sum);
+            }
+            if (uniqueDirected.add(new DirectedPair(edge.source(), edge.target()))) {
+                directedCounts.merge(communityPair, 1, Integer::sum);
             }
         }
-        return counts.entrySet().stream()
+        return tieCounts.entrySet().stream()
                 .map(entry -> new CommunityPair(
-                        entry.getKey().first(), entry.getKey().second(), entry.getValue()))
+                        entry.getKey().first(),
+                        entry.getKey().second(),
+                        entry.getValue(),
+                        directedCounts.getOrDefault(entry.getKey(), 0)))
                 .sorted(Comparator.comparingInt(CommunityPair::tieCount).reversed()
                         .thenComparing(CommunityPair::first)
                         .thenComparing(CommunityPair::second))
@@ -125,6 +135,9 @@ public final class SocialNetworkGroupInsightCalculator {
         }
     }
 
+    private record DirectedPair(String source, String target) {
+    }
+
     public record Participant(String nodeId, int count) {
     }
 
@@ -145,7 +158,8 @@ public final class SocialNetworkGroupInsightCalculator {
         }
     }
 
-    public record CommunityPair(String first, String second, int tieCount) {
+    public record CommunityPair(
+            String first, String second, int tieCount, int directedRelationshipCount) {
     }
 
     public record SharedCliques(

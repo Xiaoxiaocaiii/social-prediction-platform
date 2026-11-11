@@ -26,7 +26,7 @@ public final class SocialNetworkAnalysisResultStore {
     private static final String CLIQUE_FILE = "clique-v1.json";
     private static final String LOUVAIN_FILE = "louvain-v1.json";
     private static final String GROUP_EVIDENCE_FILE = "group-evidence-v1.json";
-    private static final String COMMUNITY_PAIRS_FILE = "louvain-community-pairs-v1.json";
+    private static final String COMMUNITY_PAIRS_FILE = "louvain-community-pairs-v2.json";
     private static final long MAX_GROUP_ARTIFACT_BYTES = 32L * 1024 * 1024;
 
     private final ObjectMapper objectMapper;
@@ -91,7 +91,7 @@ public final class SocialNetworkAnalysisResultStore {
 
     public Optional<SocialNetworkWorkspaceService.GroupEvidenceInput> loadGroupEvidenceInput(
             String datasetId, String datasetVersion, String dataFingerprint) {
-        if (datasetId == null || datasetVersion == null || dataFingerprint == null) {
+        if (!isPersistedBuiltin(datasetId, datasetVersion) || dataFingerprint == null) {
             return Optional.empty();
         }
         return load(
@@ -110,7 +110,7 @@ public final class SocialNetworkAnalysisResultStore {
             String datasetVersion,
             String dataFingerprint,
             SocialNetworkWorkspaceService.GroupEvidenceInput input) {
-        if (datasetId == null || datasetVersion == null || dataFingerprint == null
+        if (!isPersistedBuiltin(datasetId, datasetVersion) || dataFingerprint == null
                 || input == null) {
             return;
         }
@@ -126,7 +126,7 @@ public final class SocialNetworkAnalysisResultStore {
                     String datasetVersion,
                     String cacheKey,
                     String dataFingerprint) {
-        if (datasetId == null || datasetVersion == null
+        if (!isPersistedBuiltin(datasetId, datasetVersion)
                 || cacheKey == null || dataFingerprint == null) {
             return Optional.empty();
         }
@@ -148,7 +148,7 @@ public final class SocialNetworkAnalysisResultStore {
             String cacheKey,
             String dataFingerprint,
             List<SocialNetworkGroupInsightCalculator.CommunityPair> communityPairs) {
-        if (datasetId == null || datasetVersion == null || cacheKey == null
+        if (!isPersistedBuiltin(datasetId, datasetVersion) || cacheKey == null
                 || dataFingerprint == null || communityPairs == null) {
             return;
         }
@@ -160,6 +160,11 @@ public final class SocialNetworkAnalysisResultStore {
                         cacheKey,
                         dataFingerprint,
                         List.copyOf(communityPairs)));
+    }
+
+    private static boolean isPersistedBuiltin(String datasetId, String datasetVersion) {
+        return SocialNetworkDatasetRegistry.BUILTIN_DATASET_ID.equals(datasetId)
+                && SocialNetworkDatasetRegistry.BUILTIN_DATASET_VERSION.equals(datasetVersion);
     }
 
     private <T> Optional<T> load(

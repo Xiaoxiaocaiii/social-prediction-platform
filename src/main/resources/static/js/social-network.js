@@ -50,6 +50,7 @@
     var rankingTaskRolesCache = null;
     var rankingTaskRolesLookup = null;
     var rankingTaskOrdinaryLookup = null;
+    var rankingBridgeOffset = 0;
     var userRelationsSearchSequence = 0;
     var userRelationsLocalSequence = 0;
     var userRelationsContextKey = "";
@@ -385,7 +386,7 @@
         moduleExportControlsBound = true;
     }
 
-    function openModuleExportDialog(exportType, invoker) {
+    function openModuleExportDialog(exportType, invoker, queryOverride) {
         var dialog = document.getElementById("social-network-module-export-dialog");
         var title = document.getElementById("social-network-module-export-title");
         var note = document.getElementById("social-network-module-export-note");
@@ -399,17 +400,20 @@
             "social-network-module-export-users-metric");
         var labels = {
             network: ["网络结构摘要", "导出完整网络结构摘要。"],
-            users: ["重要节点排行", "users 导出是组合包，包含一个普通指标排行以及 k-core、介数中心性两类结构角色排行。"],
+            users: ["节点指标排行", "users 导出是组合包，包含一个普通指标排行以及 k-core、介数中心性两类结构角色排行。"],
             interactions: ["推文与互动分析", "导出互动分析结果包，包含当前指标摘要、推文 Top 10、用户 Top 10 和字符串排序末尾最多 30 个时间分组；结果包不等同当前可见表格，且不包含推文原文。"],
             topic: ["主题查询结果包", "导出固定使用最后一次成功查询词，不读取当前输入草稿。"],
-            quality: ["数据质量报告", "导出当前数据集的质量计数与覆盖摘要。"]
+            quality: ["数据质量报告", "导出当前数据集的质量计数与覆盖摘要。"],
+            "bridge-candidates": ["跨社群连接候选", "导出当前候选页及完整候选总数；只有明确查看过的关系证据页会附带。"]
         };
         if (!labels[exportType]) {
             return;
         }
         initializeModuleExportControls();
         var context = readDatasetContext();
-        var query = currentExportQuery(exportType);
+        var query = queryOverride
+            ? queryOverride
+            : currentExportQuery(exportType);
         usersMetricField.hidden = true;
         if (exportType === "users") {
             var selectedMetric = workspaceState.getCondition("ranking").metric;
@@ -452,6 +456,11 @@
             note.textContent =
                 "可打印摘要按结论、指标口径、数据范围、质量提示和复核信息组织；" +
                 "JSON/CSV 保留原结构。报告不受本页分类或分页影响，单次响应上限为 2 MiB。";
+        } else if (exportType === "bridge-candidates") {
+            note.textContent =
+                "导出完整候选总数和当前显示的候选页（最多 20 项），不受关系图筛选影响。" +
+                "只有已经打开并成功读取的具体账号关系证据页会附带；不会导出全部证据。" +
+                "候选用于核对，不代表影响力或传播控制能力。";
         } else if (exportType === "topic") {
             var topicCondition = workspaceState.getCondition("topic");
             note.textContent = "结果包使用最后一次成功查询“" +
@@ -5855,8 +5864,11 @@
             '<div><p class="social-network-network-structure-eyebrow">NETWORK SCOPE</p>' +
             '<h2>完整规范化网络</h2><p>计数覆盖资料用户、有效关系端点及没有关系的有效用户；' +
             "不受其他页面关系图展示上限影响。</p></div>" +
+            '<div class="social-network-network-structure-actions">' +
+            '<a class="button button-secondary" href="#/social-network/network">' +
+            "全局关系图</a>" +
             '<button class="button button-secondary" type="button" ' +
-            'data-network-structure-export>导出网络摘要</button></header>' +
+            'data-network-structure-export>导出网络摘要</button></div></header>' +
             '<section class="social-network-network-structure-scope" ' +
             'aria-label="完整网络范围计数">' +
             '<div><span>网络节点数</span><strong>' +
@@ -6010,6 +6022,9 @@
         if (currentNetworkStructure &&
                 networkStructureContextKey === contextKey) {
             renderNetworkStructureView(currentNetworkStructure, context);
+            setText("social-network-task-status", "当前网络结构摘要");
+            setText("social-network-task-message",
+                "显示完整规范化网络范围；分类切换仅改变指标视图，不会重新计算。");
             return;
         }
         if (networkStructureLookup &&
@@ -6139,17 +6154,23 @@
             '">查看一种角度</button><button type="button" ' +
             'data-ranking-task-view="comparison" aria-pressed="' +
             (rankingTaskView === "comparison") +
-            '">比较不同角度</button></div>' +
+            '">比较不同角度</button><button type="button" ' +
+            'data-ranking-task-view="bridge" aria-pressed="' +
+            (rankingTaskView === "bridge") +
+            '">跨社群连接</button></div>' +
             '<section data-ranking-task-single-view>' +
             '<div class="social-network-node-ranking-controls">' +
-            '<label for="social-network-node-ranking-metric">选择排序角度' +
-            '<select id="social-network-node-ranking-metric">' +
+            '<div class="social-network-node-ranking-metric-field">' +
+            '<label for="social-network-node-ranking-metric">选择排序角度</label>' +
+            '<select id="social-network-node-ranking-metric" ' +
+            'aria-describedby="social-network-node-ranking-note">' +
             rankingTaskSelectionHtml(selectedMetric) +
-            "</select></label>" +
+            "</select></div>" +
+            '<small id="social-network-node-ranking-note" ' +
+            'class="social-network-node-ranking-note" ' +
+            'data-ranking-task-note aria-live="polite"></small>' +
             '<button class="button button-secondary" type="button" ' +
             'data-ranking-task-refresh>更新排行</button></div>' +
-            '<p class="social-network-node-ranking-note" ' +
-            'data-ranking-task-note aria-live="polite"></p>' +
             '<p class="social-network-node-ranking-count" ' +
             'data-ranking-task-count></p>' +
             '<div class="social-network-node-ranking-table" ' +
@@ -6161,8 +6182,9 @@
             'aria-labelledby="social-network-cross-metric-title">' +
             '<div class="social-network-cross-metric-heading">' +
             '<div><h3 id="social-network-cross-metric-title">不同角度的结果是否一致？</h3>' +
-            '<p>分别看整体名次是否接近、前列账号是否相同；两项结果都不代表账号影响力或因果关系。</p></div>' +
-            '<p data-ranking-cross-metric-summary aria-live="polite"></p></div>' +
+            '<p>分别看整体名次是否接近、前列账号是否相同；两项结果都不代表账号影响力或因果关系。' +
+            '<span class="social-network-cross-metric-summary" ' +
+            'data-ranking-cross-metric-summary aria-live="polite"></span></p></div></div>' +
             '<div class="social-network-cross-metric-grid">' +
             '<section class="social-network-cross-metric-panel">' +
             '<h4>整体名次有多接近</h4><p>比较两种角度给账号排出的先后顺序。数值越接近 1，排序越相似；接近 0 表示没有明显同向关系；负值表示顺序大致相反。</p>' +
@@ -6181,7 +6203,29 @@
             '<p data-ranking-node-evidence-state role="status"></p>' +
             '<div class="social-network-cross-metric-table-wrap" ' +
             'data-ranking-node-evidence role="region" ' +
-            'aria-label="账号在不同排序角度下的结果"></div></details></section>';
+            'aria-label="账号在不同排序角度下的结果"></div></details></section>' +
+            '<section class="social-network-bridge-candidates-view" ' +
+            'data-ranking-task-bridge-view hidden ' +
+            'aria-labelledby="social-network-bridge-candidates-title">' +
+            '<div class="social-network-bridge-candidates-heading">' +
+            '<div><h3 id="social-network-bridge-candidates-title">跨社群连接候选</h3>' +
+            '<p>列出连接其他社群的资料账号。关系数按完整网络中的有效有向关系统计，不合成影响力分数，也不代表传播控制能力。 ' +
+            '<span class="social-network-bridge-candidates-status" ' +
+            'data-ranking-bridge-status role="status" aria-live="polite"></span></p></div>' +
+            '<button class="button button-secondary" type="button" ' +
+            'data-ranking-bridge-refresh>刷新候选</button></div>' +
+            '<div class="social-network-node-ranking-table ' +
+            'social-network-bridge-candidates-table" ' +
+            'data-ranking-bridge-table role="region" ' +
+            'aria-label="跨社群连接候选列表" tabindex="0"></div>' +
+            '<nav class="social-network-group-pagination ' +
+            'social-network-bridge-candidates-pagination" ' +
+            'aria-label="跨社群候选分页">' +
+            '<button type="button" data-ranking-bridge-prev ' +
+            'aria-label="上一页候选">上一页</button>' +
+            '<span data-ranking-bridge-page>—</span>' +
+            '<button type="button" data-ranking-bridge-next ' +
+            'aria-label="下一页候选">下一页</button></nav></section>';
 
         var metricControl = mount.querySelector(
             "#social-network-node-ranking-metric");
@@ -6195,18 +6239,60 @@
             });
         mount.querySelector("[data-ranking-task-export]")
             .addEventListener("click", function () {
+                var exportButton = mount.querySelector(
+                    "[data-ranking-task-export]");
+                if (rankingTaskView === "bridge") {
+                    var bridgeView =
+                        window.socialNetworkBridgeCandidates;
+                    var bridgeSnapshot = bridgeView &&
+                        bridgeView.getExportSnapshot
+                        ? bridgeView.getExportSnapshot()
+                        : null;
+                    if (!bridgeSnapshot) {
+                        mount.querySelector("[data-ranking-bridge-status]")
+                            .textContent =
+                            "候选列表仍在加载或暂不可用，请刷新候选后再导出。";
+                        return;
+                    }
+                    openModuleExportDialog(
+                        "bridge-candidates",
+                        exportButton,
+                        bridgeSnapshot.query);
+                    return;
+                }
                 openModuleExportDialog(
                     "users",
-                    mount.querySelector("[data-ranking-task-export]"));
+                    exportButton);
             });
         mount.querySelectorAll("[data-ranking-task-view]")
             .forEach(function (button) {
                 button.addEventListener("click", function () {
-                    rankingTaskView = button.getAttribute(
+                    var nextView = button.getAttribute(
                         "data-ranking-task-view"
                     );
+                    if (nextView !== rankingTaskView) {
+                        if (rankingTaskView === "bridge" &&
+                                window.socialNetworkBridgeCandidates) {
+                            window.socialNetworkBridgeCandidates.closeEvidence();
+                        }
+                        if (nextView === "bridge") {
+                            rankingBridgeOffset = 0;
+                            if (window.socialNetworkBridgeCandidates) {
+                                window.socialNetworkBridgeCandidates.resetIdentity();
+                            }
+                        }
+                    }
+                    rankingTaskView = nextView;
                     loadRankingTask(taskCard);
                 });
+            });
+        mount.querySelector("[data-ranking-bridge-refresh]")
+            .addEventListener("click", function () {
+                rankingBridgeOffset = 0;
+                if (window.socialNetworkBridgeCandidates) {
+                    window.socialNetworkBridgeCandidates.resetIdentity();
+                }
+                loadRankingTask(taskCard);
             });
         setRankingTaskViewVisibility(mount);
         return mount;
@@ -6214,14 +6300,25 @@
 
     function setRankingTaskViewVisibility(mount) {
         var comparison = rankingTaskView === "comparison";
+        var bridge = rankingTaskView === "bridge";
         var singleView = mount.querySelector("[data-ranking-task-single-view]");
         var comparisonView = mount.querySelector(
             "[data-ranking-task-comparison-view]");
+        var bridgeView = mount.querySelector(
+            "[data-ranking-task-bridge-view]");
         if (singleView) {
-            singleView.hidden = comparison;
+            singleView.hidden = comparison || bridge;
         }
         if (comparisonView) {
             comparisonView.hidden = !comparison;
+        }
+        if (bridgeView) {
+            bridgeView.hidden = !bridge;
+        }
+        var exportButton = mount.querySelector("[data-ranking-task-export]");
+        if (exportButton) {
+            exportButton.disabled = false;
+            exportButton.title = "";
         }
         mount.querySelectorAll("[data-ranking-task-view]")
             .forEach(function (button) {
@@ -6239,7 +6336,7 @@
             contextKey === datasetContextKey(readDatasetContext()) &&
             sequence === rankingTaskRequestSequence &&
             rankingTaskView === view &&
-            (view === "comparison" ||
+            (view === "comparison" || view === "bridge" ||
                 workspaceState.getCondition("ranking").metric === metric);
     }
 
@@ -6414,7 +6511,7 @@
 
     function renderCrossMetricLoading(mount) {
         mount.querySelector("[data-ranking-cross-metric-summary]")
-            .textContent = "正在比较当前数据中的不同排序角度…";
+            .textContent = " 正在比较当前数据中的不同排序角度…";
         mount.querySelector("[data-ranking-spearman-table]").innerHTML =
             '<p class="social-network-network-structure-loading" role="status">' +
             "正在比较整体名次…</p>";
@@ -6435,7 +6532,7 @@
         var notice = '<p class="social-network-network-structure-error" ' +
             'role="alert">' + escapeHtml(evidenceMessage) + "</p>";
         mount.querySelector("[data-ranking-cross-metric-summary]")
-            .textContent = "暂时无法比较不同角度：" +
+            .textContent = " 暂时无法比较不同角度：" +
                 evidenceMessage;
         mount.querySelector("[data-ranking-spearman-table]").innerHTML = notice;
         mount.querySelector("[data-ranking-top20-table]").innerHTML = notice;
@@ -6461,9 +6558,9 @@
             renderCrossMetricFailure(mount, result.reason);
             return;
         }
-        summary.textContent = "本次比较覆盖 " +
+        summary.textContent = " 本次比较覆盖 " +
             formatNumber(result.populationSize) +
-            " 个账号。整体名次看排序是否接近，前列名单看入选账号是否相同。" +
+            " 个账号。" +
             (result.state !== "available"
                 ? " " + crossMetricStateLabel(result.state) +
                     (result.reason
@@ -6648,17 +6745,52 @@
         }
         var context = readDatasetContext();
         var contextKey = datasetContextKey(context);
+        var bridgeCandidates = typeof window === "undefined"
+            ? null
+            : window.socialNetworkBridgeCandidates;
         if (rankingTaskContextKey !== contextKey) {
             rankingTaskContextKey = contextKey;
             rankingTaskView = "single";
+            rankingBridgeOffset = 0;
             rankingTaskRolesCache = null;
             rankingTaskRolesLookup = null;
             rankingTaskRequestSequence += 1;
+            if (bridgeCandidates) {
+                bridgeCandidates.resetIdentity();
+                bridgeCandidates.closeEvidence();
+            }
         }
         var mount = ensureRankingTaskView(card, metric);
         setRankingTaskViewVisibility(mount);
         var sequence = ++rankingTaskRequestSequence;
         var requestView = rankingTaskView;
+        if (requestView === "bridge") {
+            var bridgeView = bridgeCandidates;
+            if (!bridgeView) {
+                mount.querySelector("[data-ranking-bridge-status]")
+                    .textContent = "跨社群候选模块暂不可用，请刷新页面后重试。";
+                return;
+            }
+            bridgeView.load(mount, {
+                context: context,
+                contextKey: contextKey,
+                offset: rankingBridgeOffset,
+                isCurrent: function () {
+                    return rankingTaskIsCurrent(
+                        contextKey, metric, sequence, requestView);
+                },
+                onPage: function (offset) {
+                    rankingBridgeOffset = offset;
+                    loadRankingTask(card);
+                },
+                onRefresh: function () {
+                    rankingBridgeOffset = 0;
+                    bridgeView.resetIdentity();
+                    loadRankingTask(card);
+                }
+            });
+            return;
+        }
         if (requestView === "comparison") {
             renderCrossMetricLoading(mount);
         } else {

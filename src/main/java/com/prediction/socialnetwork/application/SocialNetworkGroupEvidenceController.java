@@ -27,22 +27,40 @@ public class SocialNetworkGroupEvidenceController {
     public SocialNetworkApiResponse<SocialNetworkGroupEvidenceView> cliqueEvidence(
             @PathVariable String datasetId,
             @PathVariable int cliqueIndex,
+            @RequestParam(required = false) String datasetVersion,
+            @RequestParam(required = false) String sessionId,
             @RequestParam(defaultValue = "members") String section,
             @RequestParam(defaultValue = "0") int offset,
             @RequestParam(defaultValue = "20") int pageSize) {
-        return success(evidenceService.clique(
-                datasetId, cliqueIndex, section, offset, pageSize));
+        SocialNetworkGroupEvidenceView view =
+                datasetVersion == null && sessionId == null
+                        ? evidenceService.clique(
+                                datasetId, cliqueIndex, section, offset, pageSize)
+                        : evidenceService.clique(
+                                datasetId, datasetVersion, sessionId,
+                                cliqueIndex, section, offset, pageSize);
+        return success(
+                view,
+                datasetVersion == null
+                        ? SocialNetworkDatasetRegistry.BUILTIN_DATASET_VERSION
+                        : datasetVersion,
+                sessionId);
     }
 
     @GetMapping("/louvain/communities/{communityId}/evidence")
     public SocialNetworkApiResponse<SocialNetworkGroupEvidenceView> louvainEvidence(
             @PathVariable String datasetId,
             @PathVariable String communityId,
+            @RequestParam(required = false) String datasetVersion,
+            @RequestParam(required = false) String sessionId,
             @RequestParam(defaultValue = "members") String section,
             @RequestParam(defaultValue = "0") int offset,
             @RequestParam(defaultValue = "20") int pageSize) {
         return success(evidenceService.louvain(
-                datasetId, communityId, section, offset, pageSize));
+                datasetId, datasetVersion, sessionId,
+                communityId, section, offset, pageSize),
+                datasetVersion,
+                sessionId);
     }
 
     @GetMapping("/louvain/communities/{first}/between/{second}/evidence")
@@ -50,10 +68,32 @@ public class SocialNetworkGroupEvidenceController {
             @PathVariable String datasetId,
             @PathVariable String first,
             @PathVariable String second,
+            @RequestParam(required = false) String datasetVersion,
+            @RequestParam(required = false) String sessionId,
             @RequestParam(defaultValue = "0") int offset,
             @RequestParam(defaultValue = "20") int pageSize) {
         return success(evidenceService.betweenCommunities(
-                datasetId, first, second, offset, pageSize));
+                datasetId, datasetVersion, sessionId, first, second, offset, pageSize),
+                datasetVersion,
+                sessionId);
+    }
+
+    @ExceptionHandler(SocialNetworkDatasetSessionExpiredException.class)
+    public ResponseEntity<SocialNetworkApiResponse<Void>> expiredSession(
+            SocialNetworkDatasetSessionExpiredException exception) {
+        return error(
+                HttpStatus.GONE,
+                "SN_DATASET_SESSION_EXPIRED",
+                "上传数据会话已失效，请重新上传数据");
+    }
+
+    @ExceptionHandler(SocialNetworkDatasetContextException.class)
+    public ResponseEntity<SocialNetworkApiResponse<Void>> invalidContext(
+            SocialNetworkDatasetContextException exception) {
+        return error(
+                HttpStatus.BAD_REQUEST,
+                "SN_DATASET_CONTEXT_INVALID",
+                "数据集版本或上传会话与当前请求不匹配");
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
@@ -75,9 +115,14 @@ public class SocialNetworkGroupEvidenceController {
     }
 
     private static SocialNetworkApiResponse<SocialNetworkGroupEvidenceView> success(
-            SocialNetworkGroupEvidenceView view) {
+            SocialNetworkGroupEvidenceView view,
+            String datasetVersion,
+            String sessionId) {
         Map<String, Object> meta = Map.of(
                 "datasetId", view.datasetId(),
+                "datasetVersion",
+                datasetVersion == null ? "" : datasetVersion,
+                "sessionId", sessionId == null ? "" : sessionId,
                 "analysisType", view.analysisType(),
                 "dataFingerprint",
                 view.dataFingerprint() == null ? "" : view.dataFingerprint(),

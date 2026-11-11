@@ -159,6 +159,15 @@ public class SocialNetworkDatasetRegistry {
                 if (knownSession.isExpiredAt(clock.instant())) {
                     throw new SocialNetworkDatasetSessionExpiredException();
                 }
+            } else if (datasetId != null && datasetId.startsWith("upload-")) {
+                SocialNetworkDataset knownDataset = datasets.get(datasetId);
+                if (knownDataset == null) {
+                    throw new SocialNetworkDatasetSessionExpiredException();
+                }
+                if (!Objects.equals(knownDataset.sessionId(), sessionId)) {
+                    throw new SocialNetworkDatasetContextException();
+                }
+                throw new SocialNetworkDatasetSessionExpiredException();
             }
         }
         SocialNetworkDataset dataset = requireDataset(datasetId);

@@ -27,22 +27,14 @@ class WindowsJobProcessTest {
     private Path temporaryDirectory;
 
     @BeforeAll
-    static void requireWindowsAndSafetyMargin() {
+    static void requireWindows() {
         Assumptions.assumeTrue(
                 System.getProperty("os.name", "").toLowerCase(Locale.ROOT).contains("windows"),
                 "Windows Job Object integration tests require Windows");
-        long available = WindowsResourcePreflight.currentAvailablePhysicalMemoryBytes();
-        Assumptions.assumeTrue(
-                available >= 1536L * WindowsJobLimits.MEBIBYTE,
-                "Skipped to preserve the 1.5 GiB margin for bounded synthetic workers");
     }
 
     @BeforeEach
     void createTemporaryDirectory() throws IOException {
-        long available = WindowsResourcePreflight.currentAvailablePhysicalMemoryBytes();
-        Assumptions.assumeTrue(
-                available >= 1536L * WindowsJobLimits.MEBIBYTE,
-                "Skipped to preserve the 1.5 GiB margin for bounded synthetic workers");
         temporaryDirectory = Files.createTempDirectory("social-network-cl03-");
     }
 
@@ -192,14 +184,6 @@ class WindowsJobProcessTest {
         assertProcessExited(processId);
     }
 
-    @Test
-    void preflightRequiresAtLeastTwoGibibytesOfAvailableMemory() {
-        assertFalse(WindowsResourcePreflight.hasRequiredMemory(
-                2 * WindowsJobLimits.GIBIBYTE - 1));
-        assertTrue(WindowsResourcePreflight.hasRequiredMemory(
-                2 * WindowsJobLimits.GIBIBYTE));
-    }
-
     private WindowsJobProcess startWorker(
             WindowsJobLimits limits, String mode, String... arguments) throws IOException {
         List<String> command = new java.util.ArrayList<>();
@@ -219,7 +203,7 @@ class WindowsJobProcessTest {
 
     private static void awaitFile(Path path, Duration timeout) throws Exception {
         long deadline = System.nanoTime() + timeout.toNanos();
-        while (!Files.exists(path)) {
+        while (!Files.exists(path) || Files.size(path) == 0) {
             if (System.nanoTime() >= deadline) {
                 throw new AssertionError("Timed out waiting for test marker " + path.getFileName());
             }

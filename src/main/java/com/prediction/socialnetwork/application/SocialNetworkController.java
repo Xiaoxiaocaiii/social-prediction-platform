@@ -21,6 +21,7 @@ import com.prediction.socialnetwork.quality.SocialNetworkQualityReport;
 import com.prediction.socialnetwork.network.CrossMetricAnalysisCalculator;
 import com.prediction.socialnetwork.network.CommunityDetectionResult;
 import com.prediction.socialnetwork.network.CommunityDetectionStatus;
+import com.prediction.socialnetwork.network.LouvainCommunityDetector;
 import com.prediction.socialnetwork.network.NetworkGraphView;
 import com.prediction.socialnetwork.network.NetworkEdge;
 import com.prediction.socialnetwork.network.NetworkMetrics;
@@ -69,6 +70,7 @@ public class SocialNetworkController {
     private final CliqueEnumerationWorkflowService cliqueWorkflow;
     private final LouvainAnalysisWorkflowService louvainWorkflow;
     private final SocialNetworkEvidenceFactSummaryService evidenceSummaryService;
+    private final SocialNetworkBridgeCandidateExportService bridgeCandidateExportService;
     private final ObjectMapper objectMapper;
     private final SocialNetworkJsonExportAssembler jsonExportAssembler =
             new SocialNetworkJsonExportAssembler();
@@ -83,12 +85,14 @@ public class SocialNetworkController {
             CliqueEnumerationWorkflowService cliqueWorkflow,
             LouvainAnalysisWorkflowService louvainWorkflow,
             SocialNetworkEvidenceFactSummaryService evidenceSummaryService,
+            SocialNetworkBridgeCandidateExportService bridgeCandidateExportService,
             ObjectMapper objectMapper) {
         this.registry = registry;
         this.workspace = workspace;
         this.cliqueWorkflow = cliqueWorkflow;
         this.louvainWorkflow = louvainWorkflow;
         this.evidenceSummaryService = evidenceSummaryService;
+        this.bridgeCandidateExportService = bridgeCandidateExportService;
         this.objectMapper = objectMapper;
     }
 
@@ -143,32 +147,52 @@ public class SocialNetworkController {
     public ResponseEntity<SocialNetworkApiResponse<CliqueEnumerationWorkflowView>>
             requestCliqueAnalysis(
                     @PathVariable String datasetId,
+                    @RequestParam(required = false) String datasetVersion,
+                    @RequestParam(required = false) String sessionId,
                     @RequestParam(defaultValue = "false") boolean force) {
-        CliqueEnumerationWorkflowView view = cliqueWorkflow.request(datasetId, force);
-        return ResponseEntity.accepted().body(cliqueSuccess(view));
+        CliqueEnumerationWorkflowView view = datasetVersion == null && sessionId == null
+                ? cliqueWorkflow.request(datasetId, force)
+                : cliqueWorkflow.request(datasetId, datasetVersion, sessionId, force);
+        return ResponseEntity.accepted().body(cliqueSuccess(view, sessionId));
     }
 
     @GetMapping("/datasets/{datasetId}/network/cliques")
     public SocialNetworkApiResponse<CliqueEnumerationWorkflowView> cliqueAnalysis(
             @PathVariable String datasetId,
+                    @RequestParam(required = false) String datasetVersion,
+                    @RequestParam(required = false) String sessionId,
             @RequestParam(defaultValue = "0") int offset,
             @RequestParam(defaultValue = "20") int pageSize) {
-        return cliqueSuccess(cliqueWorkflow.status(datasetId, offset, pageSize));
+        CliqueEnumerationWorkflowView view = datasetVersion == null && sessionId == null
+                ? cliqueWorkflow.status(datasetId, offset, pageSize)
+                : cliqueWorkflow.status(
+                        datasetId, datasetVersion, sessionId, offset, pageSize);
+        return cliqueSuccess(view, sessionId);
     }
 
     @PostMapping("/datasets/{datasetId}/network/louvain")
     public ResponseEntity<SocialNetworkApiResponse<LouvainAnalysisWorkflowView>>
             requestLouvainAnalysis(
                     @PathVariable String datasetId,
+                    @RequestParam(required = false) String datasetVersion,
+                    @RequestParam(required = false) String sessionId,
                     @RequestParam(defaultValue = "false") boolean force) {
+        LouvainAnalysisWorkflowView view = datasetVersion == null && sessionId == null
+                ? louvainWorkflow.request(datasetId, force)
+                : louvainWorkflow.request(datasetId, datasetVersion, sessionId, force);
         return ResponseEntity.accepted().body(
-                louvainSuccess(louvainWorkflow.request(datasetId, force)));
+                louvainSuccess(view));
     }
 
     @GetMapping("/datasets/{datasetId}/network/louvain")
     public SocialNetworkApiResponse<LouvainAnalysisWorkflowView> louvainAnalysis(
-            @PathVariable String datasetId) {
-        return louvainSuccess(louvainWorkflow.status(datasetId));
+            @PathVariable String datasetId,
+            @RequestParam(required = false) String datasetVersion,
+            @RequestParam(required = false) String sessionId) {
+        LouvainAnalysisWorkflowView view = datasetVersion == null && sessionId == null
+                ? louvainWorkflow.status(datasetId)
+                : louvainWorkflow.status(datasetId, datasetVersion, sessionId);
+        return louvainSuccess(view);
     }
 
     @GetMapping("/datasets/{datasetId}/network/structure-roles")
@@ -262,8 +286,31 @@ public class SocialNetworkController {
             @PathVariable String datasetId,
             @RequestParam(defaultValue = "100") int maxNodes,
             @RequestParam(defaultValue = "500") int maxEdges,
-            @RequestParam(defaultValue = "true") boolean includeExternalNodes) {
+            @RequestParam(defaultValue = "true") boolean includeExternalNodes,
+            @RequestParam(defaultValue = "all") String communityFilter,
+            @RequestParam(defaultValue = "") String communityId) {
         SocialNetworkWorkspaceSnapshot snapshot = requestSnapshot(datasetId);
+        LouvainAnalysisWorkflowService.ReadOnlySnapshot louvainSnapshot =
+                snapshot.dataset().isUploadSession()
+                        ? louvainWorkflow.readOnlySnapshot(
+                                datasetId,
+                                snapshot.dataset().datasetVersion(),
+                                snapshot.dataset().sessionId())
+                        : louvainWorkflow.readOnlySnapshot(datasetId);
+        String graphDataFingerprint = louvainSnapshot.status().dataFingerprint();
+        if (graphDataFingerprint != null && !snapshot.dataset().isUploadSession()) {
+            snapshot = workspace.getForAnalysis(datasetId, graphDataFingerprint);
+        }
+        LouvainAnalysisWorkflowView reusableCommunityResult = louvainSnapshot == null
+                ? null
+                : louvainSnapshot.reusableResult().orElse(null);
+        if (snapshot.dataset().isUploadSession()
+                && (snapshot.inputFingerprint() == null
+                        || reusableCommunityResult == null
+                        || !snapshot.inputFingerprint().dataFingerprint().equals(
+                                reusableCommunityResult.dataFingerprint()))) {
+            reusableCommunityResult = null;
+        }
         int nodeLimit = Math.max(1, Math.min(maxNodes, 1000));
         int edgeLimit = Math.max(1, Math.min(maxEdges, 15000));
         Map<String, NormalizedUser> profilesById = new LinkedHashMap<>();
@@ -281,26 +328,63 @@ public class SocialNetworkController {
                 .filter(edge -> scopedIds.contains(edge.source())
                         && scopedIds.contains(edge.target()))
                 .toList();
-        boolean nodesTruncated = scopedNodes.size() > nodeLimit;
-        List<NetworkNode> nodes = scopedNodes.stream().limit(nodeLimit).toList();
+        CommunityDetectionResult communityDetection =
+                snapshot.network().communityDetection();
+        boolean communitiesAvailable = reusableCommunityResult != null
+                || communityDetection.status() == CommunityDetectionStatus.COMPLETED;
+        Map<String, String> communityByNodeId = reusableCommunityResult != null
+                ? reusableCommunityResult.communityByNodeId()
+                : communityDetection.communityByNodeId();
+        List<Map<String, Object>> globalCommunities = communitiesAvailable
+                ? communitySummary(scopedNodes, scopedEdges, communityByNodeId)
+                : List.of();
+        String normalizedCommunityFilter = normalizeCommunityFilter(communityFilter);
+        String normalizedCommunityId = communityId == null ? "" : communityId.strip();
+        String requestedCommunityId = communityId == null ? "" : communityId.strip();
+        String candidateCommunityFilter = communitiesAvailable
+                ? normalizedCommunityFilter
+                : "all";
+        String candidateCommunityId = "community".equals(candidateCommunityFilter)
+                ? requestedCommunityId
+                : "";
+        boolean selectedCommunityExists = "community".equals(candidateCommunityFilter)
+                && globalCommunities.stream().anyMatch(community ->
+                        candidateCommunityId.equals(community.get("id")));
+        boolean invalidCommunitySelection =
+                "community".equals(candidateCommunityFilter) && !selectedCommunityExists;
+        String appliedCommunityFilter = invalidCommunitySelection
+                ? "all"
+                : candidateCommunityFilter;
+        String appliedCommunityId = invalidCommunitySelection
+                ? ""
+                : candidateCommunityId;
+        List<NetworkNode> filteredNodes = scopedNodes.stream()
+                .filter(node -> switch (appliedCommunityFilter) {
+                    case "unassigned" -> !communityByNodeId.containsKey(node.id());
+                    case "community" -> selectedCommunityExists
+                            && appliedCommunityId.equals(communityByNodeId.get(node.id()));
+                    default -> true;
+                })
+                .toList();
+        Set<String> filteredIds = filteredNodes.stream()
+                .map(NetworkNode::id)
+                .collect(java.util.stream.Collectors.toSet());
+        List<NetworkEdge> filteredEdges = scopedEdges.stream()
+                .filter(edge -> filteredIds.contains(edge.source())
+                        && filteredIds.contains(edge.target()))
+                .toList();
+        boolean nodesTruncated = filteredNodes.size() > nodeLimit;
+        List<NetworkNode> nodes = filteredNodes.stream().limit(nodeLimit).toList();
         Set<String> returnedIds = nodes.stream()
                 .map(NetworkNode::id)
                 .collect(java.util.stream.Collectors.toSet());
-        List<NetworkEdge> edgesWithinReturnedNodes = scopedEdges.stream()
+        List<NetworkEdge> edgesWithinReturnedNodes = filteredEdges.stream()
                 .filter(edge -> returnedIds.contains(edge.source())
                         && returnedIds.contains(edge.target()))
                 .toList();
         boolean edgesTruncated = edgesWithinReturnedNodes.size() > edgeLimit;
         List<NetworkEdge> edges = edgesWithinReturnedNodes.stream().limit(edgeLimit).toList();
         boolean truncated = nodesTruncated || edgesTruncated;
-        CommunityDetectionResult communityDetection =
-                snapshot.network().communityDetection();
-        boolean communitiesAvailable =
-                communityDetection.status() == CommunityDetectionStatus.COMPLETED;
-        Map<String, String> communityByNodeId = communityDetection.communityByNodeId();
-        List<Map<String, Object>> globalCommunities = communitiesAvailable
-                ? communitySummary(scopedNodes, scopedEdges, communityByNodeId)
-                : List.of();
         List<Map<String, Object>> displayedCommunities = communitiesAvailable
                 ? communitySummary(nodes, edges, communityByNodeId)
                 : List.of();
@@ -308,6 +392,12 @@ public class SocialNetworkController {
                 communitiesAvailable ? globalCommunities.size() : null;
         Integer displayedCommunityCount =
                 communitiesAvailable ? displayedCommunities.size() : null;
+        Integer globalAssignedNodeCount = communitiesAvailable
+                ? scopedNodes.size() - unassignedNodeCount(scopedNodes, communityByNodeId)
+                : null;
+        Integer displayedAssignedNodeCount = communitiesAvailable
+                ? nodes.size() - unassignedNodeCount(nodes, communityByNodeId)
+                : null;
         Integer globalUnassignedNodeCount = communitiesAvailable
                 ? unassignedNodeCount(scopedNodes, communityByNodeId)
                 : null;
@@ -323,7 +413,8 @@ public class SocialNetworkController {
         }
         List<String> truncationDetails = new ArrayList<>();
         if (nodesTruncated) {
-            truncationDetails.add("节点范围 " + scopedNodes.size() + " 个，本次返回 " + nodes.size() + " 个");
+            truncationDetails.add("筛选范围 " + filteredNodes.size()
+                    + " 个节点，本次返回 " + nodes.size() + " 个");
         }
         if (edgesTruncated) {
             truncationDetails.add("当前返回节点间有向关系 " + edgesWithinReturnedNodes.size()
@@ -331,15 +422,16 @@ public class SocialNetworkController {
         }
 
         Map<String, Object> data = new LinkedHashMap<>();
-        data.put("scope", includeExternalNodes
-                ? "全量规范化关系网络（包含外部节点）"
-                : "仅资料用户组成的规范化关系网络（排除外部节点及其关联边）");
+        data.put("scope", graphScopeDescription(
+                includeExternalNodes,
+                appliedCommunityFilter,
+                appliedCommunityId));
         data.put("graphScope", includeExternalNodes
                 ? "full_normalized_network"
                 : "profile_nodes_only");
         data.put("state", truncated
                 ? com.prediction.socialnetwork.domain.SocialNetworkState.LIMITED
-                : scopedNodes.isEmpty()
+                : filteredNodes.isEmpty()
                     ? com.prediction.socialnetwork.domain.SocialNetworkState.EMPTY
                     : com.prediction.socialnetwork.domain.SocialNetworkState.AVAILABLE);
         data.put("nodes", nodes.stream()
@@ -347,35 +439,86 @@ public class SocialNetworkController {
                         node, profilesById, communityByNodeId.get(node.id())))
                 .toList());
         data.put("edges", edges);
-        data.put("communityAnalysisStatus",
-                communityDetection.status().name().toLowerCase(Locale.ROOT));
+        data.put("graphDataFingerprint", graphDataFingerprint);
+        data.put("communityDataFingerprint", reusableCommunityResult == null
+                ? null
+                : reusableCommunityResult.dataFingerprint());
+        data.put("communityAnalysisStatus", louvainSnapshot != null
+                ? louvainSnapshot.status().state().toLowerCase(Locale.ROOT)
+                : communityDetection.status().name().toLowerCase(Locale.ROOT));
+        data.put("communityAssignmentsComplete", reusableCommunityResult != null);
+        data.put("communityAssignmentNodeCount", reusableCommunityResult == null
+                ? null
+                : reusableCommunityResult.inputNodeCount());
+        data.put("communityInputDirectedRelationshipCount", reusableCommunityResult == null
+                ? null
+                : reusableCommunityResult.inputDirectedRelationshipCount());
+        data.put("communityAssignedNodeCount", reusableCommunityResult == null
+                ? null
+                : reusableCommunityResult.quality().assignedNodeCount());
+        data.put("communityUnassignedNodeCount", reusableCommunityResult == null
+                ? null
+                : reusableCommunityResult.unassignedNodeCount());
+        data.put("communityByNodeId", reusableCommunityResult == null
+                ? Map.of()
+                : reusableCommunityResult.communityByNodeId());
+        data.put("communityUnassignedNodeIds", reusableCommunityResult == null
+                ? List.of()
+                : reusableCommunityResult.unassignedNodeIds());
         data.put("globalCommunities", globalCommunities);
         data.put("displayedCommunities", displayedCommunities);
+        data.put("communityFilter", appliedCommunityFilter);
+        data.put("communityFilterCommunityId", "community".equals(appliedCommunityFilter)
+                ? appliedCommunityId
+                : null);
+        data.put("communityFilterAvailable", communitiesAvailable);
+        data.put("communityFilterApplied",
+                "all".equals(normalizedCommunityFilter)
+                        || (communitiesAvailable && !invalidCommunitySelection));
+        data.put("communityFilterValid",
+                !invalidCommunitySelection);
+        data.put("communityFilterNodeCount", filteredNodes.size());
+        data.put("communityFilterEdgeCount", filteredEdges.size());
         data.put("globalCommunityCount", globalCommunityCount);
         data.put("displayedCommunityCount", displayedCommunityCount);
+        data.put("globalAssignedNodeCount", globalAssignedNodeCount);
+        data.put("displayedAssignedNodeCount", displayedAssignedNodeCount);
         data.put("globalUnassignedNodeCount", globalUnassignedNodeCount);
         data.put("displayedUnassignedNodeCount", displayedUnassignedNodeCount);
         // Keep the original names as aliases for the graph currently drawn on the canvas.
         data.put("communities", displayedCommunities);
         data.put("communityCount", displayedCommunityCount);
         data.put("unassignedNodeCount", displayedUnassignedNodeCount);
-        data.put("communityAlgorithm", communityDetection.algorithm());
-        data.put("communityProjection", communityDetection.relationProjection());
+        data.put("communityAlgorithm", reusableCommunityResult != null
+                ? LouvainCommunityDetector.ALGORITHM
+                : communityDetection.algorithm());
+        data.put("communityAlgorithmVersion", reusableCommunityResult == null
+                ? null
+                : reusableCommunityResult.algorithmVersion());
+        data.put("communityProjection", reusableCommunityResult != null
+                ? reusableCommunityResult.projection()
+                : communityDetection.relationProjection());
         data.put("communityDirectionNote",
                 "社群识别将关注关系投影为无向联系；画布中的关注箭头仍保留原始方向。");
         data.put("communityBoundary",
                 "社群表示当前关系结构中相对紧密的节点集合，不代表真实组织或群体身份。");
         data.put("communityIterations", communitiesAvailable
-                ? communityDetection.iterations()
+                ? reusableCommunityResult != null
+                    ? reusableCommunityResult.iterations()
+                    : communityDetection.iterations()
                 : null);
         data.put("communityConverged", communitiesAvailable
-                ? communityDetection.converged()
+                ? reusableCommunityResult != null
+                    ? reusableCommunityResult.converged()
+                    : communityDetection.converged()
                 : null);
         data.put("communityAssignmentScope", communitiesAvailable
-                ? "full_normalized_network"
+                ? reusableCommunityResult != null
+                    ? reusableCommunityResult.analysisScope()
+                    : "full_normalized_network"
                 : null);
-        data.put("totalNodeCount", scopedNodes.size());
-        data.put("totalEdgeCount", scopedEdges.size());
+        data.put("totalNodeCount", filteredNodes.size());
+        data.put("totalEdgeCount", filteredEdges.size());
         data.put("returnedNodeCount", nodes.size());
         data.put("returnedEdgeCount", edges.size());
         // Keep the original count names as aliases for the returned arrays.
@@ -389,6 +532,31 @@ public class SocialNetworkController {
         data.put("includeExternalNodes", includeExternalNodes);
         data.put("limits", Map.of("maxNodes", nodeLimit, "maxEdges", edgeLimit));
         return success(data, snapshot);
+    }
+
+    private static String normalizeCommunityFilter(String communityFilter) {
+        String normalized = communityFilter == null
+                ? "all"
+                : communityFilter.strip().toLowerCase(Locale.ROOT);
+        return Set.of("all", "community", "unassigned").contains(normalized)
+                ? normalized
+                : "all";
+    }
+
+    private static String graphScopeDescription(
+            boolean includeExternalNodes,
+            String communityFilter,
+            String communityId) {
+        String baseScope = includeExternalNodes
+                ? "规范化关系网络（包含外部节点）"
+                : "仅资料用户组成的规范化关系网络";
+        return switch (communityFilter) {
+            case "community" -> "社群 " + communityId + " 内部关系；" + baseScope;
+            case "unassigned" -> "未归类账号范围；" + baseScope;
+            default -> includeExternalNodes
+                    ? "全量规范化关系网络（包含外部节点）"
+                    : "仅资料用户组成的规范化关系网络（排除外部节点及其关联边）";
+        };
     }
 
     private static int unassignedNodeCount(
@@ -921,12 +1089,15 @@ public class SocialNetworkController {
                 Object moduleData = moduleExportData(
                         datasetId, snapshot, exportType, effectiveQuery);
                 int resultCount = exportSampleCount(exportType, moduleData);
-                if (resultCount <= 0) {
+                if (resultCount <= 0 && !"bridge-candidates".equals(exportType)) {
                     throw new IllegalStateException("SN_EXPORT_EMPTY_RESULT");
                 }
-                scope.put("range", "当前模块结果；按页面展示限制截取");
+                scope.put("range", "bridge-candidates".equals(exportType)
+                        ? "完整候选总数及本次导出的候选页；可附带当前选中的一页关系证据"
+                        : "当前模块结果；按页面展示限制截取");
                 scope.put("calculationScope", switch (exportType) {
-                    case "network", "users" -> "完整规范化网络快照";
+                    case "network", "users", "bridge-candidates" ->
+                            "完整规范化网络快照";
                     case "interactions" -> "当前互动指标及页面展示范围";
                     case "topic" -> "当前精确词元查询及页面展示范围";
                     case "quality" -> "当前数据集质量报告";
@@ -948,8 +1119,13 @@ public class SocialNetworkController {
             data.put("downloadAvailable", false);
             data.put("format", format);
             data.put("metadata", metadata);
-            data.put("resultState", Boolean.TRUE.equals(scope.get("truncated"))
-                    ? "limited" : "available");
+            String resultState = Boolean.TRUE.equals(scope.get("truncated"))
+                    ? "limited" : "available";
+            if ("bridge-candidates".equals(exportType)
+                    && "empty".equals(mapOrEmpty(result.get("data")).get("state"))) {
+                resultState = "empty";
+            }
+            data.put("resultState", resultState);
             if ("csv".equals(format)) {
                 data.put("contentType", "text/csv; charset=UTF-8");
                 data.put("result", csvResult(
@@ -975,6 +1151,21 @@ public class SocialNetworkController {
             data.put("contentLength", contentLength);
             return ResponseEntity.status(HttpStatus.CREATED).body(
                     success(data, snapshot));
+        } catch (SocialNetworkBridgeCandidateExportService.ExportUnavailableException
+                exception) {
+            String reason = exception.reason();
+            String code = "analysis_result_changed".equals(reason)
+                    ? "SN_EXPORT_RESULT_CHANGED"
+                    : "SN_EXPORT_SOURCE_UNAVAILABLE";
+            String message = "analysis_result_changed".equals(reason)
+                    ? "候选或证据结果已变化，请刷新候选后重新导出。"
+                    : "当前跨社群候选或证据暂不可用，请刷新分析结果后重试。";
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(
+                    SocialNetworkApiResponse.error(
+                            UUID.randomUUID().toString(),
+                            code,
+                            message,
+                            Map.of("datasetId", datasetId, "reason", reason)));
         } catch (IllegalArgumentException exception) {
             return badRequest("SN_BAD_REQUEST", exception.getMessage());
         } catch (IllegalStateException exception) {
@@ -1132,6 +1323,18 @@ public class SocialNetworkController {
                 data.put("warnings", warnings(snapshot.quality()));
                 yield data;
             }
+            case "bridge-candidates" -> {
+                SocialNetworkBridgeCandidateExportService.ExportData exportData =
+                        bridgeCandidateExportService.assemble(
+                                datasetId,
+                                snapshot.dataset().datasetVersion(),
+                                snapshot.dataset().sessionId(),
+                                query);
+                Map<String, Object> data =
+                        new LinkedHashMap<>(exportData.result());
+                data.put("truncated", exportData.truncated());
+                yield data;
+            }
             default -> throw new IllegalArgumentException(
                     "unsupported export type: " + exportType);
         };
@@ -1159,6 +1362,7 @@ public class SocialNetworkController {
                 }
                 yield Map.of("term", term);
             }
+            case "bridge-candidates" -> query;
             default -> throw new IllegalArgumentException("unsupported export type");
         };
     }
@@ -1196,6 +1400,7 @@ public class SocialNetworkController {
                             + listSize(data.get("users"))
                             + listSize(mapOrEmpty(data.get("network")).get("edges")));
             case "quality" -> 1;
+            case "bridge-candidates" -> listSize(data.get("candidates"));
             default -> 0;
         };
     }
@@ -1459,10 +1664,11 @@ public class SocialNetworkController {
     }
 
     private static SocialNetworkApiResponse<CliqueEnumerationWorkflowView> cliqueSuccess(
-            CliqueEnumerationWorkflowView view) {
+            CliqueEnumerationWorkflowView view, String sessionId) {
         Map<String, Object> meta = new LinkedHashMap<>();
         meta.put("datasetId", view.datasetId());
         meta.put("datasetVersion", view.datasetVersion());
+        meta.put("sessionId", sessionId == null ? "" : sessionId);
         meta.put("analysisScope", view.analysisScope());
         meta.put("dataFingerprint", view.dataFingerprint());
         meta.put("cacheKey", view.cacheKey());

@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -23,6 +24,7 @@ public class SocialNetworkGroupExportService {
     private final CliqueEnumerationWorkflowService cliqueWorkflow;
     private final LouvainAnalysisWorkflowService louvainWorkflow;
     private final SocialNetworkGroupEvidenceService evidenceService;
+    private final SocialNetworkDatasetRegistry registry;
     private final ObjectMapper objectMapper;
     private final SocialNetworkCsvSerializer csvSerializer =
             new SocialNetworkCsvSerializer();
@@ -32,13 +34,32 @@ public class SocialNetworkGroupExportService {
             LouvainAnalysisWorkflowService louvainWorkflow,
             SocialNetworkGroupEvidenceService evidenceService,
             ObjectMapper objectMapper) {
+        this(cliqueWorkflow, louvainWorkflow, evidenceService, objectMapper, null);
+    }
+
+    @Autowired
+    public SocialNetworkGroupExportService(
+            CliqueEnumerationWorkflowService cliqueWorkflow,
+            LouvainAnalysisWorkflowService louvainWorkflow,
+            SocialNetworkGroupEvidenceService evidenceService,
+            ObjectMapper objectMapper,
+            SocialNetworkDatasetRegistry registry) {
         this.cliqueWorkflow = Objects.requireNonNull(cliqueWorkflow, "cliqueWorkflow");
         this.louvainWorkflow = Objects.requireNonNull(louvainWorkflow, "louvainWorkflow");
         this.evidenceService = Objects.requireNonNull(evidenceService, "evidenceService");
         this.objectMapper = Objects.requireNonNull(objectMapper, "objectMapper");
+        this.registry = registry;
     }
 
     public ExportResult export(String datasetId, ExportRequest request) {
+        return export(datasetId, null, null, request);
+    }
+
+    public ExportResult export(
+            String datasetId,
+            String datasetVersion,
+            String sessionId,
+            ExportRequest request) {
         if (request == null) {
             throw new IllegalArgumentException("request must not be null");
         }
@@ -50,6 +71,15 @@ public class SocialNetworkGroupExportService {
         if (!List.of("json", "csv", "print").contains(format)) {
             throw new IllegalArgumentException("format must be json, csv, or print");
         }
+        if (registry != null) {
+            if (datasetVersion == null && sessionId == null) {
+                if (registry.findDataset(datasetId).isUploadSession()) {
+                    throw new SocialNetworkDatasetContextException();
+                }
+            } else {
+                registry.resolveDatasetContext(datasetId, datasetVersion, sessionId);
+            }
+        }
 
         int offset = nonNegative(request.offset(), 0, "offset");
         int pageSize = boundedPageSize(request.pageSize(), "pageSize");
@@ -58,7 +88,7 @@ public class SocialNetworkGroupExportService {
         Map<String, Object> scope = new LinkedHashMap<>();
         if ("clique".equals(type)) {
             CliqueEnumerationWorkflowView view =
-                    cliqueWorkflow.status(datasetId, offset, pageSize);
+                    cliqueStatus(datasetId, datasetVersion, sessionId, offset, pageSize);
             rejectRunningAnalysis(view.state());
             if ("NOT_REQUESTED".equals(view.state()) || view.dataFingerprint() == null) {
                 throw new EmptyResultException();
@@ -73,7 +103,8 @@ public class SocialNetworkGroupExportService {
             scope.put("truncated",
                     view.offset() + view.cliques().size() < view.retainedCliqueCount());
         } else {
-            LouvainAnalysisWorkflowView view = louvainWorkflow.status(datasetId);
+            LouvainAnalysisWorkflowView view =
+                    louvainStatus(datasetId, datasetVersion, sessionId);
             rejectRunningAnalysis(view.state());
             if ("NOT_REQUESTED".equals(view.state()) || view.dataFingerprint() == null) {
                 throw new EmptyResultException();
@@ -91,7 +122,12 @@ public class SocialNetworkGroupExportService {
         Map<String, Object> evidence = null;
         if (request.evidence() != null) {
             SocialNetworkGroupEvidenceView evidenceView =
-                    readEvidence(datasetId, type, request.evidence());
+                    readEvidence(
+                            datasetId,
+                            datasetVersion,
+                            sessionId,
+                            type,
+                            request.evidence());
             if (!Objects.equals(
                     analysisMap.get("dataFingerprint"), evidenceView.dataFingerprint())) {
                 throw new IllegalStateException("analysis changed while assembling export");
@@ -99,14 +135,18 @@ public class SocialNetworkGroupExportService {
             boolean sameAnalysis;
             if (analysis instanceof CliqueEnumerationWorkflowView before) {
                 CliqueEnumerationWorkflowView current =
-                        cliqueWorkflow.status(datasetId, offset, pageSize);
-                sameAnalysis = Objects.equals(before.cacheKey(), current.cacheKey())
+                        cliqueStatus(datasetId, datasetVersion, sessionId, offset, pageSize);
+                sameAnalysis = Objects.equals(before.datasetId(), current.datasetId())
+                        && Objects.equals(
+                                before.datasetVersion(), current.datasetVersion())
+                        && Objects.equals(before.cacheKey(), current.cacheKey())
                         && Objects.equals(before.dataFingerprint(), current.dataFingerprint())
                         && Objects.equals(before.requestedAt(), current.requestedAt())
                         && Objects.equals(before.finishedAt(), current.finishedAt());
             } else {
                 LouvainAnalysisWorkflowView before = (LouvainAnalysisWorkflowView) analysis;
-                LouvainAnalysisWorkflowView current = louvainWorkflow.status(datasetId);
+                LouvainAnalysisWorkflowView current =
+                        louvainStatus(datasetId, datasetVersion, sessionId);
                 sameAnalysis = Objects.equals(before.cacheKey(), current.cacheKey())
                         && Objects.equals(before.dataFingerprint(), current.dataFingerprint())
                         && Objects.equals(before.requestedAt(), current.requestedAt())
@@ -121,7 +161,7 @@ public class SocialNetworkGroupExportService {
             scope.put("evidence", Map.of("included", false));
         }
 
-        Map<String, Object> metadata = metadata(type, analysisMap, scope);
+        Map<String, Object> metadata = metadata(type, analysisMap, scope, sessionId);
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("analysis", analysisMap);
         result.put("evidence", evidence);
@@ -160,6 +200,8 @@ public class SocialNetworkGroupExportService {
 
     private SocialNetworkGroupEvidenceView readEvidence(
             String datasetId,
+            String datasetVersion,
+            String sessionId,
             String analysisType,
             EvidenceTarget target) {
         String targetType = normalized(target.type(), "evidence.type");
@@ -176,26 +218,56 @@ public class SocialNetworkGroupExportService {
             } catch (NumberFormatException exception) {
                 throw new IllegalArgumentException("evidence.id must be a clique index");
             }
-            return evidenceService.clique(datasetId, index, section, offset, pageSize);
+            return datasetVersion == null && sessionId == null
+                    ? evidenceService.clique(
+                            datasetId, index, section, offset, pageSize)
+                    : evidenceService.clique(
+                            datasetId, datasetVersion, sessionId,
+                            index, section, offset, pageSize);
         }
         if ("louvain".equals(targetType) && "louvain".equals(analysisType)) {
-            return evidenceService.louvain(
-                    datasetId, requireText(target.id(), "evidence.id"),
-                    section, offset, pageSize);
+            String communityId = requireText(target.id(), "evidence.id");
+            return sessionId == null
+                    ? evidenceService.louvain(
+                            datasetId, communityId, section, offset, pageSize)
+                    : evidenceService.louvain(
+                            datasetId, datasetVersion, sessionId,
+                            communityId, section, offset, pageSize);
         }
         if ("between".equals(targetType) && "louvain".equals(analysisType)) {
             if (!"ties".equals(section)) {
                 throw new IllegalArgumentException(
                         "between-community evidence only supports ties");
             }
-            return evidenceService.betweenCommunities(
-                    datasetId,
-                    requireText(target.id(), "evidence.id"),
-                    requireText(target.secondId(), "evidence.secondId"),
-                    offset,
-                    pageSize);
+            String first = requireText(target.id(), "evidence.id");
+            String second = requireText(target.secondId(), "evidence.secondId");
+            return sessionId == null
+                    ? evidenceService.betweenCommunities(
+                            datasetId, first, second, offset, pageSize)
+                    : evidenceService.betweenCommunities(
+                            datasetId, datasetVersion, sessionId, first, second,
+                            offset, pageSize);
         }
         throw new IllegalArgumentException("evidence target does not match analysisType");
+    }
+
+    private LouvainAnalysisWorkflowView louvainStatus(
+            String datasetId, String datasetVersion, String sessionId) {
+        return sessionId == null
+                ? louvainWorkflow.status(datasetId)
+                : louvainWorkflow.status(datasetId, datasetVersion, sessionId);
+    }
+
+    private CliqueEnumerationWorkflowView cliqueStatus(
+            String datasetId,
+            String datasetVersion,
+            String sessionId,
+            int offset,
+            int pageSize) {
+        return datasetVersion == null && sessionId == null
+                ? cliqueWorkflow.status(datasetId, offset, pageSize)
+                : cliqueWorkflow.status(
+                        datasetId, datasetVersion, sessionId, offset, pageSize);
     }
 
     private static Map<String, Object> evidenceScope(SocialNetworkGroupEvidenceView view) {
@@ -226,10 +298,14 @@ public class SocialNetworkGroupExportService {
     private static Map<String, Object> metadata(
             String type,
             Map<String, Object> analysis,
-            Map<String, Object> scope) {
+            Map<String, Object> scope,
+            String sessionId) {
         Map<String, Object> metadata = new LinkedHashMap<>();
         metadata.put("datasetId", analysis.get("datasetId"));
         metadata.put("datasetVersion", analysis.get("datasetVersion"));
+        if (sessionId != null) {
+            metadata.put("sessionId", sessionId);
+        }
         metadata.put("analysisType", type);
         metadata.put("analysisState", analysis.get("state"));
         metadata.put("complete", analysis.get("complete"));
@@ -390,10 +466,6 @@ public class SocialNetworkGroupExportService {
         appendField(text, "输入有向关注关系数",
                 count(intValue(analysis.get("inputDirectedRelationshipCount"), 0)));
         appendField(text, "关系处理方式", projectionDescription(analysis.get("projection")));
-        appendField(text, "迭代轮数", count(intValue(analysis.get("iterations"), 0)));
-        appendField(text, "分辨率参数",
-                stringMap(analysis.get("algorithmParameters"))
-                        .getOrDefault("resolution", "未提供"));
 
         appendSection(text, "社群列表");
         for (Object item : communities) {
@@ -502,20 +574,25 @@ public class SocialNetworkGroupExportService {
             StringBuilder text,
             Map<String, Object> analysis,
             Map<String, Object> metadata) {
-        appendSection(text, "复核信息（技术字段）");
-        appendField(text, "分析完成时间（UTC）", analysis.get("finishedAt"));
-        appendField(text, "数据指纹", analysis.get("dataFingerprint"));
-        appendField(text, "算法版本", analysis.get("algorithmVersion"));
-        appendField(text, "结果缓存命中",
-                Boolean.TRUE.equals(analysis.get("cacheHit")) ? "是" : "否");
-        appendField(text, "导出过程", "读取已有分析结果并排版，未重新运行分析");
+        appendSection(text, "数据核对说明");
+        appendField(text, "结果状态",
+                Boolean.TRUE.equals(metadata.get("complete")) ? "完整" : "未完整");
+        appendField(text, "导出说明", "本报告整理当前数据版本已生成的分析结果，未重新运行分析");
         for (Object item : listValue(analysis.get("inputFiles"))) {
             Map<String, Object> file = stringMap(item);
-            appendField(text, "输入文件（" + stringValue(file.get("role")) + "）",
+            appendField(text, "使用文件（" + fileRoleLabel(file.get("role")) + "）",
                     file.get("logicalPath"));
         }
-        appendField(text, "完整性",
-                Boolean.TRUE.equals(metadata.get("complete")) ? "完整" : "未完整");
+    }
+
+    private static String fileRoleLabel(Object role) {
+        return switch (stringValue(role).toLowerCase(Locale.ROOT)) {
+            case "users", "user" -> "账号资料";
+            case "relationships", "relationship" -> "关注关系";
+            case "tweets", "tweet" -> "推文";
+            case "interactions", "interaction" -> "互动";
+            default -> "数据";
+        };
     }
 
     private static void appendSection(StringBuilder text, String title) {
@@ -546,10 +623,12 @@ public class SocialNetworkGroupExportService {
     }
 
     private static String projectionDescription(Object projection) {
-        if ("undirected_simple_any_direction".equals(stringValue(projection))) {
+        String normalized = stringValue(projection).toLowerCase(Locale.ROOT);
+        if ("undirected_simple_any_direction".equals(normalized)
+                || "undirected_simple".equals(normalized)) {
             return "任一方向有关注即视为相连；重复关系合并，双向关注只计为一条无向关系。";
         }
-        return stringValue(projection);
+        return "按关注关系判断账号之间是否相连，重复关系不重复计数。";
     }
 
     private static Map<String, Object> stringMap(Object value) {

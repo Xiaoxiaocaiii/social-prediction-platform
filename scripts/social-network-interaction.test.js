@@ -95,8 +95,8 @@ const pageShownEnd = source.indexOf("\n    };", pageShownStart);
 assert.ok(pageShownStart >= 0 && pageShownEnd > pageShownStart);
 const pageShown = source.slice(pageShownStart, pageShownEnd);
 
-assert.match(index, /social-network\.js\?v=20261107-overview-heading-gap-1/);
-assert.match(index, /style\.css\?v=20261107-overview-heading-gap-1/);
+assert.match(index, /social-network\.js\?v=20261108-global-graph-entry-1/);
+assert.match(index, /style\.css\?v=20261111-ranking-bridge-spacing-1/);
 assert.match(source, /interactionTaskResultCache/);
 assert.doesNotMatch(interactionView, /social-network-content-task-nav/);
 assert.match(pageShown, /interaction:\s*"INTERACTION ANALYSIS"/);

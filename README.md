@@ -7,6 +7,8 @@
 
 页面、接口和图表均使用真实数据计算，不使用 mock 数据。社交网络分析不生成综合影响力分，不推断社会影响力、传播路径或因果关系。
 
+当前交付范围与验收记录见[项目验收与演示说明](docs/验收与演示说明.md)。全局关系图、Louvain 社群、Clique 团体、跨社群连接候选及上传会话分析已纳入当前交付范围；阶段验收记录见[实施计划与验收记录](全局关系图与社群桥接分析实施计划.md)。其中验收日期和测试结果是计划文档记载，不代表每次检出代码后都重新运行过测试或完成了新的浏览器验收。
+
 ## English Overview
 
 This project provides two isolated workspaces:
@@ -46,7 +48,10 @@ The platform uses real data rather than mock data. Social-network metrics descri
 - B05 用户详情右侧抽屉：从排行及用户关系结果中的用户入口打开
 - B06 点赞、评论、转发独立统计，以及推文排行、用户排行和按发布时间字段分组的时间分布：`#/social-network/content`
 - B07 精确主题查询、相关推文/用户/关注关系联动：`#/social-network/content/topic`；关键词与 TF-IDF 接口已存在，但当前没有独立词表 UI
-- 全局关系图与社群展示代码及入口已存在，目前暂停、待负责人复核，不作为已验收能力
+- 全局关系图、社群筛选和账号详情：`#/social-network/network`
+- 团体与社群分析：复用 Clique 极大团分析和 Louvain 社群划分，提供成员、关系证据及结果导出
+- 节点排行包含独立的跨社群连接候选视图，提供账号详情、关系证据、图内定位和 JSON/CSV/可读报告导出
+- 当前会话上传支持 CSV/JSONL；上传数据可运行 Louvain 与 Clique，并用于关系图、社群/团体证据、跨社群候选及相应导出。上传结果按会话隔离，关闭、过期或服务重启后不可恢复
 - 数据集入口集中导出；网络总览、重要节点、互动、主题和质量模块提供独立导出
 
 ### Social Network Analysis
@@ -59,7 +64,10 @@ The platform uses real data rather than mock data. Social-network metrics descri
 - B05 user details in a shared side drawer, opened from ranking and user-relation results
 - B06 separate like, reply, and repost statistics, plus tweet rankings, user rankings, and time distributions grouped by the available publish-time field: `#/social-network/content`
 - B07 exact topic search with related tweets, users, and following relationships: `#/social-network/content/topic`; keyword and TF-IDF APIs exist, but there is no standalone vocabulary UI
-- The global graph and community view have code and routes, but remain paused pending owner review and are not accepted capabilities
+- The global graph, community filters, and account details are available at `#/social-network/network`
+- Clique and Louvain analysis provide group/community results, member and relationship evidence, and exports
+- Node rankings include a separate cross-community connection-candidate view with account details, relationship evidence, graph location, and JSON/CSV/readable-report exports
+- Current-session CSV/JSONL uploads support Louvain and Clique analysis, graph/community evidence, bridge candidates, and related exports. Upload results are isolated by session and expire when the session closes, expires, or the service restarts
 - Dataset-level export remains available; network overview, important nodes, interactions, topics, and data quality also have module-level export actions
 
 ## 快速开始 Quick Start
@@ -98,13 +106,16 @@ Open <http://localhost:8080> after startup.
 
 ### 测试 Test
 
-```bash
+```powershell
 mvn -s mvn-settings.xml test
-node --check src/main/resources/static/js/social-network.js
+Get-ChildItem scripts\*.test.js | ForEach-Object {
+  node $_.FullName
+  if ($LASTEXITCODE -ne 0) { throw "Frontend test failed: $($_.Name)" }
+}
 git diff --check
 ```
 
-Run the same Maven, JavaScript syntax, and whitespace checks from PowerShell or another supported shell.
+Run the JavaScript contract tests in PowerShell as shown. A recorded test result is evidence only for the exact code and environment used for that run.
 
 ## 数据说明 Dataset
 
@@ -119,6 +130,10 @@ The prediction workspace uses SMTPD video data, including video text, covers, an
 当前内置数据集 ID 为 `think-tank-social-network`，版本为 `v1`：
 
 The built-in social-network dataset is `think-tank-social-network`, version `v1`:
+
+以下规模对应 2026-10-29 核验过的本机数据快照；克隆源码不包含原始社交网络数据，本地文件缺失或版本变化时不得直接套用这些计数。
+
+The counts below describe the local snapshot verified on 2026-10-29. The source repository does not include the raw social-network dataset; do not assume these counts apply when local data is absent or has changed.
 
 | 项目 | 数量 |
 | --- | ---: |
@@ -255,7 +270,10 @@ Missing values mean “not collected” or “not linkable”; an observed `0` r
 | `GET /.../{datasetId}` | 数据集摘要、质量和能力 |
 | `GET /.../{datasetId}/network/summary` | 网络总览 |
 | `GET /.../{datasetId}/network/local` | 局部网络 |
-| `GET /.../{datasetId}/network/graph` | 全局关系图数据及社群摘要；代码/API 已存在，但当前暂停、待负责人复核，不视为已验收能力 |
+| `GET /.../{datasetId}/network/graph` | 全局关系图数据、社群归属及完整范围/画布展示范围摘要 |
+| `GET /.../{datasetId}/network/bridge-candidates` | 跨社群连接候选分页 |
+| `GET /.../{datasetId}/network/bridge-candidates/{accountId}/evidence` | 候选账号按社群和方向分页的关注关系证据 |
+| `POST /.../{datasetId}/network/exports` | 已完成的 Clique/Louvain 结果及当前页证据导出 |
 | `GET /.../{datasetId}/rankings` | 指标排行 |
 | `GET /.../{datasetId}/users/search` | 用户搜索 |
 | `GET /.../{datasetId}/users/{userId}` | 用户详情 |
@@ -273,7 +291,10 @@ Missing values mean “not collected” or “not linkable”; an observed `0` r
 | `GET /.../{datasetId}` | Dataset summary, quality, and capabilities |
 | `GET /.../{datasetId}/network/summary` | Network overview |
 | `GET /.../{datasetId}/network/local` | Local following network |
-| `GET /.../{datasetId}/network/graph` | Global-graph data and community summary; implemented but paused pending owner review |
+| `GET /.../{datasetId}/network/graph` | Global graph data, community assignments, and full/displayed-scope summaries |
+| `GET /.../{datasetId}/network/bridge-candidates` | Paginated cross-community connection candidates |
+| `GET /.../{datasetId}/network/bridge-candidates/{accountId}/evidence` | Paginated relationship evidence by community and direction |
+| `POST /.../{datasetId}/network/exports` | Export completed Clique/Louvain results and selected evidence pages |
 | `GET /.../{datasetId}/rankings` | Metric rankings |
 | `GET /.../{datasetId}/users/search` | User search |
 | `GET /.../{datasetId}/users/{userId}` | User details |
@@ -289,9 +310,9 @@ Missing values mean “not collected” or “not linkable”; an observed `0` r
 
 The main API prefix is `/api/social-network/datasets/{datasetId}`. Responses use the shared `success`, `code`, `message`, `requestId`, `data`, `warnings`, and `meta` envelope. Errors do not expose local paths, stack traces, or internal configuration.
 
-全局关系图接口默认最多返回 100 个节点和 500 条关系，可通过 `maxNodes`、`maxEdges` 及 `includeExternalNodes` 调整展示范围；单次请求上限为 1,000 个节点和 15,000 条关系，并通过 `truncated` 标识截断。节点、关系和社群摘要按本次返回范围统计；图与社群仍待负责人复核。
+全局关系图接口默认最多返回 100 个节点和 500 条关系，可通过 `maxNodes`、`maxEdges` 及 `includeExternalNodes` 调整展示范围；单次请求上限为 1,000 个节点和 15,000 条关系，并通过 `truncated` 标识截断。社群划分和跨社群候选基于完整规范化网络及同一份 Louvain 结果；响应分别提供完整筛选范围统计和本次画布展示统计。展示被截断不代表范围外账号或关系不存在。
 
-The global-graph API defaults to at most 100 nodes and 500 relations. `maxNodes`, `maxEdges`, and `includeExternalNodes` can adjust the display range, up to 1,000 nodes and 15,000 relations per request. Responses mark truncation with `truncated`; node, relation, and community summaries describe the returned range. The graph and community view remain paused pending owner review.
+The global-graph API defaults to at most 100 nodes and 500 relations. `maxNodes`, `maxEdges`, and `includeExternalNodes` can adjust the displayed range, up to 1,000 nodes and 15,000 relations per request. Responses mark truncation with `truncated` and separate full filtered-scope statistics from the displayed canvas. Community assignments and bridge candidates use the complete normalized network and the same Louvain result. Truncation does not mean omitted accounts or relations do not exist.
 
 数据集入口保留集中式导出；网络总览、重要节点、互动、主题和数据质量模块也可导出当前结果。导出 API 同步返回内容，前端使用浏览器 Blob 生成文件，不创建服务端临时下载文件。单次导出上限为 `2 MiB`，超限整体拒绝；主题导出必须带当前查询词。
 
@@ -311,7 +332,7 @@ idle / loading / available / empty / limited / failed / disabled / unavailable
 - 外部节点可以参与网络计算，但默认不进入用户资料排行。
 - 当前导出是同步响应承载，不生成永久文件或下载链接。
 - 内置快照缓存复用同一数据集版本；版本变化必须重新计算。
-- 当前真实数据工作集约 2.2GB，继续扩大数据规模时需要分区索引、按需导出或异步大结果处理。
+- 性能报告记录了 2026-10-05 本机数据集的内存测量和接口耗时；这是特定环境下的历史观测，不是最低可用内存要求或分析准入门槛。项目不因可用内存低于 2 GiB 而拒绝分析。
 - 项目仅支持桌面 Microsoft Edge，不扩展移动端、平板端或触摸设备适配。
 
 - `limited` means the graph, sample, or author-linkage coverage is capped.
@@ -320,10 +341,12 @@ idle / loading / available / empty / limited / failed / disabled / unavailable
 - External nodes may participate in network calculations but are excluded from user-profile rankings by default.
 - Exports are synchronous responses; the server does not keep permanent files or download links.
 - Snapshot caches are scoped to a dataset version; a version change requires recalculation.
-- The current real-data working set is about 2.2 GB. Larger datasets may require partitioned indexes, on-demand exports, or asynchronous large-result handling.
+- The performance report records memory and request-time measurements from one local run on 2026-10-05. These are historical, environment-specific observations, not a minimum-memory requirement or analysis gate. The application does not reject analysis because available memory is below 2 GiB.
 - Desktop Microsoft Edge is the only supported browser target; mobile, tablet, and touch layouts are out of scope.
 
-## 验收步骤 Acceptance
+## 验收与演示检查 Acceptance and Demo Checks
+
+以下是需在目标机器上实际执行的检查清单，不是已经在每次运行环境中完成的证明。已记录的历史验收见[项目验收与演示说明](docs/验收与演示说明.md)。
 
 1. 启动应用并打开 `http://localhost:8080/#/social-network`。
 2. 确认数据集显示用户数 626、关注关系数 12,963 和推文数 237,840，并区分候选关系、规范化有效关系及原始/去重推文口径。
@@ -334,9 +357,14 @@ idle / loading / available / empty / limited / failed / disabled / unavailable
 7. 分别使用集中式入口及五个模块入口生成 JSON、CSV 和打印摘要；检查查询条件、截断信息和超限提示。
 8. 检查加载、空、部分可用和失败提示。
 9. 在三个目标桌面分辨率检查表格、长文本、导出对话框、图表和关系方向。
-10. 切换 `#/predict`，确认预测页面无回归。
+10. 打开全局关系图，检查社群筛选、画布截断说明、账号详情及图内定位。
+11. 运行 Clique/Louvain，检查成员与关系证据；在节点排行核对跨社群候选及导出内容。
+12. 上传三份演示 CSV，检查质量预览、激活、Louvain/Clique、跨社群候选、证据和导出；关闭或重启后确认旧会话失效。
+13. 切换 `#/predict`，确认预测页面无回归。
 
 ### English Checklist
+
+These checks must be executed on the target machine; their presence here is not evidence that the current runtime passed. See the [acceptance and demo guide](docs/验收与演示说明.md) for dated historical evidence.
 
 1. Start the application and open `http://localhost:8080/#/social-network`.
 2. Confirm the dataset summary shows 626 users, 12,963 relation records, and 237,840 raw tweet records; distinguish candidate relations from valid normalized relations and raw tweets from deduplicated samples.
@@ -347,11 +375,14 @@ idle / loading / available / empty / limited / failed / disabled / unavailable
 7. Generate JSON, CSV, and print-summary exports from both the dataset entry and all five module actions; verify query metadata, truncation information, and oversized-result handling.
 8. Check loading, empty, partial, and failed states.
 9. At all three target desktop viewports, inspect tables, long text, export dialogs, charts, and relation direction.
-10. Open `#/predict` and confirm the prediction workspace has not regressed.
+10. Open the global graph and check community filters, truncation notices, account details, and graph navigation.
+11. Run Clique/Louvain, inspect member and relationship evidence, and verify bridge candidates and exports from node rankings.
+12. Upload the three demo CSV files and check preview, activation, analysis, bridge evidence, and exports; confirm the old session expires after closure or restart.
+13. Open `#/predict` and confirm the prediction workspace has not regressed.
 
-性能实测见 [T34 性能验收报告](docs/social-network-analysis-performance-acceptance.md)。
+历史性能测量见 [T34 性能验收报告](docs/social-network-analysis-performance-acceptance.md)。项目的阶段范围、验收记录和可复现演示步骤见[项目验收与演示说明](docs/验收与演示说明.md)。
 
-See the [T34 performance acceptance report](docs/social-network-analysis-performance-acceptance.md) for measured performance.
+See the [T34 performance report](docs/social-network-analysis-performance-acceptance.md) for historical measurements. See the [acceptance and demo guide](docs/验收与演示说明.md) for delivery scope, recorded acceptance, and local run instructions.
 
 ## 项目结构 Project Structure
 

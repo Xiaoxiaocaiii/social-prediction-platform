@@ -20,7 +20,6 @@ import java.util.Locale;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class WindowsLouvainAnalysisRunnerTest {
@@ -36,14 +35,6 @@ class WindowsLouvainAnalysisRunnerTest {
         Assumptions.assumeTrue(
                 System.getProperty("os.name", "").toLowerCase(Locale.ROOT).contains("windows"),
                 "Windows Job Object integration tests require Windows");
-    }
-
-    @BeforeEach
-    void preserveSyntheticTestMargin() {
-        Assumptions.assumeTrue(
-                WindowsResourcePreflight.currentAvailablePhysicalMemoryBytes()
-                        >= 1536L * WindowsJobLimits.MEBIBYTE,
-                "Skipped to preserve the 1.5 GiB margin for bounded synthetic workers");
     }
 
     @Test
@@ -150,22 +141,14 @@ class WindowsLouvainAnalysisRunnerTest {
     }
 
     @Test
-    void productionEntryHonorsTheCurrentMemoryPreflight() {
-        Assumptions.assumeTrue(
-                WindowsResourcePreflight.currentAvailablePhysicalMemoryBytes()
-                        >= 2L * WindowsJobLimits.GIBIBYTE,
-                "Production worker preflight requires 2 GiB of available physical memory");
+    void productionEntryRunsWithWorkerLimitsWithoutSystemMemoryPreflight() {
         WindowsLouvainAnalysisRunner runner = runner(
                 WindowsJobLimits.DEFAULT, LouvainAnalysisWorkerMain.class.getName());
 
         LouvainWorkerRunResult result =
                 runner.run(nodes("A", "B", "C"), edges("A", "B", "B", "C"), () -> false);
 
-        if (result.status() == LouvainWorkerRunResult.Status.MEMORY_LIMIT) {
-            assertEquals("physical_memory_preflight", result.terminationDetail());
-        } else {
-            assertEquals(LouvainWorkerRunResult.Status.COMPLETED, result.status());
-        }
+        assertEquals(LouvainWorkerRunResult.Status.COMPLETED, result.status());
     }
 
     private static WindowsLouvainAnalysisRunner runner(

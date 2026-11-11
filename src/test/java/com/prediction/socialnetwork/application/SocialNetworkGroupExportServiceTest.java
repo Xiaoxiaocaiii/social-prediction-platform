@@ -93,6 +93,9 @@ class SocialNetworkGroupExportServiceTest {
         assertEquals(false, metadata.get("converged"));
         assertEquals(true, metadata.get("workerCompleted"));
         assertEquals(1.0, ((Map<?, ?>) metadata.get("algorithmParameters")).get("resolution"));
+        assertEquals("louvain-test-v1", metadata.get("algorithmVersion"));
+        assertEquals(FINGERPRINT, metadata.get("dataFingerprint"));
+        assertEquals("fixture-cache-key", metadata.get("cacheKey"));
         assertEquals(1, ((Map<?, ?>) metadata.get("scope")).get("returnedCount"));
         verify(evidenceService, never()).louvain(
                 org.mockito.ArgumentMatchers.anyString(),
@@ -100,6 +103,84 @@ class SocialNetworkGroupExportServiceTest {
                 org.mockito.ArgumentMatchers.anyString(),
                 org.mockito.ArgumentMatchers.anyInt(),
                 org.mockito.ArgumentMatchers.anyInt());
+    }
+
+    @Test
+    void exportsBuiltinLouvainWithoutUploadContextWhenRegistryIsConfigured()
+            throws Exception {
+        CliqueEnumerationWorkflowService cliqueWorkflow =
+                mock(CliqueEnumerationWorkflowService.class);
+        LouvainAnalysisWorkflowService louvainWorkflow =
+                mock(LouvainAnalysisWorkflowService.class);
+        SocialNetworkGroupEvidenceService evidenceService =
+                mock(SocialNetworkGroupEvidenceService.class);
+        SocialNetworkDatasetRegistry registry = new SocialNetworkDatasetRegistry();
+        registry.registerBuiltin();
+        when(louvainWorkflow.status(DATASET_ID)).thenReturn(louvainView());
+
+        SocialNetworkGroupExportService.ExportResult result =
+                new SocialNetworkGroupExportService(
+                        cliqueWorkflow,
+                        louvainWorkflow,
+                        evidenceService,
+                        new ObjectMapper().findAndRegisterModules(),
+                        registry)
+                        .export(
+                                DATASET_ID,
+                                new SocialNetworkGroupExportService.ExportRequest(
+                                        "louvain", "json", 0, 20, null));
+
+        Map<?, ?> file = new ObjectMapper().readValue(
+                (String) result.result(), Map.class);
+        Map<?, ?> metadata = (Map<?, ?>) file.get("metadata");
+        assertEquals(DATASET_ID, metadata.get("datasetId"));
+        assertEquals(
+                SocialNetworkDatasetRegistry.BUILTIN_DATASET_VERSION,
+                metadata.get("datasetVersion"));
+    }
+
+    @Test
+    void bindsUploadedLouvainExportAndEvidenceToItsSession() throws Exception {
+        CliqueEnumerationWorkflowService cliqueWorkflow =
+                mock(CliqueEnumerationWorkflowService.class);
+        LouvainAnalysisWorkflowService louvainWorkflow =
+                mock(LouvainAnalysisWorkflowService.class);
+        SocialNetworkGroupEvidenceService evidenceService =
+                mock(SocialNetworkGroupEvidenceService.class);
+        String datasetId = "upload-export-session";
+        String datasetVersion = "session-export-session";
+        String sessionId = "export-session";
+        when(louvainWorkflow.status(datasetId, datasetVersion, sessionId))
+                .thenReturn(louvainView(datasetId, datasetVersion));
+        when(evidenceService.louvain(
+                datasetId, datasetVersion, sessionId,
+                "C001", "members", 0, 20))
+                .thenReturn(louvainEvidenceView(datasetId));
+
+        SocialNetworkGroupExportService.ExportResult result = service(
+                cliqueWorkflow, louvainWorkflow, evidenceService).export(
+                        datasetId,
+                        datasetVersion,
+                        sessionId,
+                        new SocialNetworkGroupExportService.ExportRequest(
+                                "louvain",
+                                "json",
+                                0,
+                                20,
+                                new SocialNetworkGroupExportService.EvidenceTarget(
+                                        "louvain", "C001", null, "members", 0, 20)));
+
+        Map<?, ?> file = new ObjectMapper().readValue(
+                (String) result.result(), Map.class);
+        Map<?, ?> metadata = (Map<?, ?>) file.get("metadata");
+        assertEquals(datasetId, metadata.get("datasetId"));
+        assertEquals(datasetVersion, metadata.get("datasetVersion"));
+        assertEquals(sessionId, metadata.get("sessionId"));
+        verify(louvainWorkflow, org.mockito.Mockito.times(2))
+                .status(datasetId, datasetVersion, sessionId);
+        verify(evidenceService).louvain(
+                datasetId, datasetVersion, sessionId,
+                "C001", "members", 0, 20);
     }
 
     @Test
@@ -165,6 +246,15 @@ class SocialNetworkGroupExportServiceTest {
         assertTrue(report.contains("划分出的社群数：1"));
         assertTrue(report.contains("C001：3 个账号，内部关系 2 条"));
         assertTrue(report.contains("已结束，但尚未收敛"));
+        assertTrue(report.contains("数据核对说明"));
+        assertTrue(report.contains("结果状态：未完整"));
+        assertTrue(report.contains("未重新运行分析"));
+        assertTrue(report.contains("任一方向有关注即视为相连"));
+        assertFalse(report.contains("undirected_simple"));
+        assertFalse(report.contains("louvain-test-v1"));
+        assertFalse(report.contains("fixture-fingerprint"));
+        assertFalse(report.contains("fixture-cache-key"));
+        assertFalse(report.contains("技术字段"));
         assertFalse(report.contains("analysis.communityByNodeId"));
         verify(cliqueWorkflow, never()).request(DATASET_ID, false);
         verify(louvainWorkflow, never()).request(DATASET_ID, false);
@@ -296,9 +386,15 @@ class SocialNetworkGroupExportServiceTest {
     }
 
     private static LouvainAnalysisWorkflowView louvainView() {
+        return louvainView(
+                DATASET_ID, SocialNetworkDatasetRegistry.BUILTIN_DATASET_VERSION);
+    }
+
+    private static LouvainAnalysisWorkflowView louvainView(
+            String datasetId, String datasetVersion) {
         return new LouvainAnalysisWorkflowView(
-                DATASET_ID,
-                SocialNetworkDatasetRegistry.BUILTIN_DATASET_VERSION,
+                datasetId,
+                datasetVersion,
                 "COMPLETED_UNCONVERGED",
                 false,
                 true,
@@ -332,6 +428,26 @@ class SocialNetworkGroupExportServiceTest {
                 50,
                 "fixture-cache-key",
                 true);
+    }
+
+    private static SocialNetworkGroupEvidenceView louvainEvidenceView(String datasetId) {
+        return new SocialNetworkGroupEvidenceView(
+                datasetId,
+                "louvain",
+                "COMPLETED_UNCONVERGED",
+                false,
+                true,
+                false,
+                true,
+                null,
+                FINGERPRINT,
+                "C001",
+                "members",
+                0,
+                20,
+                0,
+                List.of(),
+                List.of());
     }
 
     private static SocialNetworkGroupEvidenceView evidenceView() {
