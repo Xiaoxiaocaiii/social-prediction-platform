@@ -23,7 +23,7 @@ $rules = @(
     },
     @{
         Name = "touch or device branch"
-        Pattern = '(?i)\b(?:touchstart|touchmove|touchend|ontouch|pointer\s*:\s*coarse|matchMedia\s*\([^)]*(?:width|orientation|pointer)|innerWidth|outerWidth|screen\.width)\b'
+        Pattern = '(?i)(?:\b(?:touchstart|touchmove|touchend|ontouch)\b|\bpointer\s*:\s*coarse\b|\bmatchMedia\s*\([^)]*(?:width|orientation|pointer)|\b(?:innerWidth|outerWidth|screen\.width)\s*(?:<=?|>=?)|(?:<=?|>=?)\s*(?:window\.)?\b(?:innerWidth|outerWidth|screen\.width)\b)'
     },
     @{
         Name = "mobile keywords"
